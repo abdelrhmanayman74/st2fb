@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="BATCH_FILLING" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="START_PB"/><With Var="ABORT"/><With Var="WEIGHT"/><With Var="TARGET"/><With Var="SLOW_BAND"/><With Var="TOLERANCE"/><With Var="SETTLE_TIME"/><With Var="RESET_COUNT"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="STATE_NO"/><With Var="FAST_VALVE"/><With Var="SLOW_VALVE"/><With Var="ACCEPTED"/><With Var="REJECTED"/><With Var="BATCH_COUNT"/><With Var="NET_WEIGHT"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="START_PB" Type="BOOL"/>
+      <VarDeclaration Name="ABORT" Type="BOOL"/>
+      <VarDeclaration Name="WEIGHT" Type="REAL"/>
+      <VarDeclaration Name="TARGET" Type="REAL"/>
+      <VarDeclaration Name="SLOW_BAND" Type="REAL"/>
+      <VarDeclaration Name="TOLERANCE" Type="REAL"/>
+      <VarDeclaration Name="SETTLE_TIME" Type="TIME"/>
+      <VarDeclaration Name="RESET_COUNT" Type="BOOL"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="STATE_NO" Type="INT"/>
+      <VarDeclaration Name="FAST_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="SLOW_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="ACCEPTED" Type="BOOL"/>
+      <VarDeclaration Name="REJECTED" Type="BOOL"/>
+      <VarDeclaration Name="BATCH_COUNT" Type="INT"/>
+      <VarDeclaration Name="NET_WEIGHT" Type="REAL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="TARE" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="COUNT_PULSE" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="SETTLE_TIMER_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="SETTLE_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="SETTLE_TIMER_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="SETTLE_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="SETTLE_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="SETTLE_TIMER_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="SETTLE_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="COUNTER_CU" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="COUNTER_R" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="COUNTER_PV" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="COUNTER_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="COUNTER_CV" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="COUNTER_CU_T_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="COUNTER_CU_T_M" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="START_EDGE_CLK" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="START_EDGE_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="START_EDGE_M" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="COMMON" x="200" y="0">
+        <ECAction Algorithm="common"/>
+      </ECState>
+      <ECState Name="S0" x="400" y="-200">
+        <ECAction Algorithm="a0"/>
+      </ECState>
+      <ECState Name="S1" x="400" y="-100">
+        <ECAction Algorithm="a1"/>
+      </ECState>
+      <ECState Name="S2" x="400" y="0">
+        <ECAction Algorithm="a2"/>
+      </ECState>
+      <ECState Name="S3" x="400" y="100">
+        <ECAction Algorithm="a3"/>
+      </ECState>
+      <ECState Name="S4" x="400" y="200">
+        <ECAction Algorithm="a4"/>
+      </ECState>
+      <ECState Name="OTHER" x="400" y="300"/>
+      <ECState Name="TAIL" x="600" y="0">
+        <ECAction Algorithm="tail" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="COMMON" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="COMMON" Destination="S0" Condition="[STATE_NO = 0]" x="300" y="-200"/>
+      <ECTransition Source="COMMON" Destination="S1" Condition="[STATE_NO = 1]" x="300" y="-100"/>
+      <ECTransition Source="COMMON" Destination="S2" Condition="[STATE_NO = 2]" x="300" y="0"/>
+      <ECTransition Source="COMMON" Destination="S3" Condition="[STATE_NO = 3]" x="300" y="100"/>
+      <ECTransition Source="COMMON" Destination="S4" Condition="[STATE_NO = 4]" x="300" y="200"/>
+      <ECTransition Source="COMMON" Destination="OTHER" Condition="1" x="300" y="300"/>
+      <ECTransition Source="S0" Destination="TAIL" Condition="1" x="500" y="-100"/>
+      <ECTransition Source="S1" Destination="TAIL" Condition="1" x="500" y="-50"/>
+      <ECTransition Source="S2" Destination="TAIL" Condition="1" x="500" y="0"/>
+      <ECTransition Source="S3" Destination="TAIL" Condition="1" x="500" y="50"/>
+      <ECTransition Source="S4" Destination="TAIL" Condition="1" x="500" y="100"/>
+      <ECTransition Source="OTHER" Destination="TAIL" Condition="1" x="500" y="150"/>
+      <ECTransition Source="TAIL" Destination="START" Condition="1" x="300" y="-300"/>
+    </ECC>
+    <Algorithm Name="common">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+START_EDGE_CLK := START_PB;
+START_EDGE_Q := START_EDGE_CLK AND NOT START_EDGE_M;
+START_EDGE_M := START_EDGE_CLK;
+NET_WEIGHT := WEIGHT - TARE;
+FAST_VALVE := FALSE;
+SLOW_VALVE := FALSE;
+COUNT_PULSE := FALSE;
+IF ABORT THEN
+  STATE_NO := 0;
+  ACCEPTED := FALSE;
+  REJECTED := FALSE;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="a0">
+      <ST><![CDATA[
+IF START_EDGE_Q AND NOT ABORT THEN
+  TARE := WEIGHT;
+  NET_WEIGHT := 0.0;
+  ACCEPTED := FALSE;
+  REJECTED := FALSE;
+  STATE_NO := 1;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="a1">
+      <ST><![CDATA[
+FAST_VALVE := TRUE;
+SLOW_VALVE := TRUE;
+IF NET_WEIGHT >= TARGET - SLOW_BAND THEN
+  STATE_NO := 2;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="a2">
+      <ST><![CDATA[
+SLOW_VALVE := TRUE;
+IF NET_WEIGHT >= TARGET THEN
+  STATE_NO := 3;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="a3">
+      <ST><![CDATA[
+IF SETTLE_TIMER_Q THEN
+  IF (NET_WEIGHT >= TARGET - TOLERANCE) AND (NET_WEIGHT <= TARGET + TOLERANCE) THEN
+    ACCEPTED := TRUE;
+    COUNT_PULSE := TRUE;
+  ELSE
+    REJECTED := TRUE;
+  END_IF;
+  STATE_NO := 4;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="a4">
+      <ST><![CDATA[
+IF START_EDGE_Q THEN
+  TARE := WEIGHT;
+  NET_WEIGHT := 0.0;
+  ACCEPTED := FALSE;
+  REJECTED := FALSE;
+  STATE_NO := 1;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="tail">
+      <ST><![CDATA[
+SETTLE_TIMER_IN := (STATE_NO = 3);
+SETTLE_TIMER_PT := SETTLE_TIME;
+IF (SETTLE_TIMER_STATE = 0) AND NOT SETTLE_TIMER_PREV_IN AND SETTLE_TIMER_IN THEN
+  SETTLE_TIMER_STATE := 1;
+  SETTLE_TIMER_Q := FALSE;
+  SETTLE_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT SETTLE_TIMER_IN THEN
+    SETTLE_TIMER_ET := T#0s;
+    SETTLE_TIMER_Q := FALSE;
+    SETTLE_TIMER_STATE := 0;
+  ELSIF SETTLE_TIMER_STATE = 1 THEN
+    IF SETTLE_TIMER_START_TIME + SETTLE_TIMER_PT <= ST2FB_NOW THEN
+      SETTLE_TIMER_STATE := 2;
+      SETTLE_TIMER_Q := TRUE;
+      SETTLE_TIMER_ET := SETTLE_TIMER_PT;
+    ELSE
+      SETTLE_TIMER_ET := ST2FB_NOW - SETTLE_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+SETTLE_TIMER_PREV_IN := SETTLE_TIMER_IN;
+COUNTER_CU := COUNT_PULSE;
+COUNTER_R := RESET_COUNT;
+COUNTER_PV := 1000;
+COUNTER_CU_T_Q := COUNTER_CU AND NOT COUNTER_CU_T_M;
+COUNTER_CU_T_M := COUNTER_CU;
+IF COUNTER_R THEN
+  COUNTER_CV := 0;
+ELSIF COUNTER_CU_T_Q AND (COUNTER_CV < COUNTER_PV) THEN
+  COUNTER_CV := COUNTER_CV + 1;
+END_IF;
+COUNTER_Q := COUNTER_CV >= COUNTER_PV;
+BATCH_COUNT := COUNTER_CV;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

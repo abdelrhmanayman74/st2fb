@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="VALVE_FEEDBACK" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="OPEN_CMD"/><With Var="OPENED_LS"/><With Var="CLOSED_LS"/><With Var="RESET"/><With Var="TRAVEL_LIMIT"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="DRIVE_OPEN"/><With Var="DRIVE_CLOSE"/><With Var="IN_POSITION"/><With Var="FAULT"/><With Var="TRAVEL_TIME"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="OPEN_CMD" Type="BOOL"/>
+      <VarDeclaration Name="OPENED_LS" Type="BOOL"/>
+      <VarDeclaration Name="CLOSED_LS" Type="BOOL"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="TRAVEL_LIMIT" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="DRIVE_OPEN" Type="BOOL"/>
+      <VarDeclaration Name="DRIVE_CLOSE" Type="BOOL"/>
+      <VarDeclaration Name="IN_POSITION" Type="BOOL"/>
+      <VarDeclaration Name="FAULT" Type="BOOL"/>
+      <VarDeclaration Name="TRAVEL_TIME" Type="TIME"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OPENING_TIMER_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OPENING_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OPENING_TIMER_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OPENING_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OPENING_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="OPENING_TIMER_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OPENING_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="CLOSING_TIMER_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CLOSING_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="CLOSING_TIMER_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CLOSING_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="CLOSING_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="CLOSING_TIMER_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CLOSING_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+OPENING_TIMER_IN := OPEN_CMD AND NOT OPENED_LS;
+OPENING_TIMER_PT := TRAVEL_LIMIT;
+IF (OPENING_TIMER_STATE = 0) AND NOT OPENING_TIMER_PREV_IN AND OPENING_TIMER_IN THEN
+  OPENING_TIMER_STATE := 1;
+  OPENING_TIMER_Q := FALSE;
+  OPENING_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT OPENING_TIMER_IN THEN
+    OPENING_TIMER_ET := T#0s;
+    OPENING_TIMER_Q := FALSE;
+    OPENING_TIMER_STATE := 0;
+  ELSIF OPENING_TIMER_STATE = 1 THEN
+    IF OPENING_TIMER_START_TIME + OPENING_TIMER_PT <= ST2FB_NOW THEN
+      OPENING_TIMER_STATE := 2;
+      OPENING_TIMER_Q := TRUE;
+      OPENING_TIMER_ET := OPENING_TIMER_PT;
+    ELSE
+      OPENING_TIMER_ET := ST2FB_NOW - OPENING_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+OPENING_TIMER_PREV_IN := OPENING_TIMER_IN;
+
+CLOSING_TIMER_IN := NOT OPEN_CMD AND NOT CLOSED_LS;
+CLOSING_TIMER_PT := TRAVEL_LIMIT;
+IF (CLOSING_TIMER_STATE = 0) AND NOT CLOSING_TIMER_PREV_IN AND CLOSING_TIMER_IN THEN
+  CLOSING_TIMER_STATE := 1;
+  CLOSING_TIMER_Q := FALSE;
+  CLOSING_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT CLOSING_TIMER_IN THEN
+    CLOSING_TIMER_ET := T#0s;
+    CLOSING_TIMER_Q := FALSE;
+    CLOSING_TIMER_STATE := 0;
+  ELSIF CLOSING_TIMER_STATE = 1 THEN
+    IF CLOSING_TIMER_START_TIME + CLOSING_TIMER_PT <= ST2FB_NOW THEN
+      CLOSING_TIMER_STATE := 2;
+      CLOSING_TIMER_Q := TRUE;
+      CLOSING_TIMER_ET := CLOSING_TIMER_PT;
+    ELSE
+      CLOSING_TIMER_ET := ST2FB_NOW - CLOSING_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+CLOSING_TIMER_PREV_IN := CLOSING_TIMER_IN;
+
+IF OPENING_TIMER_Q OR CLOSING_TIMER_Q OR (OPENED_LS AND CLOSED_LS) THEN
+  FAULT := TRUE;
+ELSIF RESET THEN
+  FAULT := FALSE;
+END_IF;
+DRIVE_OPEN := OPEN_CMD AND NOT OPENED_LS AND NOT FAULT;
+DRIVE_CLOSE := NOT OPEN_CMD AND NOT CLOSED_LS AND NOT FAULT;
+IN_POSITION := NOT FAULT AND ((OPEN_CMD AND OPENED_LS) OR (NOT OPEN_CMD AND CLOSED_LS));
+IF OPEN_CMD THEN
+  TRAVEL_TIME := OPENING_TIMER_ET;
+ELSE
+  TRAVEL_TIME := CLOSING_TIMER_ET;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

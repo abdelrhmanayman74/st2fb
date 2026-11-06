@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PUMP_PROTECTION" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="RUN_REQ"/><With Var="SUCTION"/><With Var="DISCHARGE"/><With Var="SUCTION_MIN"/><With Var="DISCHARGE_MAX"/><With Var="RESET"/><With Var="MAX_STARTS"/><With Var="RESET_STARTS"/><With Var="LOW_DELAY"/><With Var="PRIME_TIME"/><With Var="COOL_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="PUMP_RUN"/><With Var="PRIME_VALVE"/><With Var="COOL_VALVE"/><With Var="TRIPPED"/><With Var="STARTS_BLOCKED"/><With Var="START_COUNT"/><With Var="PRIME_ELAPSED"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="RUN_REQ" Type="BOOL"/>
+      <VarDeclaration Name="SUCTION" Type="REAL"/>
+      <VarDeclaration Name="DISCHARGE" Type="REAL"/>
+      <VarDeclaration Name="SUCTION_MIN" Type="REAL"/>
+      <VarDeclaration Name="DISCHARGE_MAX" Type="REAL"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="MAX_STARTS" Type="INT"/>
+      <VarDeclaration Name="RESET_STARTS" Type="BOOL"/>
+      <VarDeclaration Name="LOW_DELAY" Type="TIME"/>
+      <VarDeclaration Name="PRIME_TIME" Type="TIME"/>
+      <VarDeclaration Name="COOL_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="PUMP_RUN" Type="BOOL"/>
+      <VarDeclaration Name="PRIME_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="COOL_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="TRIPPED" Type="BOOL"/>
+      <VarDeclaration Name="STARTS_BLOCKED" Type="BOOL"/>
+      <VarDeclaration Name="START_COUNT" Type="INT"/>
+      <VarDeclaration Name="PRIME_ELAPSED" Type="TIME"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="RESTART_OK" Type="BOOL"/>
+      <VarDeclaration Name="LOW_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="LOW_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="LOW_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="LOW_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="LOW_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="LOW_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="LOW_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="TRIP_LATCH_S" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_LATCH_R1" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_LATCH_Q1" Type="BOOL"/>
+      <VarDeclaration Name="PRIME_PULSE_IN" Type="BOOL"/>
+      <VarDeclaration Name="PRIME_PULSE_PT" Type="TIME"/>
+      <VarDeclaration Name="PRIME_PULSE_Q" Type="BOOL"/>
+      <VarDeclaration Name="PRIME_PULSE_ET" Type="TIME"/>
+      <VarDeclaration Name="PRIME_PULSE_STATE" Type="INT"/>
+      <VarDeclaration Name="PRIME_PULSE_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="PRIME_PULSE_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="COOL_DOWN_IN" Type="BOOL"/>
+      <VarDeclaration Name="COOL_DOWN_PT" Type="TIME"/>
+      <VarDeclaration Name="COOL_DOWN_Q" Type="BOOL"/>
+      <VarDeclaration Name="COOL_DOWN_ET" Type="TIME"/>
+      <VarDeclaration Name="COOL_DOWN_STATE" Type="INT"/>
+      <VarDeclaration Name="COOL_DOWN_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="COOL_DOWN_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="START_COUNTER_CU" Type="BOOL"/>
+      <VarDeclaration Name="START_COUNTER_R" Type="BOOL"/>
+      <VarDeclaration Name="START_COUNTER_PV" Type="INT"/>
+      <VarDeclaration Name="START_COUNTER_Q" Type="BOOL"/>
+      <VarDeclaration Name="START_COUNTER_CV" Type="INT"/>
+      <VarDeclaration Name="START_COUNTER_CU_T_Q" Type="BOOL"/>
+      <VarDeclaration Name="START_COUNTER_CU_T_M" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+(* LOW_TIMER : TON *)
+LOW_TIMER_IN := PUMP_RUN AND (SUCTION < SUCTION_MIN);
+LOW_TIMER_PT := LOW_DELAY;
+IF (LOW_TIMER_STATE = 0) AND NOT LOW_TIMER_PREV_IN AND LOW_TIMER_IN THEN
+  LOW_TIMER_STATE := 1;
+  LOW_TIMER_Q := FALSE;
+  LOW_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT LOW_TIMER_IN THEN
+    LOW_TIMER_ET := T#0s;
+    LOW_TIMER_Q := FALSE;
+    LOW_TIMER_STATE := 0;
+  ELSIF LOW_TIMER_STATE = 1 THEN
+    IF LOW_TIMER_START_TIME + LOW_TIMER_PT <= ST2FB_NOW THEN
+      LOW_TIMER_STATE := 2;
+      LOW_TIMER_Q := TRUE;
+      LOW_TIMER_ET := LOW_TIMER_PT;
+    ELSE
+      LOW_TIMER_ET := ST2FB_NOW - LOW_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+LOW_TIMER_PREV_IN := LOW_TIMER_IN;
+
+(* TRIP_LATCH : RS *)
+TRIP_LATCH_S := LOW_TIMER_Q OR (DISCHARGE > DISCHARGE_MAX);
+TRIP_LATCH_R1 := RESET;
+TRIP_LATCH_Q1 := NOT TRIP_LATCH_R1 AND (TRIP_LATCH_S OR TRIP_LATCH_Q1);
+TRIPPED := TRIP_LATCH_Q1;
+STARTS_BLOCKED := START_COUNTER_Q;
+RESTART_OK := PUMP_RUN OR (NOT COOL_DOWN_Q AND NOT STARTS_BLOCKED);
+PUMP_RUN := RUN_REQ AND NOT TRIPPED AND RESTART_OK;
+
+(* START_COUNTER : CTU *)
+START_COUNTER_CU := PUMP_RUN;
+START_COUNTER_R := RESET_STARTS;
+START_COUNTER_PV := MAX_STARTS;
+START_COUNTER_CU_T_Q := START_COUNTER_CU AND NOT START_COUNTER_CU_T_M;
+START_COUNTER_CU_T_M := START_COUNTER_CU;
+IF START_COUNTER_R THEN
+  START_COUNTER_CV := 0;
+ELSIF START_COUNTER_CU_T_Q AND (START_COUNTER_CV < START_COUNTER_PV) THEN
+  START_COUNTER_CV := START_COUNTER_CV + 1;
+END_IF;
+START_COUNTER_Q := START_COUNTER_CV >= START_COUNTER_PV;
+START_COUNT := START_COUNTER_CV;
+
+(* PRIME_PULSE : TP *)
+PRIME_PULSE_IN := PUMP_RUN;
+PRIME_PULSE_PT := PRIME_TIME;
+IF (PRIME_PULSE_STATE = 0) AND NOT PRIME_PULSE_PREV_IN AND PRIME_PULSE_IN THEN
+  PRIME_PULSE_STATE := 1;
+  PRIME_PULSE_Q := TRUE;
+  PRIME_PULSE_START_TIME := ST2FB_NOW;
+ELSIF PRIME_PULSE_STATE = 1 THEN
+  IF PRIME_PULSE_START_TIME + PRIME_PULSE_PT <= ST2FB_NOW THEN
+    PRIME_PULSE_STATE := 2;
+    PRIME_PULSE_Q := FALSE;
+    PRIME_PULSE_ET := PRIME_PULSE_PT;
+  ELSE
+    PRIME_PULSE_ET := ST2FB_NOW - PRIME_PULSE_START_TIME;
+  END_IF;
+END_IF;
+IF (PRIME_PULSE_STATE = 2) AND NOT PRIME_PULSE_IN THEN
+  PRIME_PULSE_ET := T#0s;
+  PRIME_PULSE_STATE := 0;
+END_IF;
+PRIME_PULSE_PREV_IN := PRIME_PULSE_IN;
+PRIME_VALVE := PRIME_PULSE_Q;
+PRIME_ELAPSED := PRIME_PULSE_ET;
+
+(* COOL_DOWN : TOF *)
+COOL_DOWN_IN := PUMP_RUN;
+COOL_DOWN_PT := COOL_TIME;
+IF (COOL_DOWN_STATE = 0) AND COOL_DOWN_PREV_IN AND NOT COOL_DOWN_IN THEN
+  COOL_DOWN_STATE := 1;
+  COOL_DOWN_START_TIME := ST2FB_NOW;
+ELSE
+  IF COOL_DOWN_IN THEN
+    COOL_DOWN_ET := T#0s;
+    COOL_DOWN_STATE := 0;
+  ELSIF COOL_DOWN_STATE = 1 THEN
+    IF COOL_DOWN_START_TIME + COOL_DOWN_PT <= ST2FB_NOW THEN
+      COOL_DOWN_STATE := 2;
+      COOL_DOWN_ET := COOL_DOWN_PT;
+    ELSE
+      COOL_DOWN_ET := ST2FB_NOW - COOL_DOWN_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+COOL_DOWN_Q := COOL_DOWN_IN OR (COOL_DOWN_STATE = 1);
+COOL_DOWN_PREV_IN := COOL_DOWN_IN;
+COOL_VALVE := COOL_DOWN_Q;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

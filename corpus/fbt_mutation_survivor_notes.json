@@ -1,0 +1,42 @@
+{
+ "survivors": {
+  "07_conveyor_interlock|algorithm scan, line 45:7: remove: removed 'ON_C1_ET := ON_C1_PT;'": "Analysed: equivalent, reasoned and not proved. The program never reads `ON_C1.ET`, only `ON_C1.Q`, so this removes a write to a variable that no statement reads and no output shows.",
+  "10_valve_feedback|algorithm scan, line 16:30: constant: '2' -> '3'": "Analysed: equivalent, reasoned and not proved. This is `OPENING_TIMER_STATE := 3`. The lowered TON only ever tests STATE against 0 and 1, so 2 and 3 behave alike.",
+  "10_valve_feedback|algorithm scan, line 5:28: operator: 'AND' -> 'OR'": "Analysed: equivalent, reasoned and not proved. The start condition becomes `STATE = 0 OR (NOT PREV_IN AND IN)`, so with IN false STATE now flips between 0 and 1. A rising edge still takes the same branch through the second clause. While IN is false the branch writes Q := FALSE, which it already is, and leaves ET at 0, and the next scan's `NOT IN` branch resets STATE. Q and ET, the only values read outside the timer, do not change. START_TIME does change, but it is overwritten on every edge before it is read.",
+  "10_valve_feedback|algorithm scan, line 46:1: remove: removed 'CLOSING_TIMER_PREV_IN := CLOSING_TIMER_IN;'": "Analysed: equivalent, reasoned and not proved. PREV_IN now stays FALSE, so the start condition is `STATE = 0 AND IN`. STATE only becomes 0 on a call with IN false, or starts at 0, so STATE = 0 with IN true already implies the previous call had IN false. PREV_IN adds nothing to this condition, and nothing else reads it.",
+  "13_case_sequencer|algorithm scan, line 57:3: constant: '4' -> '3'": "Analysed: equivalent, reasoned and not proved. The label becomes `3..6`, but 3 is matched first by the earlier label, and the exporter's if-chain takes the first match. The ST campaign has the same survivor.",
+  "19_auto_restart|algorithm scan, line 19:29: constant: '2' -> '1'": "Analysed: equivalent, reasoned and not proved. This is `STABLE_TIMER_STATE := 1` on expiry, so the timer stays in its counting state. Q stays TRUE for as long as IN holds: the expiry test can only set Q TRUE again, and its ELSE branch writes only ET. The program reads only `STABLE_TIMER.Q`. The same argument as `mutant_010` below.",
+  "19_auto_restart|algorithm scan, line 52:3: remove: removed 'WAIT_TIMER_Q := FALSE;'": "Analysed: equivalent, reasoned and not proved. This is the statement in the TON's start branch. That branch needs STATE = 0, and STATE only becomes 0 in the same branch that clears Q (or at start-up, where Q is FALSE), so Q is already FALSE there."
+ },
+ "earlier": {
+  "13_case_sequencer `mutant_010`: removed `STEP_TIMER_STATE := 2;`": [
+   "Sampled before this campaign, with `mutate fbt --count 12`, in `build/val_forward/13_case_sequencer/mutants/`. Run again for this report: it is equal to matiec on the tuning stimulus (1134 scans, 3 changes of STEP_TIME) and on the held-out stimulus (1469 scans, 11 changes of STEP_TIME).",
+   "",
+   "Analysed: equivalent **for this program**, reasoned and not proved. It is not an equivalent mutation of TON in general.",
+   "",
+   "With the statement gone, STATE stays 1 after expiry instead of moving to 2. Going through the lowered TON:",
+   "",
+   "- The start branch needs STATE = 0, and neither 1 nor 2 is 0, so it does not change.",
+   "- The `NOT IN` branch does not look at STATE, so it resets the timer exactly as before.",
+   "- That leaves IN still true with STATE 1, which reruns the expiry test on every call. If it holds it writes Q := TRUE and ET := PT, which they already are. If it fails, because PT rose after expiry, it writes only ET := NOW - START. So Q does not change.",
+   "- This program reads only `STEP_TIMER.Q`. ET is not read by any statement, and no output shows it.",
+   "",
+   "So Q is the same on every scan for every input sequence, and that holds even though STEP_TIME is an input that changes. The difference is real but lies entirely in ET: the same removal in a program that outputs ET and raises PT after expiry while IN holds is visible, and Findings below shows exactly that on real FORTE."
+  ]
+ },
+ "findings": [
+  "**No pipeline bug was found.** All 21 controls are equal, and every detected mutant was detected by a trace difference, with no crash, timeout or compile failure.",
+  "",
+  "**A real gap in a tuning stimulus, found by following up `mutant_010`.** Its argument depends on ET being unread, and `10_valve_feedback` does output a timer's ET as `TRAVEL_TIME`, so the same mutation should be visible there. An exhaustive run over that one program gave 111 mutants, 99 different and 12 survivors. To reproduce: `python3 scripts/fbt_mutation_campaign.py --only 10_valve_feedback --count 1000 --save-json build/fbt_valve_all.json`, 463 s here.",
+  "",
+  "- `OPENING_TIMER_STATE := 2` and `CLOSING_TIMER_STATE := 2`, each removed or changed to `:= 1`, are 4 of those 12. All 4 survive `stimulus.json`, and are **not equivalent**. A hand-written stimulus (open command held, limit switch never made, TRAVEL_LIMIT 30 ms for 6 scans and then 500 ms) gave matiec `TRAVEL_TIME` holding at 30 where the mutants of the opening timer went to 60 on scan 6, on real FORTE. The unmutated translation matched matiec on the same stimulus.",
+  "- No tuning stimulus raises a timer's PT after it has expired while IN holds, so a translator bug in this corner would pass the tuning stimulus of this program.",
+  "- `corpus/generate_heldout.py` gained a retune phase because of this, and all 4 now fail on `heldout_stimulus.json`. `tests/test_llm_e2e.py` uses one of them as the real example of a candidate that passes tuning and fails held-out.",
+  "- The tuning stimulus was deliberately left unchanged, because the task says that existing stimulus files must not change. Whether to add this corner to `stimulus.json` is a decision for the project owner.",
+  "- The other 8 of the 12 are not separately analysed here. They are the same kinds of change as the survivors above (the start condition's `AND` to `OR`, `2` to `3`, removing `Q := FALSE` or `PREV_IN := IN`) on either timer, and they survive both stimuli.",
+  "",
+  "**The exporter accepts what matiec rejects.** Removing the only statement of a branch compiles on this path, whereas matiec rejects an empty branch (`docs/CORPUS.md`). This is why this campaign has no compile failures, while the matiec one has many. It is not a behaviour bug, since an empty ST branch does nothing either way.",
+  "",
+  "**Line numbers in mutant descriptions run one ahead of the algorithm text**, because the CDATA section starts with a newline. They are correct for the text inside the CDATA, and `line 45` is line 44 of the `Algorithm.st` string."
+ ]
+}

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="DUTY_STANDBY" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="DEMAND"/><With Var="FB_A"/><With Var="FB_B"/><With Var="TRIP_A"/><With Var="TRIP_B"/><With Var="RESET"/><With Var="PROOF_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="RUN_A"/><With Var="RUN_B"/><With Var="LEAD_IS_B"/><With Var="STANDBY_ACTIVE"/><With Var="NO_PUMP"/><With Var="ALTERNATIONS"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="DEMAND" Type="BOOL"/>
+      <VarDeclaration Name="FB_A" Type="BOOL"/>
+      <VarDeclaration Name="FB_B" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_A" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_B" Type="BOOL"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="RUN_A" Type="BOOL"/>
+      <VarDeclaration Name="RUN_B" Type="BOOL"/>
+      <VarDeclaration Name="LEAD_IS_B" Type="BOOL"/>
+      <VarDeclaration Name="STANDBY_ACTIVE" Type="BOOL"/>
+      <VarDeclaration Name="NO_PUMP" Type="BOOL"/>
+      <VarDeclaration Name="ALTERNATIONS" Type="UINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="DEMAND_END_CLK" Type="BOOL"/>
+      <VarDeclaration Name="DEMAND_END_Q" Type="BOOL"/>
+      <VarDeclaration Name="DEMAND_END_M" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_A_IN" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_A_PT" Type="TIME"/>
+      <VarDeclaration Name="PROOF_A_Q" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_A_ET" Type="TIME"/>
+      <VarDeclaration Name="PROOF_A_STATE" Type="INT"/>
+      <VarDeclaration Name="PROOF_A_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_A_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="PROOF_B_IN" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_B_PT" Type="TIME"/>
+      <VarDeclaration Name="PROOF_B_Q" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_B_ET" Type="TIME"/>
+      <VarDeclaration Name="PROOF_B_STATE" Type="INT"/>
+      <VarDeclaration Name="PROOF_B_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_B_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="FAILED_A_S1" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_A_R" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_A_Q1" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_B_S1" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_B_R" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_B_Q1" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+DEMAND_END_CLK := DEMAND;
+DEMAND_END_Q := NOT DEMAND_END_CLK AND NOT DEMAND_END_M;
+DEMAND_END_M := NOT DEMAND_END_CLK;
+
+IF DEMAND_END_Q THEN
+  LEAD_IS_B := NOT LEAD_IS_B;
+  ALTERNATIONS := ALTERNATIONS + 1;
+END_IF;
+
+PROOF_A_IN := RUN_A AND NOT FB_A;
+PROOF_A_PT := PROOF_TIME;
+IF (PROOF_A_STATE = 0) AND NOT PROOF_A_PREV_IN AND PROOF_A_IN THEN
+  PROOF_A_STATE := 1;
+  PROOF_A_Q := FALSE;
+  PROOF_A_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT PROOF_A_IN THEN
+    PROOF_A_ET := T#0s;
+    PROOF_A_Q := FALSE;
+    PROOF_A_STATE := 0;
+  ELSIF PROOF_A_STATE = 1 THEN
+    IF PROOF_A_START_TIME + PROOF_A_PT <= ST2FB_NOW THEN
+      PROOF_A_STATE := 2;
+      PROOF_A_Q := TRUE;
+      PROOF_A_ET := PROOF_A_PT;
+    ELSE
+      PROOF_A_ET := ST2FB_NOW - PROOF_A_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+PROOF_A_PREV_IN := PROOF_A_IN;
+
+PROOF_B_IN := RUN_B AND NOT FB_B;
+PROOF_B_PT := PROOF_TIME;
+IF (PROOF_B_STATE = 0) AND NOT PROOF_B_PREV_IN AND PROOF_B_IN THEN
+  PROOF_B_STATE := 1;
+  PROOF_B_Q := FALSE;
+  PROOF_B_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT PROOF_B_IN THEN
+    PROOF_B_ET := T#0s;
+    PROOF_B_Q := FALSE;
+    PROOF_B_STATE := 0;
+  ELSIF PROOF_B_STATE = 1 THEN
+    IF PROOF_B_START_TIME + PROOF_B_PT <= ST2FB_NOW THEN
+      PROOF_B_STATE := 2;
+      PROOF_B_Q := TRUE;
+      PROOF_B_ET := PROOF_B_PT;
+    ELSE
+      PROOF_B_ET := ST2FB_NOW - PROOF_B_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+PROOF_B_PREV_IN := PROOF_B_IN;
+
+FAILED_A_S1 := TRIP_A OR PROOF_A_Q;
+FAILED_A_R := RESET;
+FAILED_A_Q1 := FAILED_A_S1 OR (NOT FAILED_A_R AND FAILED_A_Q1);
+
+FAILED_B_S1 := TRIP_B OR PROOF_B_Q;
+FAILED_B_R := RESET;
+FAILED_B_Q1 := FAILED_B_S1 OR (NOT FAILED_B_R AND FAILED_B_Q1);
+
+RUN_A := DEMAND AND NOT FAILED_A_Q1 AND (NOT LEAD_IS_B OR FAILED_B_Q1);
+RUN_B := DEMAND AND NOT FAILED_B_Q1 AND (LEAD_IS_B OR FAILED_A_Q1);
+STANDBY_ACTIVE := (RUN_A AND LEAD_IS_B) OR (RUN_B AND NOT LEAD_IS_B);
+NO_PUMP := DEMAND AND FAILED_A_Q1 AND FAILED_B_Q1;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

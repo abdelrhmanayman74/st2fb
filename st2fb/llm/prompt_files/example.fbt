@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="GATE_CYCLE" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="OPEN_CMD"/><With Var="AT_TOP"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="SEQ"/><With Var="MOTOR"/><With Var="CYCLES"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="OPEN_CMD" Type="BOOL"/>
+      <VarDeclaration Name="AT_TOP" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="SEQ" Type="INT"/>
+      <VarDeclaration Name="MOTOR" Type="BOOL"/>
+      <VarDeclaration Name="CYCLES" Type="INT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="COMMON" x="200" y="0">
+        <ECAction Algorithm="common"/>
+      </ECState>
+      <ECState Name="IDLE" x="400" y="-200">
+        <ECAction Algorithm="idle" Output="CNF"/>
+      </ECState>
+      <ECState Name="RAISING" x="400" y="0">
+        <ECAction Algorithm="raising" Output="CNF"/>
+      </ECState>
+      <ECState Name="DONE" x="400" y="200">
+        <ECAction Algorithm="done" Output="CNF"/>
+      </ECState>
+      <ECState Name="OTHER" x="400" y="400">
+        <ECAction Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="COMMON" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="COMMON" Destination="IDLE" Condition="[SEQ = 0]" x="300" y="-100"/>
+      <ECTransition Source="COMMON" Destination="RAISING" Condition="[SEQ = 1]" x="300" y="0"/>
+      <ECTransition Source="COMMON" Destination="DONE" Condition="[SEQ = 2]" x="300" y="100"/>
+      <ECTransition Source="COMMON" Destination="OTHER" Condition="1" x="300" y="200"/>
+      <ECTransition Source="IDLE" Destination="START" Condition="1" x="200" y="-200"/>
+      <ECTransition Source="RAISING" Destination="START" Condition="1" x="200" y="-100"/>
+      <ECTransition Source="DONE" Destination="START" Condition="1" x="200" y="200"/>
+      <ECTransition Source="OTHER" Destination="START" Condition="1" x="200" y="300"/>
+    </ECC>
+    <Algorithm Name="common">
+      <ST><![CDATA[
+MOTOR := FALSE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="idle">
+      <ST><![CDATA[
+IF OPEN_CMD THEN
+  SEQ := 1;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="raising">
+      <ST><![CDATA[
+MOTOR := TRUE;
+IF AT_TOP THEN
+  SEQ := 2;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="done">
+      <ST><![CDATA[
+CYCLES := CYCLES + 1;
+SEQ := 0;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

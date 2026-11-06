@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PID_LOOP" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="SP"/><With Var="PV"/><With Var="KP"/><With Var="KI"/><With Var="KD"/><With Var="DEADBAND"/><With Var="OUT_MIN"/><With Var="OUT_MAX"/><With Var="AUTO_MODE"/><With Var="MANUAL_OUT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="CV"/><With Var="ERROR_VALUE"/><With Var="SAT_HIGH"/><With Var="SAT_LOW"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="SP" Type="REAL"/>
+      <VarDeclaration Name="PV" Type="REAL"/>
+      <VarDeclaration Name="KP" Type="REAL"/>
+      <VarDeclaration Name="KI" Type="REAL"/>
+      <VarDeclaration Name="KD" Type="REAL"/>
+      <VarDeclaration Name="DEADBAND" Type="REAL"/>
+      <VarDeclaration Name="OUT_MIN" Type="REAL"/>
+      <VarDeclaration Name="OUT_MAX" Type="REAL"/>
+      <VarDeclaration Name="AUTO_MODE" Type="BOOL"/>
+      <VarDeclaration Name="MANUAL_OUT" Type="REAL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="CV" Type="REAL"/>
+      <VarDeclaration Name="ERROR_VALUE" Type="REAL"/>
+      <VarDeclaration Name="SAT_HIGH" Type="BOOL"/>
+      <VarDeclaration Name="SAT_LOW" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="I_TERM" Type="REAL"/>
+      <VarDeclaration Name="PREV_PV" Type="REAL"/>
+      <VarDeclaration Name="UNCLAMPED" Type="REAL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ERROR_VALUE := SP - PV;
+IF (ERROR_VALUE < DEADBAND) AND (ERROR_VALUE > 0.0 - DEADBAND) THEN
+  ERROR_VALUE := 0.0;
+END_IF;
+IF AUTO_MODE THEN
+  IF NOT ((SAT_HIGH AND ERROR_VALUE > 0.0) OR (SAT_LOW AND ERROR_VALUE < 0.0)) THEN
+    I_TERM := I_TERM + KI * ERROR_VALUE;
+  END_IF;
+  UNCLAMPED := KP * ERROR_VALUE + I_TERM - KD * (PV - PREV_PV);
+ELSE
+  UNCLAMPED := MANUAL_OUT;
+  I_TERM := MANUAL_OUT - KP * ERROR_VALUE;
+END_IF;
+SAT_HIGH := UNCLAMPED >= OUT_MAX;
+SAT_LOW := UNCLAMPED <= OUT_MIN;
+IF SAT_HIGH THEN
+  CV := OUT_MAX;
+ELSIF SAT_LOW THEN
+  CV := OUT_MIN;
+ELSE
+  CV := UNCLAMPED;
+END_IF;
+PREV_PV := PV;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

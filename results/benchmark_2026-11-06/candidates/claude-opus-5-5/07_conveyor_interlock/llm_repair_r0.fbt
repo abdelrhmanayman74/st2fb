@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="CONVEYOR_INTERLOCK" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="START_PB"/><With Var="STOP_PB"/><With Var="ESTOP_OK"/><With Var="JAM_C1"/><With Var="JAM_C2"/><With Var="JAM_C3"/><With Var="STAGGER"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="C1"/><With Var="C2"/><With Var="C3"/><With Var="ALL_RUNNING"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="START_PB" Type="BOOL"/>
+      <VarDeclaration Name="STOP_PB" Type="BOOL"/>
+      <VarDeclaration Name="ESTOP_OK" Type="BOOL"/>
+      <VarDeclaration Name="JAM_C1" Type="BOOL"/>
+      <VarDeclaration Name="JAM_C2" Type="BOOL"/>
+      <VarDeclaration Name="JAM_C3" Type="BOOL"/>
+      <VarDeclaration Name="STAGGER" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="C1" Type="BOOL"/>
+      <VarDeclaration Name="C2" Type="BOOL"/>
+      <VarDeclaration Name="C3" Type="BOOL"/>
+      <VarDeclaration Name="ALL_RUNNING" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="RUN_REQ" Type="BOOL"/>
+      <VarDeclaration Name="C1_CMD" Type="BOOL"/>
+      <VarDeclaration Name="C2_CMD" Type="BOOL"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+      <VarDeclaration Name="ON_C2_IN" Type="BOOL"/>
+      <VarDeclaration Name="ON_C2_PT" Type="TIME"/>
+      <VarDeclaration Name="ON_C2_Q" Type="BOOL"/>
+      <VarDeclaration Name="ON_C2_ET" Type="TIME"/>
+      <VarDeclaration Name="ON_C2_STATE" Type="INT"/>
+      <VarDeclaration Name="ON_C2_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="ON_C2_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="ON_C1_IN" Type="BOOL"/>
+      <VarDeclaration Name="ON_C1_PT" Type="TIME"/>
+      <VarDeclaration Name="ON_C1_Q" Type="BOOL"/>
+      <VarDeclaration Name="ON_C1_ET" Type="TIME"/>
+      <VarDeclaration Name="ON_C1_STATE" Type="INT"/>
+      <VarDeclaration Name="ON_C1_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="ON_C1_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="CLEAR_C2_IN" Type="BOOL"/>
+      <VarDeclaration Name="CLEAR_C2_PT" Type="TIME"/>
+      <VarDeclaration Name="CLEAR_C2_Q" Type="BOOL"/>
+      <VarDeclaration Name="CLEAR_C2_ET" Type="TIME"/>
+      <VarDeclaration Name="CLEAR_C2_STATE" Type="INT"/>
+      <VarDeclaration Name="CLEAR_C2_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="CLEAR_C2_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="CLEAR_C3_IN" Type="BOOL"/>
+      <VarDeclaration Name="CLEAR_C3_PT" Type="TIME"/>
+      <VarDeclaration Name="CLEAR_C3_Q" Type="BOOL"/>
+      <VarDeclaration Name="CLEAR_C3_ET" Type="TIME"/>
+      <VarDeclaration Name="CLEAR_C3_STATE" Type="INT"/>
+      <VarDeclaration Name="CLEAR_C3_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="CLEAR_C3_START_TIME" Type="TIME"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="MAIN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="MAIN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="MAIN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+IF STOP_PB OR NOT ESTOP_OK OR JAM_C1 OR JAM_C2 OR JAM_C3 THEN
+  RUN_REQ := FALSE;
+ELSIF START_PB THEN
+  RUN_REQ := TRUE;
+END_IF;
+
+ON_C2_IN := RUN_REQ;
+ON_C2_PT := STAGGER;
+IF (ON_C2_STATE = 0) AND NOT ON_C2_PREV_IN AND ON_C2_IN THEN
+  ON_C2_STATE := 1;
+  ON_C2_Q := FALSE;
+  ON_C2_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT ON_C2_IN THEN
+    ON_C2_ET := T#0s;
+    ON_C2_Q := FALSE;
+    ON_C2_STATE := 0;
+  ELSIF ON_C2_STATE = 1 THEN
+    IF ON_C2_START_TIME + ON_C2_PT <= ST2FB_NOW THEN
+      ON_C2_STATE := 2;
+      ON_C2_Q := TRUE;
+      ON_C2_ET := ON_C2_PT;
+    ELSE
+      ON_C2_ET := ST2FB_NOW - ON_C2_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+ON_C2_PREV_IN := ON_C2_IN;
+
+ON_C1_IN := ON_C2_Q;
+ON_C1_PT := STAGGER;
+IF (ON_C1_STATE = 0) AND NOT ON_C1_PREV_IN AND ON_C1_IN THEN
+  ON_C1_STATE := 1;
+  ON_C1_Q := FALSE;
+  ON_C1_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT ON_C1_IN THEN
+    ON_C1_ET := T#0s;
+    ON_C1_Q := FALSE;
+    ON_C1_STATE := 0;
+  ELSIF ON_C1_STATE = 1 THEN
+    IF ON_C1_START_TIME + ON_C1_PT <= ST2FB_NOW THEN
+      ON_C1_STATE := 2;
+      ON_C1_Q := TRUE;
+      ON_C1_ET := ON_C1_PT;
+    ELSE
+      ON_C1_ET := ST2FB_NOW - ON_C1_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+ON_C1_PREV_IN := ON_C1_IN;
+
+C1_CMD := ON_C1_Q;
+
+CLEAR_C2_IN := C1_CMD;
+CLEAR_C2_PT := STAGGER;
+IF (CLEAR_C2_STATE = 0) AND CLEAR_C2_PREV_IN AND NOT CLEAR_C2_IN THEN
+  CLEAR_C2_STATE := 1;
+  CLEAR_C2_START_TIME := ST2FB_NOW;
+ELSE
+  IF CLEAR_C2_IN THEN
+    CLEAR_C2_ET := T#0s;
+    CLEAR_C2_STATE := 0;
+  ELSIF CLEAR_C2_STATE = 1 THEN
+    IF CLEAR_C2_START_TIME + CLEAR_C2_PT <= ST2FB_NOW THEN
+      CLEAR_C2_STATE := 2;
+      CLEAR_C2_ET := CLEAR_C2_PT;
+    ELSE
+      CLEAR_C2_ET := ST2FB_NOW - CLEAR_C2_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+CLEAR_C2_Q := CLEAR_C2_IN OR (CLEAR_C2_STATE = 1);
+CLEAR_C2_PREV_IN := CLEAR_C2_IN;
+
+C2_CMD := ON_C2_Q OR CLEAR_C2_Q;
+
+CLEAR_C3_IN := C2_CMD;
+CLEAR_C3_PT := STAGGER;
+IF (CLEAR_C3_STATE = 0) AND CLEAR_C3_PREV_IN AND NOT CLEAR_C3_IN THEN
+  CLEAR_C3_STATE := 1;
+  CLEAR_C3_START_TIME := ST2FB_NOW;
+ELSE
+  IF CLEAR_C3_IN THEN
+    CLEAR_C3_ET := T#0s;
+    CLEAR_C3_STATE := 0;
+  ELSIF CLEAR_C3_STATE = 1 THEN
+    IF CLEAR_C3_START_TIME + CLEAR_C3_PT <= ST2FB_NOW THEN
+      CLEAR_C3_STATE := 2;
+      CLEAR_C3_ET := CLEAR_C3_PT;
+    ELSE
+      CLEAR_C3_ET := ST2FB_NOW - CLEAR_C3_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+CLEAR_C3_Q := CLEAR_C3_IN OR (CLEAR_C3_STATE = 1);
+CLEAR_C3_PREV_IN := CLEAR_C3_IN;
+
+C1 := C1_CMD AND ESTOP_OK AND NOT JAM_C1 AND NOT JAM_C2 AND NOT JAM_C3;
+C2 := C2_CMD AND ESTOP_OK AND NOT JAM_C2 AND NOT JAM_C3;
+C3 := (RUN_REQ OR CLEAR_C3_Q) AND ESTOP_OK AND NOT JAM_C3;
+ALL_RUNNING := C1 AND C2 AND C3;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

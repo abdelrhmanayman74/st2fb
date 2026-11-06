@@ -1,0 +1,20 @@
+{
+  "09_totalizer|line 25:15: constant: '0.5' -> '-0.5'": "Equivalent. Each Newton step now flips the sign of ROOT with the same magnitude, and 8 steps is an even number of flips, so the result is identical. The iteration count itself is killed.",
+  "11_ramp_generator|line 24:23: boundary: '>' -> '>='": "Equivalent. When OUTPUT_VALUE = SETPOINT the extra branch assigns SETPOINT to itself.",
+  "11_ramp_generator|line 30:23: boundary: '<' -> '<='": "Equivalent. When OUTPUT_VALUE = SETPOINT the extra branch assigns SETPOINT to itself.",
+  "12_pid_loop|line 30:39: boundary: '>' -> '>='": "Equivalent. It only changes the case ERROR_VALUE = 0, where integrating adds KI * 0 and leaves I_TERM unchanged.",
+  "12_pid_loop|line 30:74: boundary: '<' -> '<='": "Equivalent. It only changes the case ERROR_VALUE = 0, where integrating adds KI * 0 and leaves I_TERM unchanged.",
+  "13_case_sequencer|line 34:7: remove: removed 'TIMING := FALSE;'": "Equivalent. Redundant statement: every path into state 0 (start-up, state 7, state 8) already has TIMING false.",
+  "13_case_sequencer|line 55:5: constant: '4' -> '3'": "Equivalent. The label becomes 3..6, but 3 is matched first by the earlier label, so the range behaves as 4..6.",
+  "13_case_sequencer|line 73:12: constant: '0' -> '-1'": "Equivalent. Dead code: the CASE ELSE cannot run, since SEQ is only ever assigned 0 to 8.",
+  "13_case_sequencer|line 73:12: constant: '0' -> '1'": "Equivalent. Dead code: the CASE ELSE cannot run, since SEQ is only ever assigned 0 to 8.",
+  "14_batch_filling|line 43:9: remove: removed 'ACCEPTED := FALSE;'": "Equivalent. Redundant statement: state 0 is only reached at start-up or through ABORT, and both leave the flag false.",
+  "14_batch_filling|line 44:9: remove: removed 'REJECTED := FALSE;'": "Equivalent. Redundant statement: state 0 is only reached at start-up or through ABORT, and both leave the flag false.",
+  "14_batch_filling|line 78:54: constant: '1000' -> '1001'": "Not equivalent, and not killed. The count limit only shows after about 1000 accepted batches, far past the 2000-scan budget for a stimulus at this block's batch length.",
+  "14_batch_filling|line 78:54: constant: '1000' -> '999'": "Not equivalent, and not killed. The count limit only shows after about 1000 accepted batches, far past the 2000-scan budget for a stimulus at this block's batch length.",
+  "18_pump_station_rotation|line 41:21: constant: '2147483647' -> '2147483646'": "Not equivalent in principle, unreachable in practice. It differs only for a pump with 2147483646 run-seconds, which is 2^31 scans at one count per scan.",
+  "18_pump_station_rotation|line 42:21: constant: '3' -> '4'": "Equivalent. With P = 4 no CASE label matches, so the candidate from P = 3 is tested again. Its hours are not below BEST_HOURS, so nothing changes.",
+  "20_pump_station_supervisor|line 71:17: constant: '0' -> '-1'": "Equivalent. State -1 falls to the CASE ELSE, which sets 0 in the same scan, before anything else reads it.",
+  "20_pump_station_supervisor|line 113:17: constant: '0' -> '-1'": "Equivalent. Dead code: the CASE ELSE only runs for a state outside 0 to 5, and the one way there is another mutant.",
+  "20_pump_station_supervisor|line 113:17: constant: '0' -> '1'": "Equivalent. Dead code: the CASE ELSE only runs for a state outside 0 to 5, and the one way there is another mutant."
+}

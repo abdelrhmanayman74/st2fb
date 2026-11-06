@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PUMP_STATION_LEVEL" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="LEVEL"/><With Var="STOP_LEVEL"/><With Var="START_LEVEL"/><With Var="LAG_LEVEL"/><With Var="HIGH_LEVEL"/><With Var="DRY_LEVEL"/><With Var="AUTO_MODE"/><With Var="LAG_DELAY"/><With Var="ALARM_DELAY"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="PUMP_1"/><With Var="PUMP_2"/><With Var="LEAD_IS_2"/><With Var="HIGH_ALARM"/><With Var="DRY_TRIP"/><With Var="CYCLES"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="LEVEL" Type="REAL"/>
+      <VarDeclaration Name="STOP_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="START_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="LAG_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="HIGH_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="DRY_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="AUTO_MODE" Type="BOOL"/>
+      <VarDeclaration Name="LAG_DELAY" Type="TIME"/>
+      <VarDeclaration Name="ALARM_DELAY" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="PUMP_1" Type="BOOL"/>
+      <VarDeclaration Name="PUMP_2" Type="BOOL"/>
+      <VarDeclaration Name="LEAD_IS_2" Type="BOOL"/>
+      <VarDeclaration Name="HIGH_ALARM" Type="BOOL"/>
+      <VarDeclaration Name="DRY_TRIP" Type="BOOL"/>
+      <VarDeclaration Name="CYCLES" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="LEAD_REQ" Type="BOOL"/>
+      <VarDeclaration Name="LAG_REQ" Type="BOOL"/>
+      <VarDeclaration Name="LAG_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="LAG_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="LAG_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="LAG_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="LAG_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="LAG_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="LAG_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="ALARM_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="ALARM_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="ALARM_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="ALARM_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="ALARM_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="ALARM_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="ALARM_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="LEAD_STOPPED_CLK" Type="BOOL"/>
+      <VarDeclaration Name="LEAD_STOPPED_Q" Type="BOOL"/>
+      <VarDeclaration Name="LEAD_STOPPED_M" Type="BOOL"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+DRY_TRIP := LEVEL <= DRY_LEVEL;
+IF NOT AUTO_MODE OR DRY_TRIP OR LEVEL <= STOP_LEVEL THEN
+  LEAD_REQ := FALSE;
+ELSIF LEVEL >= START_LEVEL THEN
+  LEAD_REQ := TRUE;
+END_IF;
+LAG_TIMER_IN := LEAD_REQ AND LEVEL >= LAG_LEVEL;
+LAG_TIMER_PT := LAG_DELAY;
+IF (LAG_TIMER_STATE = 0) AND NOT LAG_TIMER_PREV_IN AND LAG_TIMER_IN THEN
+  LAG_TIMER_STATE := 1;
+  LAG_TIMER_Q := FALSE;
+  LAG_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT LAG_TIMER_IN THEN
+    LAG_TIMER_ET := T#0s;
+    LAG_TIMER_Q := FALSE;
+    LAG_TIMER_STATE := 0;
+  ELSIF LAG_TIMER_STATE = 1 THEN
+    IF LAG_TIMER_START_TIME + LAG_TIMER_PT <= ST2FB_NOW THEN
+      LAG_TIMER_STATE := 2;
+      LAG_TIMER_Q := TRUE;
+      LAG_TIMER_ET := LAG_TIMER_PT;
+    ELSE
+      LAG_TIMER_ET := ST2FB_NOW - LAG_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+LAG_TIMER_PREV_IN := LAG_TIMER_IN;
+IF NOT LEAD_REQ THEN
+  LAG_REQ := FALSE;
+ELSIF LAG_TIMER_Q THEN
+  LAG_REQ := TRUE;
+END_IF;
+LEAD_STOPPED_CLK := LEAD_REQ;
+LEAD_STOPPED_Q := NOT LEAD_STOPPED_CLK AND NOT LEAD_STOPPED_M;
+LEAD_STOPPED_M := NOT LEAD_STOPPED_CLK;
+IF LEAD_STOPPED_Q THEN
+  LEAD_IS_2 := NOT LEAD_IS_2;
+  CYCLES := CYCLES + 1;
+END_IF;
+IF LEAD_IS_2 THEN
+  PUMP_2 := LEAD_REQ;
+  PUMP_1 := LAG_REQ;
+ELSE
+  PUMP_1 := LEAD_REQ;
+  PUMP_2 := LAG_REQ;
+END_IF;
+ALARM_TIMER_IN := LEVEL >= HIGH_LEVEL;
+ALARM_TIMER_PT := ALARM_DELAY;
+IF (ALARM_TIMER_STATE = 0) AND NOT ALARM_TIMER_PREV_IN AND ALARM_TIMER_IN THEN
+  ALARM_TIMER_STATE := 1;
+  ALARM_TIMER_Q := FALSE;
+  ALARM_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT ALARM_TIMER_IN THEN
+    ALARM_TIMER_ET := T#0s;
+    ALARM_TIMER_Q := FALSE;
+    ALARM_TIMER_STATE := 0;
+  ELSIF ALARM_TIMER_STATE = 1 THEN
+    IF ALARM_TIMER_START_TIME + ALARM_TIMER_PT <= ST2FB_NOW THEN
+      ALARM_TIMER_STATE := 2;
+      ALARM_TIMER_Q := TRUE;
+      ALARM_TIMER_ET := ALARM_TIMER_PT;
+    ELSE
+      ALARM_TIMER_ET := ST2FB_NOW - ALARM_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+ALARM_TIMER_PREV_IN := ALARM_TIMER_IN;
+HIGH_ALARM := ALARM_TIMER_Q;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

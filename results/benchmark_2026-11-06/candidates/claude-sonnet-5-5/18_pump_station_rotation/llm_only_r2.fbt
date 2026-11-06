@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PUMP_ROTATION" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="REQUIRED"/><With Var="AVAIL_1"/><With Var="AVAIL_2"/><With Var="AVAIL_3"/><With Var="RESET_HOURS"/><With Var="ROTATE_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="RUN_1"/><With Var="RUN_2"/><With Var="RUN_3"/><With Var="HOURS_1"/><With Var="HOURS_2"/><With Var="HOURS_3"/><With Var="SHORTFALL"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="REQUIRED" Type="INT"/>
+      <VarDeclaration Name="AVAIL_1" Type="BOOL"/>
+      <VarDeclaration Name="AVAIL_2" Type="BOOL"/>
+      <VarDeclaration Name="AVAIL_3" Type="BOOL"/>
+      <VarDeclaration Name="RESET_HOURS" Type="BOOL"/>
+      <VarDeclaration Name="ROTATE_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="RUN_1" Type="BOOL"/>
+      <VarDeclaration Name="RUN_2" Type="BOOL"/>
+      <VarDeclaration Name="RUN_3" Type="BOOL"/>
+      <VarDeclaration Name="HOURS_1" Type="DINT"/>
+      <VarDeclaration Name="HOURS_2" Type="DINT"/>
+      <VarDeclaration Name="HOURS_3" Type="DINT"/>
+      <VarDeclaration Name="SHORTFALL" Type="INT"/>
+    </OutputVars>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="ROTATE_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="ROTATE_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="ROTATE_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="ROTATE_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="ROTATE_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="ROTATE_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="ROTATE_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="PREV_REQUIRED" Type="INT"/>
+      <VarDeclaration Name="PREV_AVAIL_1" Type="BOOL"/>
+      <VarDeclaration Name="PREV_AVAIL_2" Type="BOOL"/>
+      <VarDeclaration Name="PREV_AVAIL_3" Type="BOOL"/>
+      <VarDeclaration Name="N" Type="INT"/>
+      <VarDeclaration Name="P" Type="INT"/>
+      <VarDeclaration Name="BEST" Type="INT"/>
+      <VarDeclaration Name="BEST_HOURS" Type="DINT"/>
+      <VarDeclaration Name="CANDIDATE" Type="BOOL"/>
+      <VarDeclaration Name="CANDIDATE_HOURS" Type="DINT"/>
+    </InternalVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+ROTATE_TIMER_IN := NOT ROTATE_TIMER_Q;
+ROTATE_TIMER_PT := ROTATE_TIME;
+IF (ROTATE_TIMER_STATE = 0) AND NOT ROTATE_TIMER_PREV_IN AND ROTATE_TIMER_IN THEN
+  ROTATE_TIMER_STATE := 1;
+  ROTATE_TIMER_Q := FALSE;
+  ROTATE_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT ROTATE_TIMER_IN THEN
+    ROTATE_TIMER_ET := T#0s;
+    ROTATE_TIMER_Q := FALSE;
+    ROTATE_TIMER_STATE := 0;
+  ELSIF ROTATE_TIMER_STATE = 1 THEN
+    IF ROTATE_TIMER_START_TIME + ROTATE_TIMER_PT <= ST2FB_NOW THEN
+      ROTATE_TIMER_STATE := 2;
+      ROTATE_TIMER_Q := TRUE;
+      ROTATE_TIMER_ET := ROTATE_TIMER_PT;
+    ELSE
+      ROTATE_TIMER_ET := ST2FB_NOW - ROTATE_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+ROTATE_TIMER_PREV_IN := ROTATE_TIMER_IN;
+IF ROTATE_TIMER_Q OR (REQUIRED <> PREV_REQUIRED)
+   OR (AVAIL_1 XOR PREV_AVAIL_1) OR (AVAIL_2 XOR PREV_AVAIL_2) OR (AVAIL_3 XOR PREV_AVAIL_3) THEN
+  RUN_1 := FALSE;
+  RUN_2 := FALSE;
+  RUN_3 := FALSE;
+  SHORTFALL := 0;
+  FOR N := 1 TO REQUIRED DO
+    BEST := 0;
+    BEST_HOURS := 2147483647;
+    FOR P := 1 TO 3 DO
+      CASE P OF
+        1:
+          CANDIDATE := AVAIL_1 AND NOT RUN_1;
+          CANDIDATE_HOURS := HOURS_1;
+        2:
+          CANDIDATE := AVAIL_2 AND NOT RUN_2;
+          CANDIDATE_HOURS := HOURS_2;
+        3:
+          CANDIDATE := AVAIL_3 AND NOT RUN_3;
+          CANDIDATE_HOURS := HOURS_3;
+      END_CASE;
+      IF CANDIDATE AND CANDIDATE_HOURS < BEST_HOURS THEN
+        BEST := P;
+        BEST_HOURS := CANDIDATE_HOURS;
+      END_IF;
+    END_FOR;
+    CASE BEST OF
+      0:
+        SHORTFALL := SHORTFALL + 1;
+      1:
+        RUN_1 := TRUE;
+      2:
+        RUN_2 := TRUE;
+      3:
+        RUN_3 := TRUE;
+    END_CASE;
+  END_FOR;
+END_IF;
+PREV_REQUIRED := REQUIRED;
+PREV_AVAIL_1 := AVAIL_1;
+PREV_AVAIL_2 := AVAIL_2;
+PREV_AVAIL_3 := AVAIL_3;
+IF RESET_HOURS THEN
+  HOURS_1 := 0;
+  HOURS_2 := 0;
+  HOURS_3 := 0;
+ELSE
+  IF RUN_1 THEN
+    HOURS_1 := HOURS_1 + 1;
+  END_IF;
+  IF RUN_2 THEN
+    HOURS_2 := HOURS_2 + 1;
+  END_IF;
+  IF RUN_3 THEN
+    HOURS_3 := HOURS_3 + 1;
+  END_IF;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="AUTO_RESTART" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="RUN_REQ"/><With Var="DRIVE_FAULT"/><With Var="OPERATOR_RESET"/><With Var="RETRY_BUDGET"/><With Var="RETRY_DELAY"/><With Var="STABLE_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="DRIVE_ENABLE"/><With Var="WAITING"/><With Var="LOCKED_OUT"/><With Var="RETRIES_LEFT"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="RUN_REQ" Type="BOOL"/>
+      <VarDeclaration Name="DRIVE_FAULT" Type="BOOL"/>
+      <VarDeclaration Name="OPERATOR_RESET" Type="BOOL"/>
+      <VarDeclaration Name="RETRY_BUDGET" Type="INT"/>
+      <VarDeclaration Name="RETRY_DELAY" Type="TIME"/>
+      <VarDeclaration Name="STABLE_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="DRIVE_ENABLE" Type="BOOL"/>
+      <VarDeclaration Name="WAITING" Type="BOOL"/>
+      <VarDeclaration Name="LOCKED_OUT" Type="BOOL"/>
+      <VarDeclaration Name="RETRIES_LEFT" Type="INT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="FAULT_EDGE_CLK" Type="BOOL"/>
+      <VarDeclaration Name="FAULT_EDGE_Q" Type="BOOL"/>
+      <VarDeclaration Name="FAULT_EDGE_M" Type="BOOL"/>
+      <VarDeclaration Name="BUDGET_CD" Type="BOOL"/>
+      <VarDeclaration Name="BUDGET_LD" Type="BOOL"/>
+      <VarDeclaration Name="BUDGET_PV" Type="INT"/>
+      <VarDeclaration Name="BUDGET_Q" Type="BOOL"/>
+      <VarDeclaration Name="BUDGET_CV" Type="INT"/>
+      <VarDeclaration Name="BUDGET_CD_T_Q" Type="BOOL"/>
+      <VarDeclaration Name="BUDGET_CD_T_M" Type="BOOL"/>
+      <VarDeclaration Name="LOCKOUT_S" Type="BOOL"/>
+      <VarDeclaration Name="LOCKOUT_R1" Type="BOOL"/>
+      <VarDeclaration Name="LOCKOUT_Q1" Type="BOOL"/>
+      <VarDeclaration Name="WAIT_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="WAIT_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="WAIT_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="WAIT_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="WAIT_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="WAIT_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="WAIT_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="STABLE_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="STABLE_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="STABLE_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="STABLE_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="STABLE_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="STABLE_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="STABLE_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="LOADED" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+FAULT_EDGE_CLK := DRIVE_FAULT;
+FAULT_EDGE_Q := FAULT_EDGE_CLK AND NOT FAULT_EDGE_M;
+FAULT_EDGE_M := FAULT_EDGE_CLK;
+
+STABLE_TIMER_IN := DRIVE_ENABLE AND NOT DRIVE_FAULT;
+STABLE_TIMER_PT := STABLE_TIME;
+IF (STABLE_TIMER_STATE = 0) AND NOT STABLE_TIMER_PREV_IN AND STABLE_TIMER_IN THEN
+  STABLE_TIMER_STATE := 1;
+  STABLE_TIMER_Q := FALSE;
+  STABLE_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT STABLE_TIMER_IN THEN
+    STABLE_TIMER_ET := T#0s;
+    STABLE_TIMER_Q := FALSE;
+    STABLE_TIMER_STATE := 0;
+  ELSIF STABLE_TIMER_STATE = 1 THEN
+    IF STABLE_TIMER_START_TIME + STABLE_TIMER_PT <= ST2FB_NOW THEN
+      STABLE_TIMER_STATE := 2;
+      STABLE_TIMER_Q := TRUE;
+      STABLE_TIMER_ET := STABLE_TIMER_PT;
+    ELSE
+      STABLE_TIMER_ET := ST2FB_NOW - STABLE_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+STABLE_TIMER_PREV_IN := STABLE_TIMER_IN;
+
+BUDGET_CD := FAULT_EDGE_Q;
+BUDGET_LD := NOT LOADED OR OPERATOR_RESET OR STABLE_TIMER_Q;
+BUDGET_PV := RETRY_BUDGET;
+BUDGET_CD_T_Q := BUDGET_CD AND NOT BUDGET_CD_T_M;
+BUDGET_CD_T_M := BUDGET_CD;
+IF BUDGET_LD THEN
+  BUDGET_CV := BUDGET_PV;
+ELSIF BUDGET_CD_T_Q AND (BUDGET_CV > 0) THEN
+  BUDGET_CV := BUDGET_CV - 1;
+END_IF;
+BUDGET_Q := BUDGET_CV <= 0;
+
+LOADED := TRUE;
+RETRIES_LEFT := BUDGET_CV;
+
+LOCKOUT_S := FAULT_EDGE_Q AND BUDGET_Q;
+LOCKOUT_R1 := OPERATOR_RESET;
+LOCKOUT_Q1 := NOT LOCKOUT_R1 AND (LOCKOUT_S OR LOCKOUT_Q1);
+LOCKED_OUT := LOCKOUT_Q1;
+
+IF DRIVE_FAULT THEN
+  WAITING := TRUE;
+END_IF;
+
+WAIT_TIMER_IN := WAITING AND NOT DRIVE_FAULT;
+WAIT_TIMER_PT := RETRY_DELAY;
+IF (WAIT_TIMER_STATE = 0) AND NOT WAIT_TIMER_PREV_IN AND WAIT_TIMER_IN THEN
+  WAIT_TIMER_STATE := 1;
+  WAIT_TIMER_Q := FALSE;
+  WAIT_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT WAIT_TIMER_IN THEN
+    WAIT_TIMER_ET := T#0s;
+    WAIT_TIMER_Q := FALSE;
+    WAIT_TIMER_STATE := 0;
+  ELSIF WAIT_TIMER_STATE = 1 THEN
+    IF WAIT_TIMER_START_TIME + WAIT_TIMER_PT <= ST2FB_NOW THEN
+      WAIT_TIMER_STATE := 2;
+      WAIT_TIMER_Q := TRUE;
+      WAIT_TIMER_ET := WAIT_TIMER_PT;
+    ELSE
+      WAIT_TIMER_ET := ST2FB_NOW - WAIT_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+WAIT_TIMER_PREV_IN := WAIT_TIMER_IN;
+
+IF WAIT_TIMER_Q OR NOT RUN_REQ THEN
+  WAITING := FALSE;
+END_IF;
+DRIVE_ENABLE := RUN_REQ AND NOT DRIVE_FAULT AND NOT WAITING AND NOT LOCKED_OUT;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

@@ -1,0 +1,2510 @@
+[
+ {
+  "program": "00_latch",
+  "scans": 7,
+  "available": 14,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 19:22: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 13:6: negate: IF condition 'R' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 18:8: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 21:3: remove: removed 'PREV := Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 13:12: swap: branch body swapped with the one at line 15",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 19:22: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 15:9: negate: ELSIF condition 'S' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 19:20: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 16:5: remove: removed 'Q := TRUE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 14:10: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 18:6: negate: IF condition 'Q AND NOT PREV' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 19:5: remove: removed 'COUNT := COUNT + 1;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 16:10: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 14:5: remove: removed 'Q := FALSE;'",
+    "outcome": "compile_failed"
+   }
+  ]
+ },
+ {
+  "program": "01_motor_start_stop",
+  "scans": 303,
+  "available": 18,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 23:24: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 22:6: negate: IF condition 'RUNNING AND NOT PREV_RUNNING' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 23:22: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 23:5: remove: removed 'STARTS := STARTS + 1;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 16:19: swap: branch body swapped with the one at line 18",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 17:16: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 16:6: negate: IF condition 'OVERLOAD' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 21:24: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 17:5: remove: removed 'TRIPPED := TRUE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 19:16: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 18:9: negate: ELSIF condition 'RESET_PB' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 22:14: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 21:3: remove: removed 'RUNNING := (START_PB OR RUNNING) AND NOT STOP_PB AND NOT TRIPPED;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 23:24: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 21:52: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 19:5: remove: removed 'TRIPPED := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 21:36: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 25:3: remove: removed 'PREV_RUNNING := RUNNING;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "02_tank_hysteresis",
+  "scans": 453,
+  "available": 19,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 16:15: boundary: '<=' -> '<'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 19:20: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 18:9: negate: ELSIF condition 'LEVEL >= STOP_LEVEL' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 22:36: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 22:3: remove: removed 'HIGH_ALARM := LEVEL > STOP_LEVEL + ALARM_MARGIN;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 16:34: swap: branch body swapped with the one at line 18",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 21:22: boundary: '<' -> '<='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 15:20: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 14:6: negate: IF condition 'NOT ENABLE' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 21:36: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 21:3: remove: removed 'LOW_ALARM := LEVEL < START_LEVEL - ALARM_MARGIN;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 14:21: swap: branch body swapped with the one at line 16",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 18:15: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 17:20: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 16:9: negate: ELSIF condition 'LEVEL <= START_LEVEL' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 15:5: remove: removed 'INLET_VALVE := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 22:23: boundary: '>' -> '>='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 19:5: remove: removed 'INLET_VALVE := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 17:5: remove: removed 'INLET_VALVE := TRUE;'",
+    "outcome": "compile_failed"
+   }
+  ]
+ },
+ {
+  "program": "03_scaling_clamp",
+  "scans": 379,
+  "available": 29,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 25:24: boundary: '<' -> '<='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 23:19: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 27:8: negate: IF condition 'UNDER_RANGE' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 32:29: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 26:5: remove: removed 'OVER_RANGE := RAW > RAW_MAX;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 27:24: swap: branch body swapped with the one at line 29",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 26:23: boundary: '>' -> '>='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 19:24: constant: '0.0' -> '1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 20:6: negate: IF condition 'BAD_RANGE' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 32:22: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 22:5: remove: removed 'UNDER_RANGE := FALSE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 20:20: swap: branch body swapped with the one at line 24",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 19:21: boundary: '<=' -> '<'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 22:20: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 29:11: negate: ELSIF condition 'OVER_RANGE' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 32:40: operator: '*' -> '/'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 19:3: remove: removed 'BAD_RANGE := SPAN <= 0.0;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 29:26: swap: branch body swapped with the one at line 31",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 19:24: constant: '0.0' -> '-1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 32:51: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 32:7: remove: removed 'ENG := ENG_MIN + (RAW - RAW_MIN) * (ENG_MAX - ENG_MIN) / SPAN;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 18:19: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 18:3: remove: removed 'SPAN := RAW_MAX - RAW_MIN;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 32:62: operator: '/' -> '*'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 25:5: remove: removed 'UNDER_RANGE := RAW < RAW_MIN;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "04_parts_counter",
+  "scans": 393,
+  "available": 14,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 21:26: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 20:6: negate: IF condition 'DONE_EDGE.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 16:36: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 24:5: remove: removed 'BATCHES := 0;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 24:16: constant: '0' -> '1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 23:6: negate: IF condition 'RESET' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 21:24: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 16:3: remove: removed 'COUNTER(CU := SENSOR, R := RESET OR DONE_EDGE.Q, PV := BATCH_SIZE);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 24:16: constant: '0' -> '-1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 18:3: remove: removed 'BATCH_DONE := COUNTER.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 21:26: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 19:3: remove: removed 'DONE_EDGE(CLK := COUNTER.Q);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 17:3: remove: removed 'COUNT := COUNTER.CV;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 21:5: remove: removed 'BATCHES := BATCHES + 1;'",
+    "outcome": "compile_failed"
+   }
+  ]
+ },
+ {
+  "program": "05_alarm_debounce_ack",
+  "scans": 519,
+  "available": 18,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 27:34: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 25:6: negate: IF condition 'RAISED.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 31:17: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 22:3: remove: removed 'ALARM := OFF_TIMER.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 25:19: swap: branch body swapped with the one at line 28",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 29:16: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 28:9: negate: ELSIF condition 'ACK_EDGE.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 27:32: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 20:3: remove: removed 'ON_TIMER(IN := PROCESS_TRIP, PT := ON_DELAY);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 26:16: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 21:3: remove: removed 'OFF_TIMER(IN := ON_TIMER.Q, PT := OFF_DELAY);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 27:34: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 29:5: remove: removed 'UNACKED := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 24:3: remove: removed 'ACK_EDGE(CLK := ACK);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 26:5: remove: removed 'UNACKED := TRUE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 23:3: remove: removed 'RAISED(CLK := ALARM);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:3: remove: removed 'HORN := ALARM AND UNACKED;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 27:5: remove: removed 'OCCURRENCES := OCCURRENCES + 1;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "06_star_delta",
+  "scans": 767,
+  "available": 14,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 21:39: constant: 'T#50ms' -> 'T#40ms'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 19:52: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 19:3: remove: removed 'RUN_CMD := (START_PB OR RUN_CMD) AND NOT STOP_PB AND NOT OVERLOAD;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 21:39: constant: 'T#50ms' -> 'T#60ms'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 19:36: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 24:3: remove: removed 'K_DELTA := RUN_CMD AND GAP_TIMER.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 19:24: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 20:3: remove: removed 'STAR_TIMER(IN := RUN_CMD, PT := STAR_TIME);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 23:21: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 22:3: remove: removed 'K_MAIN := RUN_CMD;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 24:22: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 23:3: remove: removed 'K_STAR := RUN_CMD AND NOT STAR_TIMER.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 25:3: remove: removed 'STAR_ELAPSED := STAR_TIMER.ET;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 21:3: remove: removed 'GAP_TIMER(IN := STAR_TIMER.Q, PT := T#50ms);'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "07_conveyor_interlock",
+  "scans": 1287,
+  "available": 34,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 29:16: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 28:9: negate: ELSIF condition 'START_PB' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 40:28: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 40:3: remove: removed 'ALL_RUNNING := C1 AND C2 AND C3;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 26:64: swap: branch body swapped with the one at line 28",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 27:16: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 26:6: negate: IF condition 'STOP_PB OR NOT ESTOP_OK OR JAM_C1 OR JAM_C2 OR JAM_C3' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 26:14: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 38:3: remove: removed 'C2 := C2_CMD AND ESTOP_OK AND NOT JAM_C2 AND NOT JAM_C3;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 26:30: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 36:3: remove: removed 'CLEAR_C3(IN := C2_CMD, PT := STAGGER);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:29: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 35:3: remove: removed 'C2_CMD := ON_C2.Q OR CLEAR_C2.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 39:46: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 37:3: remove: removed 'C1 := C1_CMD AND ESTOP_OK AND NOT JAM_C1 AND NOT JAM_C2 AND NOT JAM_C3;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 39:33: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 32:3: remove: removed 'ON_C1(IN := ON_C2.Q, PT := STAGGER);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 26:40: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 33:3: remove: removed 'C1_CMD := ON_C1.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:44: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:3: remove: removed 'ON_C2(IN := RUN_REQ, PT := STAGGER);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:59: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 39:3: remove: removed 'C3 := (RUN_REQ OR CLEAR_C3.Q) AND ESTOP_OK AND NOT JAM_C3;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:16: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 27:5: remove: removed 'RUN_REQ := FALSE;'",
+    "outcome": "compile_failed"
+   }
+  ]
+ },
+ {
+  "program": "08_first_out_alarm",
+  "scans": 403,
+  "available": 59,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 40:21: boundary: '<>' -> '='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 14:13: constant: '0' -> '1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 15:6: negate: IF condition 'TRIP_1' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 22:22: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:7: remove: removed 'FIRST := 2;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 27:20: swap: branch body swapped with the one at line 37",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 37:26: boundary: '=' -> '<>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 25:24: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 34:11: negate: ELSIF condition 'TRIP_4' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 16:22: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 22:5: remove: removed 'ACTIVE := ACTIVE + 1;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 30:22: swap: branch body swapped with the one at line 32",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 27:12: boundary: '=' -> '<>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 29:16: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 37:9: negate: ELSIF condition 'RESET AND ACTIVE = 0' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 19:22: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 35:7: remove: removed 'FIRST := 4;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 32:22: swap: branch body swapped with the one at line 34",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 37:28: constant: '0' -> '1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 27:6: negate: IF condition 'FIRST = 0' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:15: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 40:3: remove: removed 'SHUTDOWN := FIRST <> 0;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 28:19: swap: branch body swapped with the one at line 30",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 33:16: constant: '3' -> '4'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 18:6: negate: IF condition 'TRIP_2' negated",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "09_totalizer",
+  "scans": 542,
+  "available": 44,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 36:19: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 30:14: constant: '0.0' -> '1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 29:6: negate: IF condition 'RESET' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 34:20: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 38:7: remove: removed 'PULSES := PULSES + 1;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 29:16: swap: branch body swapped with the one at line 33",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 20:9: boundary: '<=' -> '<'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 21:13: constant: '0.0' -> '-1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 36:11: negate: WHILE condition 'PENDING >= PULSE_SIZE' negated",
+    "outcome": "crashed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 35:24: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 37:7: remove: removed 'PENDING := PENDING - PULSE_SIZE;'",
+    "outcome": "crashed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 20:24: swap: branch body swapped with the one at line 22",
+    "outcome": "crashed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 30:14: constant: '0.0' -> '-1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 20:6: negate: IF condition 'DP <= LOW_CUT' negated",
+    "outcome": "crashed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:24: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 32:5: remove: removed 'PULSES := 0;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 24:14: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 25:19: operator: '*' -> '/'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:5: remove: removed 'PENDING := 0.0;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 38:26: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 27:22: operator: '*' -> '/'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 34:5: remove: removed 'TOTAL := TOTAL + FLOW * SCAN_HOURS;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 25:15: constant: '0.5' -> '1.5'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:26: operator: '-' -> '+'",
+    "outcome": "crashed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 25:7: remove: removed 'ROOT := 0.5 * (ROOT + DP / ROOT);'",
+    "outcome": "compile_failed"
+   }
+  ]
+ },
+ {
+  "program": "10_valve_feedback",
+  "scans": 712,
+  "available": 29,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 23:14: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 30:6: negate: IF condition 'OPEN_CMD' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 21:36: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:5: remove: removed 'TRAVEL_TIME := OPENING_TIMER.ET;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 22:74: swap: branch body swapped with the one at line 24",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 25:14: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 22:6: negate: IF condition 'OPENING_TIMER.Q OR CLOSING_TIMER.Q OR (OPENED_LS AND CLOSED_LS)' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 20:32: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 20:3: remove: removed 'OPENING_TIMER(IN := OPEN_CMD AND NOT OPENED_LS, PT := TRAVEL_LIMIT);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 30:19: swap: branch body swapped with the one at line 32",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 24:9: negate: ELSIF condition 'RESET' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 27:26: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 21:3: remove: removed 'CLOSING_TIMER(IN := NOT OPEN_CMD AND NOT CLOSED_LS, PT := TRAVEL_LIMIT);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 28:31: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 23:5: remove: removed 'FAULT := TRUE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 22:55: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 28:3: remove: removed 'DRIVE_CLOSE := NOT OPEN_CMD AND NOT CLOSED_LS AND NOT FAULT;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 29:28: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 29:3: remove: removed 'IN_POSITION := NOT FAULT AND ((OPEN_CMD AND OPENED_LS) OR (NOT OPEN_CMD AND CLOSED_LS));'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 29:58: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 25:5: remove: removed 'FAULT := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 27:44: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 33:5: remove: removed 'TRAVEL_TIME := CLOSING_TIMER.ET;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 22:41: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 27:3: remove: removed 'DRIVE_OPEN := OPEN_CMD AND NOT OPENED_LS AND NOT FAULT;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "11_ramp_generator",
+  "scans": 491,
+  "available": 29,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 21:21: boundary: '<' -> '<='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 16:17: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 21:8: negate: IF condition 'OUTPUT_VALUE < SETPOINT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 28:36: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 35:3: remove: removed 'AT_SETPOINT := OUTPUT_VALUE = SETPOINT;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 18:16: swap: branch body swapped with the one at line 20",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 30:23: boundary: '<' -> '<='",
+    "outcome": "survived"
+   },
+   {
+    "kind": "constant",
+    "description": "line 23:21: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 24:10: negate: IF condition 'OUTPUT_VALUE > SETPOINT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 22:36: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 19:5: remove: removed 'OUTPUT_VALUE := PRESET;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 21:36: swap: branch body swapped with the one at line 27",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 27:24: boundary: '>' -> '>='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 17:19: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 30:10: negate: IF condition 'OUTPUT_VALUE < SETPOINT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:9: remove: removed 'OUTPUT_VALUE := SETPOINT;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 24:23: boundary: '>' -> '>='",
+    "outcome": "survived"
+   },
+   {
+    "kind": "constant",
+    "description": "line 29:23: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 18:6: negate: IF condition 'RESET' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 25:9: remove: removed 'OUTPUT_VALUE := SETPOINT;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 35:31: boundary: '=' -> '<>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 20:9: negate: ELSIF condition 'NOT HOLD' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 28:7: remove: removed 'OUTPUT_VALUE := OUTPUT_VALUE - RATE_DOWN;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 27:11: negate: ELSIF condition 'OUTPUT_VALUE > SETPOINT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 22:7: remove: removed 'OUTPUT_VALUE := OUTPUT_VALUE + RATE_UP;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "12_pid_loop",
+  "scans": 680,
+  "available": 49,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 26:48: boundary: '>' -> '>='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 30:76: constant: '0.0' -> '1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 30:8: negate: IF condition 'NOT ((SAT_HIGH AND ERROR_VALUE > 0.0) OR (SAT_LOW AND ERROR_VALUE < 0.0))' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 26:54: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 38:3: remove: removed 'SAT_HIGH := UNCLAMPED >= OUT_MAX;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 42:21: swap: branch body swapped with the one at line 44",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 39:24: boundary: '<=' -> '<'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 30:41: constant: '0.0' -> '-1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 26:6: negate: IF condition '(ERROR_VALUE < DEADBAND) AND (ERROR_VALUE > 0.0 - DEADBAND)' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 33:35: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 47:3: remove: removed 'PREV_PV := PV;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 29:20: swap: branch body swapped with the one at line 34",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 30:74: boundary: '<' -> '<='",
+    "outcome": "survived"
+   },
+   {
+    "kind": "constant",
+    "description": "line 26:50: constant: '0.0' -> '1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 40:6: negate: IF condition 'SAT_HIGH' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 36:26: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 27:5: remove: removed 'ERROR_VALUE := 0.0;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 40:19: swap: branch body swapped with the one at line 42",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 30:39: boundary: '>' -> '>='",
+    "outcome": "survived"
+   },
+   {
+    "kind": "constant",
+    "description": "line 26:50: constant: '0.0' -> '-1.0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 42:9: negate: ELSIF condition 'SAT_LOW' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 31:24: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 43:5: remove: removed 'CV := OUT_MIN;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 26:19: boundary: '<' -> '<='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 27:20: constant: '0.0' -> '-1.0'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "13_case_sequencer",
+  "scans": 1134,
+  "available": 89,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 26:12: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 29:6: negate: IF condition 'ABORT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 58:20: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 68:7: remove: removed 'DRAIN_VALVE := TRUE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 57:27: swap: branch body swapped with the one at line 60",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 51:22: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 57:10: negate: IF condition 'STEP_TIMER.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 64:24: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 42:9: remove: removed 'TIMING := TRUE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 66:5: constant: '8' -> '9'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 35:10: negate: IF condition 'START_PB' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 69:20: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 30:5: remove: removed 'SEQ := 8;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 44:5: constant: '2' -> '1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 46:10: negate: IF condition 'STEP_TIMER.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 26:3: remove: removed 'MIXER := FALSE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 36:16: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 40:10: negate: IF condition 'LEVEL_HIGH' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 59:9: remove: removed 'TIMING := FALSE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 67:17: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 52:10: negate: IF condition 'LEVEL_LOW' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 41:9: remove: removed 'SEQ := 2;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 59:19: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 69:10: negate: IF condition 'LEVEL_LOW AND NOT ABORT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 39:7: remove: removed 'FILL_VALVE := TRUE;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "14_batch_filling",
+  "scans": 981,
+  "available": 94,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 60:24: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 64:23: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 60:12: negate: IF condition '(NET_WEIGHT >= TARGET - TOLERANCE) AND (NET_WEIGHT <= TARGET + TOLERANCE)' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 29:24: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 51:9: remove: removed 'STATE_NO := 2;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 60:90: swap: branch body swapped with the one at line 63",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 50:21: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 51:21: constant: '2' -> '1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 69:10: negate: IF condition 'START_EDGE.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 60:47: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 42:9: remove: removed 'NET_WEIGHT := 0.0;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 77:31: boundary: '=' -> '<>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 44:21: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 33:6: negate: IF condition 'ABORT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 60:73: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:3: remove: removed 'SLOW_VALVE := FALSE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 60:63: boundary: '<=' -> '<'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 62:26: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 40:10: negate: IF condition 'START_EDGE.Q AND NOT ABORT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 60:34: operator: '-' -> '+'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 48:7: remove: removed 'FAST_VALVE := TRUE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 55:21: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 49:21: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 59:10: negate: IF condition 'SETTLE_TIMER.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 40:23: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "15_duty_standby",
+  "scans": 684,
+  "available": 30,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 29:36: constant: '1' -> '0'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 27:6: negate: IF condition 'DEMAND_END.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 36:19: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 29:5: remove: removed 'ALTERNATIONS := ALTERNATIONS + 1;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 29:36: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 31:23: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 26:3: remove: removed 'DEMAND_END(CLK := DEMAND);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 35:58: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 35:3: remove: removed 'RUN_A := DEMAND AND NOT FAILED_A.Q1 AND (NOT LEAD_IS_B OR FAILED_B.Q1);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 36:39: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 36:3: remove: removed 'RUN_B := DEMAND AND NOT FAILED_B.Q1 AND (LEAD_IS_B OR FAILED_A.Q1);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 32:23: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 38:3: remove: removed 'NO_PUMP := DEMAND AND FAILED_A.Q1 AND FAILED_B.Q1;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 34:25: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 31:3: remove: removed 'PROOF_A(IN := RUN_A AND NOT FB_A, PT := PROOF_TIME);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:37: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 34:3: remove: removed 'FAILED_B(S1 := TRIP_B OR PROOF_B.Q, R := RESET);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:21: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 37:3: remove: removed 'STANDBY_ACTIVE := (RUN_A AND LEAD_IS_B) OR (RUN_B AND NOT LEAD_IS_B);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:28: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 33:3: remove: removed 'FAILED_A(S1 := TRIP_A OR PROOF_A.Q, R := RESET);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 35:19: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 32:3: remove: removed 'PROOF_B(IN := RUN_B AND NOT FB_B, PT := PROOF_TIME);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 33:25: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 28:5: remove: removed 'LEAD_IS_B := NOT LEAD_IS_B;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "16_pump_station_level",
+  "scans": 1418,
+  "available": 39,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 28:21: boundary: '<=' -> '<'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 36:16: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 31:9: negate: ELSIF condition 'LEVEL >= START_LEVEL' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 34:28: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 43:5: remove: removed 'CYCLES := CYCLES + 1;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 29:59: swap: branch body swapped with the one at line 31",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 29:41: boundary: '<=' -> '<'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 32:17: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 37:9: negate: ELSIF condition 'LAG_TIMER.Q' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 43:22: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 36:5: remove: removed 'LAG_REQ := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 45:20: swap: branch body swapped with the one at line 48",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 52:27: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 30:17: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 35:6: negate: IF condition 'NOT LEAD_REQ' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 29:32: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 30:5: remove: removed 'LEAD_REQ := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 35:23: swap: branch body swapped with the one at line 37",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 31:15: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 38:16: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 29:6: negate: IF condition 'NOT AUTO_MODE OR DRY_TRIP OR LEVEL <= STOP_LEVEL' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 29:20: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 50:5: remove: removed 'PUMP_2 := LAG_REQ;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 34:38: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 43:24: constant: '1' -> '0'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "17_pump_station_protection",
+  "scans": 1346,
+  "available": 21,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 33:44: boundary: '>' -> '>='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:39: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 39:3: remove: removed 'START_COUNTER(CU := PUMP_RUN, R := RESET_STARTS, PV := MAX_STARTS);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 32:40: boundary: '<' -> '<='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 32:28: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 37:3: remove: removed 'RESTART_OK := PUMP_RUN OR (NOT COOL_DOWN.Q AND NOT STARTS_BLOCKED);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:46: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 33:3: remove: removed 'TRIP_LATCH(S := LOW_TIMER.Q OR DISCHARGE > DISCHARGE_MAX, R1 := RESET);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:23: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 44:3: remove: removed 'COOL_DOWN(IN := PUMP_RUN, PT := COOL_TIME);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 37:26: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 35:3: remove: removed 'STARTS_BLOCKED := START_COUNTER.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 33:31: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 41:3: remove: removed 'PRIME_PULSE(IN := PUMP_RUN, PT := PRIME_TIME);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 32:3: remove: removed 'LOW_TIMER(IN := PUMP_RUN AND SUCTION < SUCTION_MIN, PT := LOW_DELAY);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 42:3: remove: removed 'PRIME_VALVE := PRIME_PULSE.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 38:3: remove: removed 'PUMP_RUN := RUN_REQ AND NOT TRIPPED AND RESTART_OK;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 34:3: remove: removed 'TRIPPED := TRIP_LATCH.Q1;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 43:3: remove: removed 'PRIME_ELAPSED := PRIME_PULSE.ET;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 45:3: remove: removed 'COOL_VALVE := COOL_DOWN.Q;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 40:3: remove: removed 'START_COUNT := START_COUNTER.CV;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "18_pump_station_rotation",
+  "scans": 1251,
+  "available": 99,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 33:34: boundary: '<>' -> '='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 60:9: constant: '0' -> '-1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 75:6: negate: IF condition 'RESET_HOURS' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 34:78: operator: 'XOR' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 49:13: remove: removed 'CANDIDATE_HOURS := HOURS_2;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 75:22: swap: branch body swapped with the one at line 79",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 54:42: boundary: '<' -> '<='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 87:28: constant: '1' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 80:8: negate: IF condition 'RUN_1' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 81:26: operator: '+' -> '-'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 67:11: remove: removed 'RUN_3 := TRUE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 78:16: constant: '0' -> '1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 83:8: negate: IF condition 'RUN_2' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 33:21: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 63:11: remove: removed 'RUN_1 := TRUE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 41:21: constant: '2147483647' -> '2147483646'",
+    "outcome": "survived"
+   },
+   {
+    "kind": "negate",
+    "description": "line 54:12: negate: IF condition 'CANDIDATE AND CANDIDATE_HOURS < BEST_HOURS' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 54:22: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 76:5: remove: removed 'HOURS_1 := 0;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 42:21: constant: '3' -> '2'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 86:8: negate: IF condition 'RUN_3' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 34:36: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 41:7: remove: removed 'BEST_HOURS := 2147483647;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 64:9: constant: '2' -> '3'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 33:6: negate: IF condition 'ROTATE_TIMER.Q OR (REQUIRED <> PREV_REQUIRED) OR (AVAIL_1 XOR PREV_AVAIL_1) OR (AVAIL_2 XOR PREV_AVAIL_2) OR (AVAIL_3 XOR PREV_AVAIL_3)' negated",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "19_auto_restart",
+  "scans": 1133,
+  "available": 25,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "constant",
+    "description": "line 27:13: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 35:6: negate: IF condition 'WAIT_TIMER.Q OR NOT RUN_REQ' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 26:65: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 25:3: remove: removed 'STABLE_TIMER(IN := DRIVE_ENABLE AND NOT DRIVE_FAULT, PT := STABLE_TIME);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 36:16: constant: 'FALSE' -> 'TRUE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 31:6: negate: IF condition 'DRIVE_FAULT' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:63: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 30:3: remove: removed 'LOCKED_OUT := LOCKOUT.Q1;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 32:16: constant: 'TRUE' -> 'FALSE'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 35:19: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 36:5: remove: removed 'WAITING := FALSE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 29:29: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 27:3: remove: removed 'LOADED := TRUE;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:47: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 28:3: remove: removed 'RETRIES_LEFT := BUDGET.CV;'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 26:47: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 26:3: remove: removed 'BUDGET(CD := FAULT_EDGE.Q, LD := NOT LOADED OR OPERATOR_RESET OR STABLE_TIMER.Q, PV := RETRY_BUDGET);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 34:28: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 29:3: remove: removed 'LOCKOUT(S := FAULT_EDGE.Q AND BUDGET.Q, R1 := OPERATOR_RESET);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 25:35: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 32:5: remove: removed 'WAITING := TRUE;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 38:27: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 34:3: remove: removed 'WAIT_TIMER(IN := WAITING AND NOT DRIVE_FAULT, PT := RETRY_DELAY);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 24:3: remove: removed 'FAULT_EDGE(CLK := DRIVE_FAULT);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 38:3: remove: removed 'DRIVE_ENABLE := RUN_REQ AND NOT DRIVE_FAULT AND NOT WAITING AND NOT LOCKED_OUT;'",
+    "outcome": "killed"
+   }
+  ]
+ },
+ {
+  "program": "20_pump_station_supervisor",
+  "scans": 1990,
+  "available": 179,
+  "control_equal": true,
+  "mutants": [
+   {
+    "kind": "boundary",
+    "description": "line 48:38: boundary: '<' -> '<='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 74:5: constant: '0' -> '1'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 133:11: negate: WHILE condition 'PENDING >= PULSE_SIZE' negated",
+    "outcome": "crashed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 116:36: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 116:3: remove: removed 'PROOF_TIMER(IN := (STATE_NO = 2) AND NOT LEAD_RUNNING_FB, PT := PROOF_TIME);'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 79:41: swap: branch body swapped with the one at line 81",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 48:17: boundary: '>' -> '>='",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 106:21: constant: '3' -> '4'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 60:6: negate: IF condition 'LEAD_IS_2' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 48:24: operator: 'OR' -> 'AND'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 49:5: remove: removed 'PASSES := 4;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 96:46: swap: branch body swapped with the one at line 99",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 116:31: boundary: '=' -> '<>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 113:17: constant: '0' -> '1'",
+    "outcome": "survived"
+   },
+   {
+    "kind": "negate",
+    "description": "line 79:10: negate: IF condition 'LEAD_FAILED AND LAG_FAILED' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 119:22: operator: 'AND' -> 'OR'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 100:9: remove: removed 'STATE_NO := 4;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 94:26: swap: branch body swapped with the one at line 96",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 119:16: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "constant",
+    "description": "line 120:44: constant: '4' -> '3'",
+    "outcome": "killed"
+   },
+   {
+    "kind": "negate",
+    "description": "line 94:10: negate: IF condition 'LEAD_FAILED' negated",
+    "outcome": "killed"
+   },
+   {
+    "kind": "operator",
+    "description": "line 54:38: operator: '+' -> '-'",
+    "outcome": "crashed"
+   },
+   {
+    "kind": "remove",
+    "description": "line 76:9: remove: removed 'STATE_NO := 1;'",
+    "outcome": "compile_failed"
+   },
+   {
+    "kind": "swap",
+    "description": "line 48:50: swap: branch body swapped with the one at line 50",
+    "outcome": "killed"
+   },
+   {
+    "kind": "boundary",
+    "description": "line 83:28: boundary: '>=' -> '>'",
+    "outcome": "killed"
+   }
+  ]
+ }
+]

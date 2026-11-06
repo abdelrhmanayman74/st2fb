@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="LATCH" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="S"/><With Var="R"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="Q"/><With Var="COUNT"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="S" Type="BOOL"/>
+      <VarDeclaration Name="R" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="Q" Type="BOOL"/>
+      <VarDeclaration Name="COUNT" Type="INT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="PREV" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="400" y="0">
+        <ECAction Algorithm="scan" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="200" y="-60"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="200" y="60"/>
+    </ECC>
+    <Algorithm Name="scan">
+      <ST><![CDATA[
+IF R THEN
+  Q := FALSE;
+ELSIF S THEN
+  Q := TRUE;
+END_IF;
+IF Q AND NOT PREV THEN
+  COUNT := COUNT + 1;
+END_IF;
+PREV := Q;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

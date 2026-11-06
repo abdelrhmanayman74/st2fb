@@ -1,0 +1,191 @@
+[
+ {
+  "program": "00_latch",
+  "ok": true,
+  "scans": 7,
+  "divergences": 0,
+  "outputs": 2,
+  "static_outputs": [],
+  "output_changes": 5
+ },
+ {
+  "program": "01_motor_start_stop",
+  "ok": true,
+  "scans": 303,
+  "divergences": 0,
+  "outputs": 3,
+  "static_outputs": [],
+  "output_changes": 38
+ },
+ {
+  "program": "02_tank_hysteresis",
+  "ok": true,
+  "scans": 453,
+  "divergences": 0,
+  "outputs": 3,
+  "static_outputs": [],
+  "output_changes": 48
+ },
+ {
+  "program": "03_scaling_clamp",
+  "ok": true,
+  "scans": 379,
+  "divergences": 0,
+  "outputs": 4,
+  "static_outputs": [],
+  "output_changes": 351
+ },
+ {
+  "program": "04_parts_counter",
+  "ok": true,
+  "scans": 393,
+  "divergences": 0,
+  "outputs": 3,
+  "static_outputs": [],
+  "output_changes": 112
+ },
+ {
+  "program": "05_alarm_debounce_ack",
+  "ok": true,
+  "scans": 519,
+  "divergences": 0,
+  "outputs": 4,
+  "static_outputs": [],
+  "output_changes": 101
+ },
+ {
+  "program": "06_star_delta",
+  "ok": true,
+  "scans": 767,
+  "divergences": 0,
+  "outputs": 4,
+  "static_outputs": [],
+  "output_changes": 171
+ },
+ {
+  "program": "07_conveyor_interlock",
+  "ok": true,
+  "scans": 1287,
+  "divergences": 0,
+  "outputs": 4,
+  "static_outputs": [],
+  "output_changes": 86
+ },
+ {
+  "program": "08_first_out_alarm",
+  "ok": true,
+  "scans": 403,
+  "divergences": 0,
+  "outputs": 3,
+  "static_outputs": [],
+  "output_changes": 124
+ },
+ {
+  "program": "09_totalizer",
+  "ok": true,
+  "scans": 542,
+  "divergences": 0,
+  "outputs": 3,
+  "static_outputs": [],
+  "output_changes": 909
+ },
+ {
+  "program": "10_valve_feedback",
+  "ok": true,
+  "scans": 712,
+  "divergences": 0,
+  "outputs": 5,
+  "static_outputs": [],
+  "output_changes": 438
+ },
+ {
+  "program": "11_ramp_generator",
+  "ok": true,
+  "scans": 491,
+  "divergences": 0,
+  "outputs": 4,
+  "static_outputs": [],
+  "output_changes": 319
+ },
+ {
+  "program": "12_pid_loop",
+  "ok": true,
+  "scans": 680,
+  "divergences": 0,
+  "outputs": 4,
+  "static_outputs": [],
+  "output_changes": 770
+ },
+ {
+  "program": "13_case_sequencer",
+  "ok": true,
+  "scans": 1134,
+  "divergences": 0,
+  "outputs": 6,
+  "static_outputs": [],
+  "output_changes": 166
+ },
+ {
+  "program": "14_batch_filling",
+  "ok": true,
+  "scans": 981,
+  "divergences": 0,
+  "outputs": 7,
+  "static_outputs": [],
+  "output_changes": 884
+ },
+ {
+  "program": "15_duty_standby",
+  "ok": true,
+  "scans": 684,
+  "divergences": 0,
+  "outputs": 6,
+  "static_outputs": [],
+  "output_changes": 108
+ },
+ {
+  "program": "16_pump_station_level",
+  "ok": true,
+  "scans": 1418,
+  "divergences": 0,
+  "outputs": 6,
+  "static_outputs": [],
+  "output_changes": 130
+ },
+ {
+  "program": "17_pump_station_protection",
+  "ok": true,
+  "scans": 1346,
+  "divergences": 0,
+  "outputs": 7,
+  "static_outputs": [],
+  "output_changes": 355
+ },
+ {
+  "program": "18_pump_station_rotation",
+  "ok": true,
+  "scans": 1251,
+  "divergences": 0,
+  "outputs": 7,
+  "static_outputs": [],
+  "output_changes": 1809
+ },
+ {
+  "program": "19_auto_restart",
+  "ok": true,
+  "scans": 1133,
+  "divergences": 0,
+  "outputs": 4,
+  "static_outputs": [],
+  "output_changes": 94
+ },
+ {
+  "program": "20_pump_station_supervisor",
+  "ok": true,
+  "scans": 1990,
+  "divergences": 0,
+  "outputs": 10,
+  "static_outputs": [],
+  "output_changes": 2931
+ }
+]

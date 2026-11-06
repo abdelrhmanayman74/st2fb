@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PARTS_COUNTER" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="SENSOR"/><With Var="RESET"/><With Var="BATCH_SIZE"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="COUNT"/><With Var="BATCH_DONE"/><With Var="BATCHES"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="SENSOR" Type="BOOL"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="BATCH_SIZE" Type="INT"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="COUNT" Type="INT"/>
+      <VarDeclaration Name="BATCH_DONE" Type="BOOL"/>
+      <VarDeclaration Name="BATCHES" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="COUNTER_CU" Type="BOOL"/>
+      <VarDeclaration Name="COUNTER_R" Type="BOOL"/>
+      <VarDeclaration Name="COUNTER_PV" Type="INT"/>
+      <VarDeclaration Name="COUNTER_Q" Type="BOOL"/>
+      <VarDeclaration Name="COUNTER_CV" Type="INT"/>
+      <VarDeclaration Name="COUNTER_CU_T_Q" Type="BOOL"/>
+      <VarDeclaration Name="COUNTER_CU_T_M" Type="BOOL"/>
+      <VarDeclaration Name="DONE_EDGE_CLK" Type="BOOL"/>
+      <VarDeclaration Name="DONE_EDGE_Q" Type="BOOL"/>
+      <VarDeclaration Name="DONE_EDGE_M" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="MAIN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="MAIN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="MAIN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+COUNTER_CU := SENSOR;
+COUNTER_R := RESET OR DONE_EDGE_Q;
+COUNTER_PV := BATCH_SIZE;
+COUNTER_CU_T_Q := COUNTER_CU AND NOT COUNTER_CU_T_M;
+COUNTER_CU_T_M := COUNTER_CU;
+IF COUNTER_R THEN
+  COUNTER_CV := 0;
+ELSIF COUNTER_CU_T_Q AND (COUNTER_CV < COUNTER_PV) THEN
+  COUNTER_CV := COUNTER_CV + 1;
+END_IF;
+COUNTER_Q := COUNTER_CV >= COUNTER_PV;
+COUNT := COUNTER_CV;
+BATCH_DONE := COUNTER_Q;
+DONE_EDGE_CLK := COUNTER_Q;
+DONE_EDGE_Q := DONE_EDGE_CLK AND NOT DONE_EDGE_M;
+DONE_EDGE_M := DONE_EDGE_CLK;
+IF DONE_EDGE_Q THEN
+  BATCHES := BATCHES + 1;
+END_IF;
+IF RESET THEN
+  BATCHES := 0;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="RAMP_GENERATOR" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="SETPOINT"/><With Var="RATE_UP"/><With Var="RATE_DOWN"/><With Var="HOLD"/><With Var="RESET"/><With Var="PRESET"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="OUTPUT_VALUE"/><With Var="RAMPING_UP"/><With Var="RAMPING_DOWN"/><With Var="AT_SETPOINT"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="SETPOINT" Type="REAL"/>
+      <VarDeclaration Name="RATE_UP" Type="REAL"/>
+      <VarDeclaration Name="RATE_DOWN" Type="REAL"/>
+      <VarDeclaration Name="HOLD" Type="BOOL"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="PRESET" Type="REAL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="OUTPUT_VALUE" Type="REAL"/>
+      <VarDeclaration Name="RAMPING_UP" Type="BOOL"/>
+      <VarDeclaration Name="RAMPING_DOWN" Type="BOOL"/>
+      <VarDeclaration Name="AT_SETPOINT" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+RAMPING_UP := FALSE;
+RAMPING_DOWN := FALSE;
+IF RESET THEN
+  OUTPUT_VALUE := PRESET;
+ELSIF NOT HOLD THEN
+  IF OUTPUT_VALUE < SETPOINT THEN
+    OUTPUT_VALUE := OUTPUT_VALUE + RATE_UP;
+    RAMPING_UP := TRUE;
+    IF OUTPUT_VALUE > SETPOINT THEN
+      OUTPUT_VALUE := SETPOINT;
+    END_IF;
+  ELSIF OUTPUT_VALUE > SETPOINT THEN
+    OUTPUT_VALUE := OUTPUT_VALUE - RATE_DOWN;
+    RAMPING_DOWN := TRUE;
+    IF OUTPUT_VALUE < SETPOINT THEN
+      OUTPUT_VALUE := SETPOINT;
+    END_IF;
+  END_IF;
+END_IF;
+AT_SETPOINT := OUTPUT_VALUE = SETPOINT;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

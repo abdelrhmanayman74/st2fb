@@ -1,0 +1,10 @@
+{"scan_ms": 10, "scans": [
+  {"ENABLE": false, "LEVEL": 0},
+  {"ENABLE": true, "LEVEL": 0},
+  {"ENABLE": true, "LEVEL": 2},
+  {"ENABLE": true, "LEVEL": 4},
+  {"ENABLE": true, "LEVEL": 7},
+  {"ENABLE": true, "LEVEL": 10},
+  {"ENABLE": true, "LEVEL": 12},
+  {"ENABLE": true, "LEVEL": 1}
+]}

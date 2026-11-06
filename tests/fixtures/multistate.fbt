@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand-written multi-state Basic FB: guarded transitions, several algorithms and actions per
+     state, a CNF-free condition (`[...]`), a double CNF in one REQ, and every v1 type on the
+     interface. tests/test_forward_e2e.py checks it against a trace worked out by hand. -->
+<FBType Name="FILL_CTRL" Comment="Tank fill controller, written by hand">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event">
+        <With Var="ENABLE"/><With Var="LEVEL"/><With Var="SCAN_DT"/>
+      </Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event">
+        <With Var="VALVE"/><With Var="CYCLES"/><With Var="TOTAL"/><With Var="BATCH"/>
+        <With Var="RATIO"/><With Var="ELAPSED"/>
+      </Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="ENABLE" Type="BOOL"/>
+      <VarDeclaration Name="LEVEL" Type="INT"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="VALVE" Type="BOOL"/>
+      <VarDeclaration Name="CYCLES" Type="INT"/>
+      <VarDeclaration Name="TOTAL" Type="DINT" InitialValue="100"/>
+      <VarDeclaration Name="BATCH" Type="UINT"/>
+      <VarDeclaration Name="RATIO" Type="REAL"/>
+      <VarDeclaration Name="ELAPSED" Type="TIME"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="LIMIT_LEVEL" Type="INT" InitialValue="10"/>
+      <VarDeclaration Name="I" Type="INT"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="OFF" x="400" y="-200">
+        <ECAction Algorithm="close" Output="CNF"/>
+      </ECState>
+      <ECState Name="FILL" x="400" y="0">
+        <ECAction Algorithm="open"/>
+        <ECAction Algorithm="tick" Output="CNF"/>
+      </ECState>
+      <ECState Name="FULL" x="400" y="200">
+        <ECAction Algorithm="close"/>
+        <ECAction Algorithm="count" Output="CNF"/>
+      </ECState>
+      <ECState Name="RESET" x="800" y="200">
+        <ECAction Algorithm="reset" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="OFF" Condition="REQ[NOT ENABLE]" x="200" y="-100"/>
+      <ECTransition Source="START" Destination="FULL" Condition="REQ[LEVEL &gt;= LIMIT_LEVEL]" x="200" y="100"/>
+      <ECTransition Source="START" Destination="FILL" Condition="REQ" x="200" y="0"/>
+      <ECTransition Source="OFF" Destination="START" Condition="1" x="200" y="-200"/>
+      <ECTransition Source="FILL" Destination="START" Condition="1" x="200" y="50"/>
+      <ECTransition Source="FULL" Destination="RESET" Condition="[CYCLES &gt;= 2]" x="600" y="200"/>
+      <ECTransition Source="FULL" Destination="START" Condition="1" x="200" y="200"/>
+      <ECTransition Source="RESET" Destination="START" Condition="1" x="400" y="300"/>
+    </ECC>
+    <Algorithm Name="close">
+      <ST><![CDATA[
+VALVE := FALSE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="open">
+      <ST><![CDATA[
+VALVE := TRUE;
+RATIO := RATIO + 0.5;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="tick">
+      <ST><![CDATA[
+ELAPSED := ELAPSED + SCAN_DT;
+CASE LEVEL OF
+  0: TOTAL := TOTAL + 1;
+  1, 2: TOTAL := TOTAL + 10;
+  3..5: TOTAL := TOTAL + 100;
+  ELSE TOTAL := TOTAL - 1;
+END_CASE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="count">
+      <ST><![CDATA[
+CYCLES := CYCLES + 1;
+FOR I := 1 TO 3 DO
+  BATCH := BATCH + 2;
+END_FOR;
+WHILE BATCH > 4 DO
+  BATCH := BATCH - 1;
+END_WHILE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="reset">
+      <ST><![CDATA[
+CYCLES := 0;
+ELAPSED := T#0s;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

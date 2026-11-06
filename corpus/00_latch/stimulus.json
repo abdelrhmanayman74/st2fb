@@ -1,0 +1,5 @@
+{"scan_ms": 10, "scans": [
+  {"S": false, "R": false}, {"S": true, "R": false}, {"S": false, "R": false},
+  {"S": false, "R": true}, {"S": true, "R": true}, {"S": true, "R": false},
+  {"S": false, "R": false}
+]}

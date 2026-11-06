@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="TANK_HYSTERESIS" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="LEVEL"/><With Var="START_LEVEL"/><With Var="STOP_LEVEL"/><With Var="ALARM_MARGIN"/><With Var="ENABLE"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="INLET_VALVE"/><With Var="LOW_ALARM"/><With Var="HIGH_ALARM"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="LEVEL" Type="REAL"/>
+      <VarDeclaration Name="START_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="STOP_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="ALARM_MARGIN" Type="REAL"/>
+      <VarDeclaration Name="ENABLE" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="INLET_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="LOW_ALARM" Type="BOOL"/>
+      <VarDeclaration Name="HIGH_ALARM" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+IF NOT ENABLE THEN
+  INLET_VALVE := FALSE;
+ELSIF LEVEL <= START_LEVEL THEN
+  INLET_VALVE := TRUE;
+ELSIF LEVEL >= STOP_LEVEL THEN
+  INLET_VALVE := FALSE;
+END_IF;
+LOW_ALARM := LEVEL < START_LEVEL - ALARM_MARGIN;
+HIGH_ALARM := LEVEL > STOP_LEVEL + ALARM_MARGIN;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

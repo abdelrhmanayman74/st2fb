@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="ALARM_DEBOUNCE" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="PROCESS_TRIP"/><With Var="ACK"/><With Var="ON_DELAY"/><With Var="OFF_DELAY"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="ALARM"/><With Var="UNACKED"/><With Var="HORN"/><With Var="OCCURRENCES"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="PROCESS_TRIP" Type="BOOL"/>
+      <VarDeclaration Name="ACK" Type="BOOL"/>
+      <VarDeclaration Name="ON_DELAY" Type="TIME"/>
+      <VarDeclaration Name="OFF_DELAY" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="ALARM" Type="BOOL"/>
+      <VarDeclaration Name="UNACKED" Type="BOOL"/>
+      <VarDeclaration Name="HORN" Type="BOOL"/>
+      <VarDeclaration Name="OCCURRENCES" Type="INT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="ON_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="ON_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="ON_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="ON_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="ON_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="ON_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="ON_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OFF_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="OFF_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OFF_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="OFF_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OFF_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="OFF_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="OFF_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="RAISED_CLK" Type="BOOL"/>
+      <VarDeclaration Name="RAISED_Q" Type="BOOL"/>
+      <VarDeclaration Name="RAISED_M" Type="BOOL"/>
+      <VarDeclaration Name="ACK_EDGE_CLK" Type="BOOL"/>
+      <VarDeclaration Name="ACK_EDGE_Q" Type="BOOL"/>
+      <VarDeclaration Name="ACK_EDGE_M" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+ON_TIMER_IN := PROCESS_TRIP;
+ON_TIMER_PT := ON_DELAY;
+IF (ON_TIMER_STATE = 0) AND NOT ON_TIMER_PREV_IN AND ON_TIMER_IN THEN
+  ON_TIMER_STATE := 1;
+  ON_TIMER_Q := FALSE;
+  ON_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT ON_TIMER_IN THEN
+    ON_TIMER_ET := T#0s;
+    ON_TIMER_Q := FALSE;
+    ON_TIMER_STATE := 0;
+  ELSIF ON_TIMER_STATE = 1 THEN
+    IF ON_TIMER_START_TIME + ON_TIMER_PT <= ST2FB_NOW THEN
+      ON_TIMER_STATE := 2;
+      ON_TIMER_Q := TRUE;
+      ON_TIMER_ET := ON_TIMER_PT;
+    ELSE
+      ON_TIMER_ET := ST2FB_NOW - ON_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+ON_TIMER_PREV_IN := ON_TIMER_IN;
+
+OFF_TIMER_IN := ON_TIMER_Q;
+OFF_TIMER_PT := OFF_DELAY;
+IF (OFF_TIMER_STATE = 0) AND OFF_TIMER_PREV_IN AND NOT OFF_TIMER_IN THEN
+  OFF_TIMER_STATE := 1;
+  OFF_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF OFF_TIMER_IN THEN
+    OFF_TIMER_ET := T#0s;
+    OFF_TIMER_STATE := 0;
+  ELSIF OFF_TIMER_STATE = 1 THEN
+    IF OFF_TIMER_START_TIME + OFF_TIMER_PT <= ST2FB_NOW THEN
+      OFF_TIMER_STATE := 2;
+      OFF_TIMER_ET := OFF_TIMER_PT;
+    ELSE
+      OFF_TIMER_ET := ST2FB_NOW - OFF_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+OFF_TIMER_Q := OFF_TIMER_IN OR (OFF_TIMER_STATE = 1);
+OFF_TIMER_PREV_IN := OFF_TIMER_IN;
+
+ALARM := OFF_TIMER_Q;
+
+RAISED_CLK := ALARM;
+RAISED_Q := RAISED_CLK AND NOT RAISED_M;
+RAISED_M := RAISED_CLK;
+
+ACK_EDGE_CLK := ACK;
+ACK_EDGE_Q := ACK_EDGE_CLK AND NOT ACK_EDGE_M;
+ACK_EDGE_M := ACK_EDGE_CLK;
+
+IF RAISED_Q THEN
+  UNACKED := TRUE;
+  OCCURRENCES := OCCURRENCES + 1;
+ELSIF ACK_EDGE_Q THEN
+  UNACKED := FALSE;
+END_IF;
+HORN := ALARM AND UNACKED;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

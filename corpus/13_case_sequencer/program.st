@@ -1,0 +1,75 @@
+FUNCTION_BLOCK CASE_SEQUENCER
+VAR_INPUT
+  START_PB : BOOL;
+  ABORT : BOOL;
+  HOLD : BOOL;
+  LEVEL_HIGH : BOOL;
+  LEVEL_LOW : BOOL;
+  STEP_TIME : TIME;
+END_VAR
+VAR_OUTPUT
+  SEQ : INT;
+  FILL_VALVE : BOOL;
+  MIXER : BOOL;
+  DRAIN_VALVE : BOOL;
+  RINSE_VALVE : BOOL;
+  CYCLES : DINT;
+END_VAR
+VAR
+  STEP_TIMER : TON;
+  TIMING : BOOL;
+END_VAR
+  IF NOT HOLD THEN
+    STEP_TIMER(IN := TIMING, PT := STEP_TIME);
+  END_IF;
+  FILL_VALVE := FALSE;
+  MIXER := FALSE;
+  DRAIN_VALVE := FALSE;
+  RINSE_VALVE := FALSE;
+  IF ABORT THEN
+    SEQ := 8;
+  END_IF;
+  CASE SEQ OF
+    0:
+      TIMING := FALSE;
+      IF START_PB THEN
+        SEQ := 1;
+      END_IF;
+    1:
+      FILL_VALVE := TRUE;
+      IF LEVEL_HIGH THEN
+        SEQ := 2;
+        TIMING := TRUE;
+      END_IF;
+    2:
+      MIXER := TRUE;
+      IF STEP_TIMER.Q THEN
+        SEQ := 3;
+        TIMING := FALSE;
+      END_IF;
+    3:
+      DRAIN_VALVE := TRUE;
+      IF LEVEL_LOW THEN
+        SEQ := 4;
+      END_IF;
+    4..6:
+      RINSE_VALVE := TRUE;
+      IF STEP_TIMER.Q THEN
+        SEQ := SEQ + 1;
+        TIMING := FALSE;
+      ELSE
+        TIMING := TRUE;
+      END_IF;
+    7:
+      CYCLES := CYCLES + 1;
+      SEQ := 0;
+    8:
+      TIMING := FALSE;
+      DRAIN_VALVE := TRUE;
+      IF LEVEL_LOW AND NOT ABORT THEN
+        SEQ := 0;
+      END_IF;
+  ELSE
+    SEQ := 0;
+  END_CASE;
+END_FUNCTION_BLOCK

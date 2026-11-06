@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="STAR_DELTA" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="START_PB"/><With Var="STOP_PB"/><With Var="OVERLOAD"/><With Var="STAR_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="K_MAIN"/><With Var="K_STAR"/><With Var="K_DELTA"/><With Var="STAR_ELAPSED"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="START_PB" Type="BOOL"/>
+      <VarDeclaration Name="STOP_PB" Type="BOOL"/>
+      <VarDeclaration Name="OVERLOAD" Type="BOOL"/>
+      <VarDeclaration Name="STAR_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="K_MAIN" Type="BOOL"/>
+      <VarDeclaration Name="K_STAR" Type="BOOL"/>
+      <VarDeclaration Name="K_DELTA" Type="BOOL"/>
+      <VarDeclaration Name="STAR_ELAPSED" Type="TIME"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="RUN_CMD" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="STAR_TIMER_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="STAR_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="STAR_TIMER_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="STAR_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="STAR_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="STAR_TIMER_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="STAR_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="GAP_TIMER_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="GAP_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="GAP_TIMER_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="GAP_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="GAP_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="GAP_TIMER_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="GAP_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+RUN_CMD := (START_PB OR RUN_CMD) AND NOT STOP_PB AND NOT OVERLOAD;
+
+STAR_TIMER_IN := RUN_CMD;
+STAR_TIMER_PT := STAR_TIME;
+IF (STAR_TIMER_STATE = 0) AND NOT STAR_TIMER_PREV_IN AND STAR_TIMER_IN THEN
+  STAR_TIMER_STATE := 1;
+  STAR_TIMER_Q := FALSE;
+  STAR_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT STAR_TIMER_IN THEN
+    STAR_TIMER_ET := T#0s;
+    STAR_TIMER_Q := FALSE;
+    STAR_TIMER_STATE := 0;
+  ELSIF STAR_TIMER_STATE = 1 THEN
+    IF STAR_TIMER_START_TIME + STAR_TIMER_PT <= ST2FB_NOW THEN
+      STAR_TIMER_STATE := 2;
+      STAR_TIMER_Q := TRUE;
+      STAR_TIMER_ET := STAR_TIMER_PT;
+    ELSE
+      STAR_TIMER_ET := ST2FB_NOW - STAR_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+STAR_TIMER_PREV_IN := STAR_TIMER_IN;
+
+GAP_TIMER_IN := STAR_TIMER_Q;
+GAP_TIMER_PT := T#50ms;
+IF (GAP_TIMER_STATE = 0) AND NOT GAP_TIMER_PREV_IN AND GAP_TIMER_IN THEN
+  GAP_TIMER_STATE := 1;
+  GAP_TIMER_Q := FALSE;
+  GAP_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT GAP_TIMER_IN THEN
+    GAP_TIMER_ET := T#0s;
+    GAP_TIMER_Q := FALSE;
+    GAP_TIMER_STATE := 0;
+  ELSIF GAP_TIMER_STATE = 1 THEN
+    IF GAP_TIMER_START_TIME + GAP_TIMER_PT <= ST2FB_NOW THEN
+      GAP_TIMER_STATE := 2;
+      GAP_TIMER_Q := TRUE;
+      GAP_TIMER_ET := GAP_TIMER_PT;
+    ELSE
+      GAP_TIMER_ET := ST2FB_NOW - GAP_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+GAP_TIMER_PREV_IN := GAP_TIMER_IN;
+
+K_MAIN := RUN_CMD;
+K_STAR := RUN_CMD AND NOT STAR_TIMER_Q;
+K_DELTA := RUN_CMD AND GAP_TIMER_Q;
+STAR_ELAPSED := STAR_TIMER_ET;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

@@ -1,0 +1,26 @@
+FUNCTION_BLOCK GATE_CYCLE
+VAR_INPUT
+  OPEN_CMD : BOOL;
+  AT_TOP : BOOL;
+END_VAR
+VAR_OUTPUT
+  SEQ : INT;
+  MOTOR : BOOL;
+  CYCLES : INT;
+END_VAR
+  MOTOR := FALSE;
+  CASE SEQ OF
+    0:
+      IF OPEN_CMD THEN
+        SEQ := 1;
+      END_IF;
+    1:
+      MOTOR := TRUE;
+      IF AT_TOP THEN
+        SEQ := 2;
+      END_IF;
+    2:
+      CYCLES := CYCLES + 1;
+      SEQ := 0;
+  END_CASE;
+END_FUNCTION_BLOCK

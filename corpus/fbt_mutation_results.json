@@ -1,0 +1,805 @@
+{
+ "count": 5,
+ "seed": 61499,
+ "seconds": 508.57244021398947,
+ "results": [
+  {
+   "program": "00_latch",
+   "scans": 7,
+   "available": 14,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 8:20: constant: '1' -> '0'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 1, \"t_ms\": 10, \"output\": \"COUNT\", \"expected\": 1, \"actual\": 0}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 2:4: negate: IF condition 'R' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 1, \"t_ms\": 10, \"output\": \"Q\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 7:6: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"COUNT\", \"expected\": 0, \"actual\": 1}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 10:1: remove: removed 'PREV := Q;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 2, \"t_ms\": 20, \"output\": \"COUNT\", \"expected\": 1, \"actual\": 2}"
+    },
+    {
+     "kind": "swap",
+     "description": "algorithm scan, line 2:10: swap: branch body swapped with the one at line 4",
+     "outcome": "killed",
+     "detail": "{\"scan\": 1, \"t_ms\": 10, \"output\": \"Q\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  },
+  {
+   "program": "01_motor_start_stop",
+   "scans": 303,
+   "available": 18,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 9:22: constant: '1' -> '2'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 5, \"t_ms\": 50, \"output\": \"STARTS\", \"expected\": 1, \"actual\": 2}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 8:4: negate: IF condition 'RUNNING AND NOT PREV_RUNNING' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"STARTS\", \"expected\": 0, \"actual\": 1}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 9:20: operator: '+' -> '-'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 5, \"t_ms\": 50, \"output\": \"STARTS\", \"expected\": 1, \"actual\": 65535}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 9:3: remove: removed 'STARTS := STARTS + 1;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 5, \"t_ms\": 50, \"output\": \"STARTS\", \"expected\": 1, \"actual\": 0}"
+    },
+    {
+     "kind": "swap",
+     "description": "algorithm scan, line 2:17: swap: branch body swapped with the one at line 4",
+     "outcome": "killed",
+     "detail": "{\"scan\": 29, \"t_ms\": 290, \"output\": \"RUNNING\", \"expected\": false, \"actual\": true}"
+    }
+   ]
+  },
+  {
+   "program": "02_tank_hysteresis",
+   "scans": 453,
+   "available": 19,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 4:13: boundary: '<=' -> '<'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 9, \"t_ms\": 900, \"output\": \"INLET_VALVE\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 7:18: constant: 'FALSE' -> 'TRUE'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 17, \"t_ms\": 1700, \"output\": \"INLET_VALVE\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 6:7: negate: ELSIF condition 'LEVEL >= STOP_LEVEL' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 13, \"t_ms\": 1300, \"output\": \"INLET_VALVE\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 10:34: operator: '+' -> '-'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 15, \"t_ms\": 1500, \"output\": \"HIGH_ALARM\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 10:1: remove: removed 'HIGH_ALARM := LEVEL > STOP_LEVEL + ALARM_MARGIN;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 39, \"t_ms\": 3900, \"output\": \"HIGH_ALARM\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  },
+  {
+   "program": "03_scaling_clamp",
+   "scans": 379,
+   "available": 29,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 9:22: boundary: '<' -> '<='",
+     "outcome": "killed",
+     "detail": "{\"scan\": 2, \"t_ms\": 20, \"output\": \"UNDER_RANGE\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 7:17: constant: 'FALSE' -> 'TRUE'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 151, \"t_ms\": 1510, \"output\": \"OVER_RANGE\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 11:6: negate: IF condition 'UNDER_RANGE' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"ENG\", \"expected\": 0.0, \"actual\": -25.0}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 16:27: operator: '-' -> '+'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 2, \"t_ms\": 20, \"output\": \"ENG\", \"expected\": 0.0, \"actual\": 50.0}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 10:3: remove: removed 'OVER_RANGE := RAW > RAW_MAX;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 14, \"t_ms\": 140, \"output\": \"ENG\", \"expected\": 100.0, \"actual\": 100.78125}"
+    }
+   ]
+  },
+  {
+   "program": "04_parts_counter",
+   "scans": 393,
+   "available": 36,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 12:25: boundary: '>=' -> '>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 8, \"t_ms\": 80, \"output\": \"BATCH_DONE\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 19:24: constant: '1' -> '0'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 8, \"t_ms\": 80, \"output\": \"BATCHES\", \"expected\": 1, \"actual\": 0}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 21:4: negate: IF condition 'RESET' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 8, \"t_ms\": 80, \"output\": \"BATCHES\", \"expected\": 1, \"actual\": 0}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 3:20: operator: 'OR' -> 'AND'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 9, \"t_ms\": 90, \"output\": \"COUNT\", \"expected\": 0, \"actual\": 5}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 13:1: remove: removed 'COUNT := COUNTER_CV;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"COUNT\", \"expected\": 1, \"actual\": 0}"
+    }
+   ]
+  },
+  {
+   "program": "05_alarm_debounce_ack",
+   "scans": 519,
+   "available": 105,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 34:25: boundary: '=' -> '<>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 40, \"t_ms\": 400, \"output\": \"ALARM\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 28:22: constant: '1' -> '0'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 15, \"t_ms\": 150, \"output\": \"ALARM\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 35:8: negate: IF condition 'OFF_TIMER_START_TIME + OFF_TIMER_PT <= ST2FB_NOW' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 16, \"t_ms\": 160, \"output\": \"ALARM\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 5:48: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 14, \"t_ms\": 140, \"output\": \"ALARM\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 3:1: remove: removed 'ON_TIMER_IN := PROCESS_TRIP;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 14, \"t_ms\": 140, \"output\": \"ALARM\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  },
+  {
+   "program": "06_star_delta",
+   "scans": 767,
+   "available": 96,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 38:44: boundary: '<=' -> '<'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 38, \"t_ms\": 380, \"output\": \"K_DELTA\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 36:24: constant: '0' -> '1'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 33, \"t_ms\": 330, \"output\": \"K_DELTA\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 6:4: negate: IF condition 'STAR_TIMER_STATE = 0 AND NOT STAR_TIMER_PREV_IN AND STAR_TIMER_IN' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 4, \"t_ms\": 40, \"output\": \"STAR_ELAPSED\", \"expected\": 10, \"actual\": 0}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 50:20: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 3, \"t_ms\": 30, \"output\": \"K_DELTA\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 19:7: remove: removed 'STAR_TIMER_ET := STAR_TIMER_PT;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 33, \"t_ms\": 330, \"output\": \"STAR_ELAPSED\", \"expected\": 300, \"actual\": 290}"
+    }
+   ]
+  },
+  {
+   "program": "07_conveyor_interlock",
+   "scans": 1287,
+   "available": 194,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 10:16: boundary: '=' -> '<>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 13, \"t_ms\": 130, \"output\": \"C2\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 83:26: constant: '1' -> '0'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 64, \"t_ms\": 640, \"output\": \"C3\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 76:4: negate: IF condition 'CLEAR_C3_STATE = 0 AND CLEAR_C3_PREV_IN AND NOT CLEAR_C3_IN' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"C3\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 96:31: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"C3\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 45:7: remove: removed 'ON_C1_ET := ON_C1_PT;'",
+     "outcome": "survived",
+     "heldout_outcome": "survived"
+    }
+   ]
+  },
+  {
+   "program": "08_first_out_alarm",
+   "scans": 403,
+   "available": 59,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 28:19: boundary: '<>' -> '='",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"SHUTDOWN\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 2:11: constant: '0' -> '1'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"ACTIVE\", \"expected\": 0, \"actual\": 1}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 3:4: negate: IF condition 'TRIP_1' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"ACTIVE\", \"expected\": 0, \"actual\": 1}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 10:20: operator: '+' -> '-'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 19, \"t_ms\": 190, \"output\": \"ACTIVE\", \"expected\": 1, \"actual\": -1}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 19:5: remove: removed 'FIRST := 2;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 11, \"t_ms\": 110, \"output\": \"FIRST\", \"expected\": 2, \"actual\": 0}"
+    }
+   ]
+  },
+  {
+   "program": "09_totalizer",
+   "scans": 542,
+   "available": 44,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 18:17: boundary: '>=' -> '>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 228, \"t_ms\": 22800, \"output\": \"PULSES\", \"expected\": 1, \"actual\": 0}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 12:12: constant: '0.0' -> '1.0'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 120, \"t_ms\": 12000, \"output\": \"TOTAL\", \"expected\": 0.0, \"actual\": 1.0}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 11:4: negate: IF condition 'RESET' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 40, \"t_ms\": 4000, \"output\": \"TOTAL\", \"expected\": 0.0828640759, \"actual\": 0.0}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 16:18: operator: '+' -> '-'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 40, \"t_ms\": 4000, \"output\": \"TOTAL\", \"expected\": 0.0828640759, \"actual\": -0.08286407589912415}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 20:5: remove: removed 'PULSES := PULSES + 1;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 52, \"t_ms\": 5200, \"output\": \"PULSES\", \"expected\": 1, \"actual\": 0}"
+    }
+   ]
+  },
+  {
+   "program": "10_valve_feedback",
+   "scans": 712,
+   "available": 111,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 15:52: boundary: '<=' -> '<'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 75, \"t_ms\": 750, \"output\": \"DRIVE_OPEN\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 16:30: constant: '2' -> '3'",
+     "outcome": "survived",
+     "heldout_outcome": "survived"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 32:6: negate: IF condition 'NOT CLOSING_TIMER_IN' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 31, \"t_ms\": 310, \"output\": \"TRAVEL_TIME\", \"expected\": 10, \"actual\": 0}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 5:28: operator: 'AND' -> 'OR'",
+     "outcome": "survived",
+     "heldout_outcome": "survived"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 46:1: remove: removed 'CLOSING_TIMER_PREV_IN := CLOSING_TIMER_IN;'",
+     "outcome": "survived",
+     "heldout_outcome": "survived"
+    }
+   ]
+  },
+  {
+   "program": "11_ramp_generator",
+   "scans": 491,
+   "available": 29,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 7:19: boundary: '<' -> '<='",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"RAMPING_UP\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 2:15: constant: 'FALSE' -> 'TRUE'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"RAMPING_UP\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 7:6: negate: IF condition 'OUTPUT_VALUE < SETPOINT' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"RAMPING_UP\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 14:34: operator: '-' -> '+'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 28, \"t_ms\": 1400, \"output\": \"OUTPUT_VALUE\", \"expected\": 18.0, \"actual\": 22.0}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 21:1: remove: removed 'AT_SETPOINT := OUTPUT_VALUE = SETPOINT;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"AT_SETPOINT\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  },
+  {
+   "program": "12_pid_loop",
+   "scans": 680,
+   "available": 49,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 3:43: boundary: '>' -> '>='",
+     "outcome": "killed",
+     "detail": "{\"scan\": 92, \"t_ms\": 9200, \"output\": \"CV\", \"expected\": 87.25, \"actual\": 89.5}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 7:71: constant: '0.0' -> '1.0'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 262, \"t_ms\": 26200, \"output\": \"CV\", \"expected\": 0.375, \"actual\": 0.25}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 7:6: negate: IF condition 'NOT (SAT_HIGH AND ERROR_VALUE > 0.0 OR SAT_LOW AND ERROR_VALUE < 0.0)' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 6, \"t_ms\": 600, \"output\": \"CV\", \"expected\": 42.5, \"actual\": 40.0}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 3:49: operator: '-' -> '+'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 86, \"t_ms\": 8600, \"output\": \"CV\", \"expected\": 90.25, \"actual\": 91.375}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 15:1: remove: removed 'SAT_HIGH := UNCLAMPED >= OUT_MAX;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 29, \"t_ms\": 2900, \"output\": \"SAT_HIGH\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  },
+  {
+   "program": "13_case_sequencer",
+   "scans": 1134,
+   "available": 131,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 6:23: boundary: '=' -> '<>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 16, \"t_ms\": 160, \"output\": \"SEQ\", \"expected\": 3, \"actual\": 2}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 57:3: constant: '4' -> '3'",
+     "outcome": "survived",
+     "heldout_outcome": "survived"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 31:4: negate: IF condition 'ABORT' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"SEQ\", \"expected\": 0, \"actual\": 8}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 2:24: operator: '+' -> '-'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 16, \"t_ms\": 160, \"output\": \"SEQ\", \"expected\": 3, \"actual\": 2}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 5:3: remove: removed 'STEP_TIMER_PT := STEP_TIME;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 9, \"t_ms\": 90, \"output\": \"SEQ\", \"expected\": 2, \"actual\": 3}"
+    }
+   ]
+  },
+  {
+   "program": "14_batch_filling",
+   "scans": 981,
+   "available": 158,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 56:23: boundary: '=' -> '<>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 39, \"t_ms\": 390, \"output\": \"STATE_NO\", \"expected\": 4, \"actual\": 3}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 50:19: constant: 'FALSE' -> 'TRUE'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 44, \"t_ms\": 440, \"output\": \"REJECTED\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 17:8: negate: IF condition 'START_EDGE_Q AND NOT ABORT' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"STATE_NO\", \"expected\": 0, \"actual\": 1}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 4:32: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"STATE_NO\", \"expected\": 0, \"actual\": 1}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 33:7: remove: removed 'STATE_NO := 3;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 30, \"t_ms\": 300, \"output\": \"STATE_NO\", \"expected\": 3, \"actual\": 2}"
+    }
+   ]
+  },
+  {
+   "program": "15_duty_standby",
+   "scans": 684,
+   "available": 123,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 44:40: boundary: '<=' -> '<'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 67, \"t_ms\": 670, \"output\": \"RUN_B\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 34:20: constant: '0' -> '-1'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 67, \"t_ms\": 670, \"output\": \"RUN_B\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 43:9: negate: ELSIF condition 'PROOF_B_STATE = 1' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 67, \"t_ms\": 670, \"output\": \"RUN_B\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 63:19: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 3, \"t_ms\": 30, \"output\": \"NO_PUMP\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 19:5: remove: removed 'PROOF_A_Q := FALSE;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 115, \"t_ms\": 1150, \"output\": \"RUN_A\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  },
+  {
+   "program": "16_pump_station_level",
+   "scans": 1418,
+   "available": 124,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 6:13: boundary: '>=' -> '>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 13, \"t_ms\": 1300, \"output\": \"PUMP_2\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 12:22: constant: '1' -> '2'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 85, \"t_ms\": 8500, \"output\": \"PUMP_1\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 62:8: negate: IF condition 'ALARM_TIMER_START_TIME + ALARM_TIMER_PT <= ST2FB_NOW' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 125, \"t_ms\": 12500, \"output\": \"HIGH_ALARM\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 2:24: operator: '+' -> '-'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 85, \"t_ms\": 8500, \"output\": \"PUMP_1\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 53:3: remove: removed 'ALARM_TIMER_STATE := 1;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 152, \"t_ms\": 15200, \"output\": \"HIGH_ALARM\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  },
+  {
+   "program": "17_pump_station_protection",
+   "scans": 1346,
+   "available": 166,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 68:20: boundary: '=' -> '<>'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 33, \"t_ms\": 330, \"output\": \"COOL_VALVE\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 84:50: constant: '1' -> '2'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 33, \"t_ms\": 330, \"output\": \"COOL_VALVE\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 50:7: negate: ELSIF condition 'PRIME_PULSE_STATE = 1' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"PRIME_ELAPSED\", \"expected\": 0, \"actual\": 10}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 84:29: operator: 'OR' -> 'AND'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 3, \"t_ms\": 30, \"output\": \"COOL_VALVE\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 2:1: remove: removed 'ST2FB_NOW := ST2FB_NOW + SCAN_DT;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 4, \"t_ms\": 40, \"output\": \"PRIME_ELAPSED\", \"expected\": 10, \"actual\": 0}"
+    }
+   ]
+  },
+  {
+   "program": "18_pump_station_rotation",
+   "scans": 1251,
+   "available": 141,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 25:31: boundary: '<>' -> '='",
+     "outcome": "killed",
+     "detail": "{\"scan\": 3, \"t_ms\": 30, \"output\": \"RUN_1\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 56:18: constant: 'TRUE' -> 'FALSE'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 23, \"t_ms\": 230, \"output\": \"RUN_2\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 10:6: negate: IF condition 'NOT ROTATE_TIMER_IN' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 102, \"t_ms\": 1020, \"output\": \"RUN_1\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 39:32: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 23, \"t_ms\": 230, \"output\": \"RUN_3\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 72:5: remove: removed 'HOURS_1 := HOURS_1 + 1;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 3, \"t_ms\": 30, \"output\": \"HOURS_1\", \"expected\": 1, \"actual\": 0}"
+    }
+   ]
+  },
+  {
+   "program": "19_auto_restart",
+   "scans": 1133,
+   "available": 135,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 18:50: boundary: '<=' -> '<'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 51, \"t_ms\": 510, \"output\": \"RETRIES_LEFT\", \"expected\": 3, \"actual\": 2}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 19:29: constant: '2' -> '1'",
+     "outcome": "survived",
+     "heldout_outcome": "survived"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 45:4: negate: IF condition 'DRIVE_FAULT' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 3, \"t_ms\": 30, \"output\": \"DRIVE_ENABLE\", \"expected\": true, \"actual\": false}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 8:56: operator: 'AND' -> 'OR'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 51, \"t_ms\": 510, \"output\": \"RETRIES_LEFT\", \"expected\": 3, \"actual\": 2}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 52:3: remove: removed 'WAIT_TIMER_Q := FALSE;'",
+     "outcome": "survived",
+     "heldout_outcome": "survived"
+    }
+   ]
+  },
+  {
+   "program": "20_pump_station_supervisor",
+   "scans": 1990,
+   "available": 272,
+   "control": "equal",
+   "mutants": [
+    {
+     "kind": "boundary",
+     "description": "algorithm scan, line 56:26: boundary: '<=' -> '<'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 117, \"t_ms\": 11700, \"output\": \"STATE_NO\", \"expected\": 1, \"actual\": 3}"
+    },
+    {
+     "kind": "constant",
+     "description": "algorithm scan, line 114:22: constant: 'FALSE' -> 'TRUE'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 0, \"t_ms\": 0, \"output\": \"HIGH_ALARM\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "negate",
+     "description": "algorithm scan, line 82:6: negate: IF condition 'NOT PROOF_TIMER_IN' negated",
+     "outcome": "killed",
+     "detail": "{\"scan\": 22, \"t_ms\": 2200, \"output\": \"STATE_NO\", \"expected\": 1, \"actual\": 2}"
+    },
+    {
+     "kind": "operator",
+     "description": "algorithm scan, line 117:31: operator: '+' -> '-'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 72, \"t_ms\": 7200, \"output\": \"HIGH_ALARM\", \"expected\": false, \"actual\": true}"
+    },
+    {
+     "kind": "remove",
+     "description": "algorithm scan, line 105:1: remove: removed 'ALARM_TIMER_IN := FILTERED_LEVEL >= HIGH_LEVEL;'",
+     "outcome": "killed",
+     "detail": "{\"scan\": 91, \"t_ms\": 9100, \"output\": \"HIGH_ALARM\", \"expected\": true, \"actual\": false}"
+    }
+   ]
+  }
+ ]
+}
