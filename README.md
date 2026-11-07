@@ -9,6 +9,8 @@ program.st --(translator or LLM)--> X.fbt --> FORTE ----> trace
 
 The repo also holds a pump-station demo, simulated on one PC, that runs a migrated block as a containerized controller with failover.
 
+![Pump-station dashboard, simulated plant](edge/results/dashboard.png)
+
 ## Results
 
 | Test | Result | Evidence |
