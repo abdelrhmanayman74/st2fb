@@ -11,6 +11,23 @@ from st2fb.st.parser import parse_time_ns
 REPO = Path(__file__).resolve().parent.parent
 
 
+class TerminatorTests(unittest.TestCase):
+    """matiec rejects a block without its semicolon, so the parser must too."""
+
+    def test_block_without_semicolon_is_rejected(self):
+        for text in (
+            "IF a THEN x := 1; END_IF",
+            "CASE a OF 1: x := 1; END_CASE",
+            "FOR i := 1 TO 2 DO x := 1; END_FOR",
+            "WHILE a DO x := 1; END_WHILE",
+        ):
+            with self.subTest(text), self.assertRaises(STParseError):
+                parse_statements(text)
+
+    def test_block_with_semicolon_is_accepted(self):
+        self.assertEqual(len(parse_statements("IF a THEN x := 1; END_IF; y := 2;")), 2)
+
+
 class ExpressionTests(unittest.TestCase):
     def test_precedence(self):
         self.assertEqual(

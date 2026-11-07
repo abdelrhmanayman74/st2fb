@@ -202,6 +202,7 @@ class _Parser:
             self.advance()
             else_body = self.statements()
         self.expect_kw("END_IF")
+        self.expect_op(";")
         return If(tuple(branches), else_body, line)
 
     def if_branch(self) -> tuple[Expr, tuple[Stmt, ...]]:
@@ -226,6 +227,7 @@ class _Parser:
             self.advance()
             else_body = self.statements()
         self.expect_kw("END_CASE")
+        self.expect_op(";")
         return Case(selector, tuple(branches), else_body, line)
 
     def case_label(self) -> CaseLabel:
@@ -260,6 +262,7 @@ class _Parser:
         self.expect_kw("DO")
         body = self.statements()
         self.expect_kw("END_FOR")
+        self.expect_op(";")
         return For(var, start, stop, step, body, line)
 
     def while_statement(self) -> While:
@@ -268,6 +271,7 @@ class _Parser:
         self.expect_kw("DO")
         body = self.statements()
         self.expect_kw("END_WHILE")
+        self.expect_op(";")
         return While(condition, body, line)
 
     # Expressions, lowest precedence first
