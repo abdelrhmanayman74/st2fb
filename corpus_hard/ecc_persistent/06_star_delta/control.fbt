@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="STAR_DELTA" Comment="Solvability control: ecc_persistent form, designed by hand. Never shown to a model.">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="START_PB"/><With Var="STOP_PB"/><With Var="OVERLOAD"/><With Var="STAR_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="K_MAIN"/><With Var="K_STAR"/><With Var="K_DELTA"/><With Var="STAR_ELAPSED"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="START_PB" Type="BOOL"/>
+      <VarDeclaration Name="STOP_PB" Type="BOOL"/>
+      <VarDeclaration Name="OVERLOAD" Type="BOOL"/>
+      <VarDeclaration Name="STAR_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="K_MAIN" Type="BOOL"/>
+      <VarDeclaration Name="K_STAR" Type="BOOL"/>
+      <VarDeclaration Name="K_DELTA" Type="BOOL"/>
+      <VarDeclaration Name="STAR_ELAPSED" Type="TIME"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="RUN_CMD" Type="BOOL"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+      <VarDeclaration Name="STAR_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="STAR_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="STAR_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="STAR_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="STAR_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="STAR_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="STAR_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="GAP_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="GAP_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="GAP_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="GAP_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="GAP_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="GAP_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="GAP_TIMER_START_TIME" Type="TIME"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="WAIT_STAR" x="200" y="0"/>
+      <ECState Name="WAIT_GAP" x="400" y="0"/>
+      <ECState Name="WAIT_DELTA" x="600" y="0"/>
+      <ECState Name="FROM_OFF" x="800" y="0">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="logic"/>
+      </ECState>
+      <ECState Name="FROM_STAR" x="1000" y="0">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="logic"/>
+      </ECState>
+      <ECState Name="FROM_GAP" x="200" y="150">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="logic"/>
+      </ECState>
+      <ECState Name="FROM_DELTA" x="400" y="150">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="logic"/>
+      </ECState>
+      <ECState Name="OFF" x="600" y="150">
+        <ECAction Algorithm="off" Output="CNF"/>
+      </ECState>
+      <ECState Name="STAR" x="800" y="150">
+        <ECAction Algorithm="star" Output="CNF"/>
+      </ECState>
+      <ECState Name="GAP" x="1000" y="150">
+        <ECAction Algorithm="gap" Output="CNF"/>
+      </ECState>
+      <ECState Name="DELTA" x="200" y="300">
+        <ECAction Algorithm="delta" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="FROM_OFF" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_STAR" Destination="FROM_STAR" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_GAP" Destination="FROM_GAP" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_DELTA" Destination="FROM_DELTA" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="FROM_OFF" Destination="OFF" Condition="[NOT RUN_CMD]" x="0" y="0"/>
+      <ECTransition Source="FROM_OFF" Destination="STAR" Condition="1" x="0" y="0"/>
+      <ECTransition Source="FROM_STAR" Destination="OFF" Condition="[NOT RUN_CMD]" x="0" y="0"/>
+      <ECTransition Source="FROM_STAR" Destination="GAP" Condition="[STAR_TIMER_Q]" x="0" y="0"/>
+      <ECTransition Source="FROM_STAR" Destination="STAR" Condition="1" x="0" y="0"/>
+      <ECTransition Source="FROM_GAP" Destination="OFF" Condition="[NOT RUN_CMD]" x="0" y="0"/>
+      <ECTransition Source="FROM_GAP" Destination="DELTA" Condition="[GAP_TIMER_Q]" x="0" y="0"/>
+      <ECTransition Source="FROM_GAP" Destination="GAP" Condition="1" x="0" y="0"/>
+      <ECTransition Source="FROM_DELTA" Destination="OFF" Condition="[NOT RUN_CMD]" x="0" y="0"/>
+      <ECTransition Source="FROM_DELTA" Destination="DELTA" Condition="1" x="0" y="0"/>
+      <ECTransition Source="OFF" Destination="START" Condition="1" x="0" y="0"/>
+      <ECTransition Source="STAR" Destination="WAIT_STAR" Condition="1" x="0" y="0"/>
+      <ECTransition Source="GAP" Destination="WAIT_GAP" Condition="1" x="0" y="0"/>
+      <ECTransition Source="DELTA" Destination="WAIT_DELTA" Condition="1" x="0" y="0"/>
+    </ECC>
+    <Algorithm Name="clock">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="logic">
+      <ST><![CDATA[
+RUN_CMD := (START_PB OR RUN_CMD) AND NOT STOP_PB AND NOT OVERLOAD;
+STAR_TIMER_IN := RUN_CMD;
+STAR_TIMER_PT := STAR_TIME;
+IF STAR_TIMER_STATE = 0 AND NOT STAR_TIMER_PREV_IN AND STAR_TIMER_IN THEN
+  STAR_TIMER_STATE := 1;
+  STAR_TIMER_Q := FALSE;
+  STAR_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT STAR_TIMER_IN THEN
+    STAR_TIMER_ET := T#0s;
+    STAR_TIMER_Q := FALSE;
+    STAR_TIMER_STATE := 0;
+  ELSIF STAR_TIMER_STATE = 1 THEN
+    IF STAR_TIMER_START_TIME + STAR_TIMER_PT <= ST2FB_NOW THEN
+      STAR_TIMER_STATE := 2;
+      STAR_TIMER_Q := TRUE;
+      STAR_TIMER_ET := STAR_TIMER_PT;
+    ELSE
+      STAR_TIMER_ET := ST2FB_NOW - STAR_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+STAR_TIMER_PREV_IN := STAR_TIMER_IN;
+GAP_TIMER_IN := STAR_TIMER_Q;
+GAP_TIMER_PT := T#50ms;
+IF GAP_TIMER_STATE = 0 AND NOT GAP_TIMER_PREV_IN AND GAP_TIMER_IN THEN
+  GAP_TIMER_STATE := 1;
+  GAP_TIMER_Q := FALSE;
+  GAP_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT GAP_TIMER_IN THEN
+    GAP_TIMER_ET := T#0s;
+    GAP_TIMER_Q := FALSE;
+    GAP_TIMER_STATE := 0;
+  ELSIF GAP_TIMER_STATE = 1 THEN
+    IF GAP_TIMER_START_TIME + GAP_TIMER_PT <= ST2FB_NOW THEN
+      GAP_TIMER_STATE := 2;
+      GAP_TIMER_Q := TRUE;
+      GAP_TIMER_ET := GAP_TIMER_PT;
+    ELSE
+      GAP_TIMER_ET := ST2FB_NOW - GAP_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+GAP_TIMER_PREV_IN := GAP_TIMER_IN;
+STAR_ELAPSED := STAR_TIMER_ET;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="off">
+      <ST><![CDATA[
+K_MAIN := FALSE;
+K_STAR := FALSE;
+K_DELTA := FALSE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="star">
+      <ST><![CDATA[
+K_MAIN := TRUE;
+K_STAR := TRUE;
+K_DELTA := FALSE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="gap">
+      <ST><![CDATA[
+K_MAIN := TRUE;
+K_STAR := FALSE;
+K_DELTA := FALSE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="delta">
+      <ST><![CDATA[
+K_MAIN := TRUE;
+K_STAR := FALSE;
+K_DELTA := TRUE;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

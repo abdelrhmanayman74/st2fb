@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="GATE_CYCLE">
+<InterfaceList>
+<EventInputs><Event Name="REQ" Type="Event"><With Var="OPEN_CMD"/><With Var="AT_TOP"/></Event></EventInputs>
+<EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/><With Var="MOTOR"/><With Var="CYCLES"/></Event></EventOutputs>
+<InputVars><VarDeclaration Name="OPEN_CMD" Type="BOOL"/><VarDeclaration Name="AT_TOP" Type="BOOL"/></InputVars>
+<OutputVars><VarDeclaration Name="SEQ" Type="INT"/><VarDeclaration Name="MOTOR" Type="BOOL"/><VarDeclaration Name="CYCLES" Type="INT"/></OutputVars>
+</InterfaceList>
+<BasicFB>
+<InternalVars><VarDeclaration Name="K" Type="INT"/></InternalVars>
+<ECC>
+<ECState Name="START"></ECState>
+<ECState Name="SA"><ECAction Algorithm="scan" Output="CNF"/></ECState>
+<ECState Name="PB"></ECState>
+<ECState Name="SB"><ECAction Algorithm="noop"/><ECAction Algorithm="scan" Output="CNF"/></ECState>
+<ECTransition Source="START" Destination="SA" Condition="REQ"/>
+<ECTransition Source="SA" Destination="PB" Condition="1"/>
+<ECTransition Source="PB" Destination="SB" Condition="REQ"/>
+<ECTransition Source="SB" Destination="START" Condition="1"/>
+</ECC>
+<Algorithm Name="scan"><ST><![CDATA[
+K := SEQ;
+MOTOR := FALSE;
+CASE K OF
+ 0: IF OPEN_CMD THEN SEQ := 1; END_IF;
+ 1: MOTOR := TRUE; IF AT_TOP THEN SEQ := 2; END_IF;
+ 2: CYCLES := CYCLES + 1; SEQ := 0;
+END_CASE;
+]]></ST></Algorithm>
+<Algorithm Name="noop"><ST><![CDATA[
+K := 0;
+]]></ST></Algorithm>
+</BasicFB>
+</FBType>

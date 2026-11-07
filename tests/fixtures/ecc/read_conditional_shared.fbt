@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Needs reading R3: exit guards after a shared algorithm that only sometimes assigns, so the value read may be the carried-over one">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars><VarDeclaration Name="D" Type="INT"/></InternalVars>
+    <ECC>
+      <ECState Name="START"></ECState>
+      <ECState Name="PHASE2"></ECState>
+      <ECState Name="LA"><ECAction Algorithm="load"/></ECState>
+      <ECState Name="LB"><ECAction Algorithm="load"/><ECAction Algorithm="noop"/></ECState>
+      <ECState Name="SA"><ECAction Algorithm="a0" Output="CNF"/></ECState>
+      <ECState Name="SB"><ECAction Algorithm="a1" Output="CNF"/></ECState>
+      <ECState Name="SC"><ECAction Algorithm="a2" Output="CNF"/></ECState>
+      <ECState Name="SD"><ECAction Algorithm="a0" Output="CNF"/></ECState>
+      <ECState Name="SE"><ECAction Algorithm="a1" Output="CNF"/></ECState>
+      <ECState Name="SF"><ECAction Algorithm="a2" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="LA" Condition="REQ"/>
+      <ECTransition Source="PHASE2" Destination="LB" Condition="REQ"/>
+      <ECTransition Source="LA" Destination="SA" Condition="[SEQ = 0]"/>
+      <ECTransition Source="LA" Destination="SB" Condition="[SEQ = 1]"/>
+      <ECTransition Source="LA" Destination="SC" Condition="1"/>
+      <ECTransition Source="LB" Destination="SD" Condition="[SEQ = 0]"/>
+      <ECTransition Source="LB" Destination="SE" Condition="[SEQ = 1]"/>
+      <ECTransition Source="LB" Destination="SF" Condition="1"/>
+      <ECTransition Source="SA" Destination="PHASE2" Condition="1"/>
+      <ECTransition Source="SB" Destination="PHASE2" Condition="1"/>
+      <ECTransition Source="SC" Destination="PHASE2" Condition="1"/>
+      <ECTransition Source="SD" Destination="START" Condition="1"/>
+      <ECTransition Source="SE" Destination="START" Condition="1"/>
+      <ECTransition Source="SF" Destination="START" Condition="1"/>
+    </ECC>
+    <Algorithm Name="load"><ST><![CDATA[
+IF GO THEN
+  SEQ := 2;
+END_IF;
+]]></ST></Algorithm>
+    <Algorithm Name="a0"><ST><![CDATA[
+SEQ := 1;
+]]></ST></Algorithm>
+    <Algorithm Name="a1"><ST><![CDATA[
+SEQ := 2;
+]]></ST></Algorithm>
+    <Algorithm Name="a2"><ST><![CDATA[
+SEQ := 0;
+]]></ST></Algorithm>
+    <Algorithm Name="noop"><ST><![CDATA[
+D := 0;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

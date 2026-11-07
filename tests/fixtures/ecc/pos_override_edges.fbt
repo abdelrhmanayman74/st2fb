@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Positive: an input override reaches one state from every position, and not all scans pass through it">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="A"><ECAction Algorithm="step_a" Output="CNF"/></ECState>
+      <ECState Name="WAIT_B"/>
+      <ECState Name="B"><ECAction Algorithm="step_b" Output="CNF"/></ECState>
+      <ECState Name="OVERRIDE"><ECAction Algorithm="reset" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="OVERRIDE" Condition="REQ[NOT GO]"/>
+      <ECTransition Source="START" Destination="A" Condition="REQ"/>
+      <ECTransition Source="A" Destination="WAIT_B" Condition="[GO]"/>
+      <ECTransition Source="A" Destination="START" Condition="1"/>
+      <ECTransition Source="WAIT_B" Destination="OVERRIDE" Condition="REQ[NOT GO]"/>
+      <ECTransition Source="WAIT_B" Destination="B" Condition="REQ"/>
+      <ECTransition Source="B" Destination="WAIT_B" Condition="1"/>
+      <ECTransition Source="OVERRIDE" Destination="START" Condition="1"/>
+    </ECC>
+    <Algorithm Name="step_a"><ST><![CDATA[
+SEQ := 0;
+IF GO THEN
+  SEQ := 1;
+END_IF;
+]]></ST></Algorithm>
+    <Algorithm Name="step_b"><ST><![CDATA[
+IF NOT GO THEN
+  SEQ := 0;
+END_IF;
+]]></ST></Algorithm>
+    <Algorithm Name="reset"><ST><![CDATA[
+SEQ := 0;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

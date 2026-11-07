@@ -126,6 +126,11 @@ def parse_fbt(text: str) -> FBType:
     basic = root.find("BasicFB")
     if interface is None or basic is None:
         raise FbtError("expected InterfaceList and BasicFB elements")
+    # Reading only BasicFB would silently drop a misplaced block, and the exporter would then report
+    # its variables as undeclared, which sends a reader or a repair prompt the wrong way.
+    for parent in root.iter():
+        if parent is not basic and parent.find("InternalVars") is not None:
+            raise FbtError(f"<InternalVars> must be inside <BasicFB>, not inside <{parent.tag}>")
     ecc = basic.find("ECC")
     if ecc is None:
         raise FbtError("BasicFB has no ECC")

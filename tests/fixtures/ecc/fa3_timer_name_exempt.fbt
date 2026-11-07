@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="GATE_CYCLE">
+<InterfaceList>
+<EventInputs><Event Name="REQ" Type="Event"><With Var="OPEN_CMD"/><With Var="AT_TOP"/></Event></EventInputs>
+<EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/><With Var="MOTOR"/><With Var="CYCLES"/></Event></EventOutputs>
+<InputVars><VarDeclaration Name="OPEN_CMD" Type="BOOL"/><VarDeclaration Name="AT_TOP" Type="BOOL"/></InputVars>
+<OutputVars><VarDeclaration Name="SEQ" Type="INT"/><VarDeclaration Name="MOTOR" Type="BOOL"/><VarDeclaration Name="CYCLES" Type="INT"/></OutputVars>
+</InterfaceList>
+<BasicFB>
+<InternalVars><VarDeclaration Name="SEQ_STATE" Type="INT"/><VarDeclaration Name="SEQ_START_TIME" Type="TIME"/></InternalVars>
+<ECC>
+<ECState Name="START"></ECState>
+<ECState Name="PHASE2"></ECState>
+<ECState Name="S0_START"><ECAction Algorithm="a0" Output="CNF"/></ECState>
+<ECState Name="S1_START"><ECAction Algorithm="a1" Output="CNF"/></ECState>
+<ECState Name="S2_START"><ECAction Algorithm="a2" Output="CNF"/></ECState>
+<ECState Name="S0_PHASE2"><ECAction Algorithm="noop"/><ECAction Algorithm="a0" Output="CNF"/></ECState>
+<ECState Name="S1_PHASE2"><ECAction Algorithm="noop"/><ECAction Algorithm="a1" Output="CNF"/></ECState>
+<ECState Name="S2_PHASE2"><ECAction Algorithm="noop"/><ECAction Algorithm="a2" Output="CNF"/></ECState>
+<ECTransition Source="START" Destination="S0_START" Condition="REQ[SEQ_STATE = 0]"/>
+<ECTransition Source="START" Destination="S1_START" Condition="REQ[SEQ_STATE = 1]"/>
+<ECTransition Source="START" Destination="S2_START" Condition="REQ"/>
+<ECTransition Source="PHASE2" Destination="S0_PHASE2" Condition="REQ[SEQ_STATE = 0]"/>
+<ECTransition Source="PHASE2" Destination="S1_PHASE2" Condition="REQ[SEQ_STATE = 1]"/>
+<ECTransition Source="PHASE2" Destination="S2_PHASE2" Condition="REQ"/>
+<ECTransition Source="S0_START" Destination="PHASE2" Condition="1"/>
+<ECTransition Source="S1_START" Destination="PHASE2" Condition="1"/>
+<ECTransition Source="S2_START" Destination="PHASE2" Condition="1"/>
+<ECTransition Source="S0_PHASE2" Destination="START" Condition="1"/>
+<ECTransition Source="S1_PHASE2" Destination="START" Condition="1"/>
+<ECTransition Source="S2_PHASE2" Destination="START" Condition="1"/>
+</ECC>
+<Algorithm Name="a0"><ST><![CDATA[
+MOTOR := FALSE;
+IF OPEN_CMD THEN SEQ := 1; END_IF;
+SEQ_STATE := SEQ;
+]]></ST></Algorithm>
+<Algorithm Name="a1"><ST><![CDATA[
+MOTOR := TRUE;
+IF AT_TOP THEN SEQ := 2; END_IF;
+SEQ_STATE := SEQ;
+]]></ST></Algorithm>
+<Algorithm Name="a2"><ST><![CDATA[
+MOTOR := FALSE;
+CYCLES := CYCLES + 1;
+SEQ := 0;
+SEQ_STATE := SEQ;
+]]></ST></Algorithm>
+<Algorithm Name="noop"><ST><![CDATA[
+CYCLES := CYCLES;
+]]></ST></Algorithm>
+</BasicFB>
+</FBType>

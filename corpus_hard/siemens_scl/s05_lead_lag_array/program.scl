@@ -1,0 +1,91 @@
+FUNCTION_BLOCK "FB_LeadLag"
+TITLE = 'Lead-lag selection over a pump array'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Pumps
+NAME : LeadLag
+VERSION : 1.1
+//Keeps one record per pump. On a rotate request the available pump after the current lead becomes the new lead.
+   VAR_INPUT 
+      i_rotate : Bool;
+      i_lagDemand : Bool;
+      i_avail1 : Bool;
+      i_avail2 : Bool;
+      i_avail3 : Bool;
+   END_VAR
+
+   VAR_OUTPUT 
+      o_lead : Int;
+      o_lag : Int;
+      o_run1 : Bool;
+      o_run2 : Bool;
+      o_run3 : Bool;
+      o_rotations : DInt;
+   END_VAR
+
+   VAR 
+      statPump : Array[1..3] of Struct
+         available : Bool;
+         runTicks : DInt;
+      END_STRUCT;
+      statRotateEdge {InstructionName := 'R_TRIG'; LibVersion := '1.0'} : R_TRIG;
+   END_VAR
+
+   VAR_TEMP 
+      tempIdx : Int;
+      tempCandidate : Int;
+      tempOffset : Int;
+   END_VAR
+
+   VAR CONSTANT 
+      C_PUMPS : Int := 3;
+   END_VAR
+
+
+BEGIN
+	REGION Read availability
+	    #statPump[1].available := #i_avail1;
+	    #statPump[2].available := #i_avail2;
+	    #statPump[3].available := #i_avail3;
+	END_REGION
+	
+	REGION Lead selection
+	    #statRotateEdge(CLK := #i_rotate);
+	    // The lead moves on a rotate request, on first use, and when it becomes unavailable.
+	    IF #statRotateEdge.Q OR #o_lead = 0 OR NOT #statPump[MAX(IN1 := #o_lead, IN2 := 1)].available THEN
+	        #tempCandidate := 0;
+	        FOR #tempOffset := 1 TO #C_PUMPS DO
+	            #tempIdx := (#o_lead + #tempOffset - 1) MOD #C_PUMPS + 1;
+	            IF NOT #statPump[#tempIdx].available THEN
+	                CONTINUE;
+	            END_IF;
+	            #tempCandidate := #tempIdx;
+	            EXIT;
+	        END_FOR;
+	        IF #tempCandidate <> #o_lead THEN
+	            #o_lead := #tempCandidate;
+	            #o_rotations += 1;
+	        END_IF;
+	    END_IF;
+	END_REGION
+	
+	REGION Lag selection
+	    // The lag is the first available pump counted from the lead, and is only chosen on demand.
+	    #o_lag := 0;
+	    IF #i_lagDemand AND #o_lead <> 0 THEN
+	        FOR #tempOffset := 1 TO #C_PUMPS - 1 DO
+	            #tempIdx := (#o_lead + #tempOffset - 1) MOD #C_PUMPS + 1;
+	            IF #statPump[#tempIdx].available THEN
+	                #o_lag := #tempIdx;
+	                EXIT;
+	            END_IF;
+	        END_FOR;
+	    END_IF;
+	END_REGION
+	
+	REGION Outputs
+	    #o_run1 := #o_lead = 1 OR #o_lag = 1;
+	    #o_run2 := #o_lead = 2 OR #o_lag = 2;
+	    #o_run3 := #o_lead = 3 OR #o_lag = 3;
+	END_REGION
+END_FUNCTION_BLOCK

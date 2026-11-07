@@ -1,0 +1,86 @@
+{
+  "mqtt_down": {
+    "before": {
+      "writes_per_s": 10.0,
+      "max_gap_ms": 100.96,
+      "wd_trips": 0,
+      "grants": 0
+    },
+    "during": {
+      "writes_per_s": 10.0,
+      "max_gap_ms": 101.2,
+      "wd_trips": 0,
+      "grants": 0
+    },
+    "reconnect_s": 0.41,
+    "level_before": 2.0009,
+    "level_after": 2.36661
+  },
+  "gateway_restart": {
+    "during": {
+      "writes_per_s": 10.0,
+      "max_gap_ms": 100.96,
+      "wd_trips": 0,
+      "grants": 0
+    },
+    "recovery_s": 2.06
+  },
+  "tsdb_down": {
+    "during": {
+      "writes_per_s": 10.0,
+      "max_gap_ms": 101.06,
+      "wd_trips": 0,
+      "grants": 0
+    }
+  },
+  "all_it_down": {
+    "during": {
+      "writes_per_s": 10.0,
+      "max_gap_ms": 100.95,
+      "wd_trips": 0,
+      "grants": 0
+    },
+    "started_pump_without_it": true
+  },
+  "sensor_stuck": {
+    "detect_s": 10.21,
+    "stuck_time_setting_s": 10,
+    "latched_until_ack": true,
+    "pumps_off": true
+  },
+  "modbus_link_loss": {
+    "cycle_during_outage_ms": {
+      "n": 36,
+      "mean": 99.978,
+      "median": 99.187,
+      "p95": 485.891,
+      "max": 983.789,
+      "min": 0.0
+    },
+    "wd_after_last_write_ms": 1012.6,
+    "wd_timeout_ms": 1000,
+    "guard_reports_loss_s": 1.23,
+    "epoch_changed_during_outage": false,
+    "resume_after_link_back_s": 0.47,
+    "level_during_outage_m": 3.44214,
+    "grants_after_link_back": 0
+  },
+  "forte_process_crash": {
+    "takeover_ms": 494.0,
+    "rejoined_as_standby": true
+  },
+  "remote_io_restart": {
+    "recover_s": 3.5,
+    "old_token": 21905,
+    "new_token": 63841
+  },
+  "machine": {
+    "date": "2026-11-07T04:03:16+02:00",
+    "cpu": "Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz",
+    "cpus": 12,
+    "kernel": "6.8.0-138-generic",
+    "kernel_version": "#138~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug  7 13:43:15 UTC ",
+    "docker": "28.0.0",
+    "environment": "simulated: one x86_64 PC, Docker bridge networks, no Raspberry Pi or ESP32"
+  }
+}

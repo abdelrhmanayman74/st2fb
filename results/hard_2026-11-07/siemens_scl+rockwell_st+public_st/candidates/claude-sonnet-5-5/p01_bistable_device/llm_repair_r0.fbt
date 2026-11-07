@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="GenericBistableDeviceModel" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="ActivateCmd"/><With Var="DeactivateCmd"/><With Var="cfgActTime"/><With Var="cfgDeactTime"/><With Var="simActFail"/><With Var="simDeactFail"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="Activated"/><With Var="Deactivated"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="ActivateCmd" Type="BOOL"/>
+      <VarDeclaration Name="DeactivateCmd" Type="BOOL"/>
+      <VarDeclaration Name="cfgActTime" Type="TIME" InitialValue="T#1s"/>
+      <VarDeclaration Name="cfgDeactTime" Type="TIME" InitialValue="T#1s"/>
+      <VarDeclaration Name="simActFail" Type="BOOL"/>
+      <VarDeclaration Name="simDeactFail" Type="BOOL"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="Activated" Type="BOOL"/>
+      <VarDeclaration Name="Deactivated" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="TransitionDelay_IN" Type="BOOL"/>
+      <VarDeclaration Name="TransitionDelay_PT" Type="TIME"/>
+      <VarDeclaration Name="TransitionDelay_Q" Type="BOOL"/>
+      <VarDeclaration Name="TransitionDelay_ET" Type="TIME"/>
+      <VarDeclaration Name="TransitionDelay_STATE" Type="INT"/>
+      <VarDeclaration Name="TransitionDelay_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="TransitionDelay_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+      <VarDeclaration Name="vState" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="vStateOld" Type="INT" InitialValue="3"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+CASE vState OF
+  0:
+    IF vState <> vStateOld THEN
+      TransitionDelay_IN := FALSE;
+      IF (TransitionDelay_STATE = 0) AND NOT TransitionDelay_PREV_IN AND TransitionDelay_IN THEN
+        TransitionDelay_STATE := 1;
+        TransitionDelay_Q := FALSE;
+        TransitionDelay_START_TIME := ST2FB_NOW;
+      ELSE
+        IF NOT TransitionDelay_IN THEN
+          TransitionDelay_ET := T#0s;
+          TransitionDelay_Q := FALSE;
+          TransitionDelay_STATE := 0;
+        ELSIF TransitionDelay_STATE = 1 THEN
+          IF TransitionDelay_START_TIME + TransitionDelay_PT <= ST2FB_NOW THEN
+            TransitionDelay_STATE := 2;
+            TransitionDelay_Q := TRUE;
+            TransitionDelay_ET := TransitionDelay_PT;
+          ELSE
+            TransitionDelay_ET := ST2FB_NOW - TransitionDelay_START_TIME;
+          END_IF;
+        END_IF;
+      END_IF;
+      TransitionDelay_PREV_IN := TransitionDelay_IN;
+      vStateOld := vState;
+    END_IF;
+    TransitionDelay_IN := ActivateCmd AND NOT simActFail;
+    TransitionDelay_PT := cfgActTime;
+    IF (TransitionDelay_STATE = 0) AND NOT TransitionDelay_PREV_IN AND TransitionDelay_IN THEN
+      TransitionDelay_STATE := 1;
+      TransitionDelay_Q := FALSE;
+      TransitionDelay_START_TIME := ST2FB_NOW;
+    ELSE
+      IF NOT TransitionDelay_IN THEN
+        TransitionDelay_ET := T#0s;
+        TransitionDelay_Q := FALSE;
+        TransitionDelay_STATE := 0;
+      ELSIF TransitionDelay_STATE = 1 THEN
+        IF TransitionDelay_START_TIME + TransitionDelay_PT <= ST2FB_NOW THEN
+          TransitionDelay_STATE := 2;
+          TransitionDelay_Q := TRUE;
+          TransitionDelay_ET := TransitionDelay_PT;
+        ELSE
+          TransitionDelay_ET := ST2FB_NOW - TransitionDelay_START_TIME;
+        END_IF;
+      END_IF;
+    END_IF;
+    TransitionDelay_PREV_IN := TransitionDelay_IN;
+    IF TransitionDelay_Q THEN
+      vState := 1;
+    END_IF;
+  1:
+    IF vState <> vStateOld THEN
+      TransitionDelay_IN := FALSE;
+      IF (TransitionDelay_STATE = 0) AND NOT TransitionDelay_PREV_IN AND TransitionDelay_IN THEN
+        TransitionDelay_STATE := 1;
+        TransitionDelay_Q := FALSE;
+        TransitionDelay_START_TIME := ST2FB_NOW;
+      ELSE
+        IF NOT TransitionDelay_IN THEN
+          TransitionDelay_ET := T#0s;
+          TransitionDelay_Q := FALSE;
+          TransitionDelay_STATE := 0;
+        ELSIF TransitionDelay_STATE = 1 THEN
+          IF TransitionDelay_START_TIME + TransitionDelay_PT <= ST2FB_NOW THEN
+            TransitionDelay_STATE := 2;
+            TransitionDelay_Q := TRUE;
+            TransitionDelay_ET := TransitionDelay_PT;
+          ELSE
+            TransitionDelay_ET := ST2FB_NOW - TransitionDelay_START_TIME;
+          END_IF;
+        END_IF;
+      END_IF;
+      TransitionDelay_PREV_IN := TransitionDelay_IN;
+      vStateOld := vState;
+    END_IF;
+    TransitionDelay_IN := DeactivateCmd AND NOT simDeactFail;
+    TransitionDelay_PT := cfgDeactTime;
+    IF (TransitionDelay_STATE = 0) AND NOT TransitionDelay_PREV_IN AND TransitionDelay_IN THEN
+      TransitionDelay_STATE := 1;
+      TransitionDelay_Q := FALSE;
+      TransitionDelay_START_TIME := ST2FB_NOW;
+    ELSE
+      IF NOT TransitionDelay_IN THEN
+        TransitionDelay_ET := T#0s;
+        TransitionDelay_Q := FALSE;
+        TransitionDelay_STATE := 0;
+      ELSIF TransitionDelay_STATE = 1 THEN
+        IF TransitionDelay_START_TIME + TransitionDelay_PT <= ST2FB_NOW THEN
+          TransitionDelay_STATE := 2;
+          TransitionDelay_Q := TRUE;
+          TransitionDelay_ET := TransitionDelay_PT;
+        ELSE
+          TransitionDelay_ET := ST2FB_NOW - TransitionDelay_START_TIME;
+        END_IF;
+      END_IF;
+    END_IF;
+    TransitionDelay_PREV_IN := TransitionDelay_IN;
+    IF TransitionDelay_Q THEN
+      vState := 0;
+    END_IF;
+END_CASE;
+Activated := vState = 1;
+Deactivated := vState = 0;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

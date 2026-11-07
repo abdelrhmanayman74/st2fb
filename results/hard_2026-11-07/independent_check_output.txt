@@ -1,0 +1,44 @@
+ecc_06_star_delta ALLEQUAL {'heldout_stimulus': 1427, 'stimulus': 767, 'rand': 1200}
+ecc_13_case_sequencer ALLEQUAL {'heldout_stimulus': 1685, 'stimulus': 1134, 'rand': 1200}
+ecc_14_batch_filling ALLEQUAL {'heldout_stimulus': 1506, 'stimulus': 981, 'rand': 1200}
+ecc_20_pump_station_supervisor ALLEQUAL {'heldout_stimulus': 2366, 'stimulus': 1990, 'rand': 1200}
+p01_bistable_device ALLEQUAL {'heldout_stimulus': 979, 'heldout_stimulus_2': 832, 'stimulus': 459, 'rand': 1200}
+p02_pi_controller ALLEQUAL {'heldout_stimulus': 780, 'heldout_stimulus_2': 840, 'stimulus': 447, 'rand': 1200}
+p03_alpha_beta_filter ALLEQUAL {'heldout_stimulus': 595, 'heldout_stimulus_2': 616, 'stimulus': 276, 'rand': 1200}
+p04_debounce_bool ALLEQUAL {'heldout_stimulus': 904, 'heldout_stimulus_2': 765, 'stimulus': 417, 'rand': 1200}
+r01_motor_aoi ALLEQUAL {'heldout_stimulus': 1163, 'heldout_stimulus_2': 1066, 'stimulus': 644, 'rand': 1200}
+r02_fill_retry_aoi ALLEQUAL {'heldout_stimulus': 1263, 'heldout_stimulus_2': 1341, 'stimulus': 708, 'rand': 1200}
+r03_sequence_aoi ALLEQUAL {'heldout_stimulus': 1255, 'heldout_stimulus_2': 1142, 'stimulus': 691, 'rand': 1200}
+r04_alarm_word_aoi ALLEQUAL {'heldout_stimulus': 1006, 'heldout_stimulus_2': 1064, 'stimulus': 493, 'rand': 1200}
+s01_conveyor_starter ALLEQUAL {'heldout_stimulus': 1076, 'heldout_stimulus_2': 917, 'stimulus': 528, 'rand': 1200}
+s02_analog_input ALLEQUAL {'heldout_stimulus': 1401, 'heldout_stimulus_2': 1519, 'stimulus': 370, 'rand': 1200}
+s03_valve_monitor ALLEQUAL {'heldout_stimulus': 962, 'heldout_stimulus_2': 842, 'stimulus': 459, 'rand': 1200}
+s04_batch_steps ALLEQUAL {'heldout_stimulus': 1300, 'heldout_stimulus_2': 1153, 'stimulus': 711, 'rand': 1200}
+s05_lead_lag_array ALLEQUAL {'heldout_stimulus': 699, 'heldout_stimulus_2': 722, 'stimulus': 362, 'rand': 1200}
+s06_status_word ALLEQUAL {'heldout_stimulus': 1290, 'heldout_stimulus_2': 1340, 'stimulus': 325, 'rand': 1200}
+s07_heater_pi ALLEQUAL {'heldout_stimulus': 715, 'heldout_stimulus_2': 719, 'stimulus': 374, 'rand': 1200}
+s08_packaging_counter ALLEQUAL {'heldout_stimulus': 1137, 'heldout_stimulus_2': 1244, 'stimulus': 543, 'rand': 1200}
+programs not fully equal: 0
+MUT ecc_06_star_delta {'killed': 4, 'survived': 1} ['mutant_004.fbt']
+MUT ecc_13_case_sequencer {'killed': 5} []
+MUT ecc_14_batch_filling {'killed': 4, 'survived': 1} ['mutant_003.fbt']
+MUT ecc_20_pump_station_supervisor {'killed': 5} []
+MUT p01_bistable_device {'survived': 4, 'killed': 1} ['mutant_000.fbt', 'mutant_002.fbt', 'mutant_003.fbt', 'mutant_004.fbt']
+MUT p02_pi_controller {'survived': 1, 'killed': 4} ['mutant_000.fbt']
+MUT p03_alpha_beta_filter {'survived': 2, 'killed': 3} ['mutant_000.fbt', 'mutant_001.fbt']
+MUT p04_debounce_bool {'killed': 4, 'survived': 1} ['mutant_004.fbt']
+MUT r01_motor_aoi {'killed': 5} []
+MUT r02_fill_retry_aoi {'killed': 5} []
+MUT r03_sequence_aoi {'killed': 3, 'survived': 2} ['mutant_001.fbt', 'mutant_003.fbt']
+MUT r04_alarm_word_aoi {'killed': 4, 'survived': 1} ['mutant_004.fbt']
+MUT s01_conveyor_starter {'killed': 5} []
+MUT s02_analog_input {'killed': 3, 'survived': 2} ['mutant_001.fbt', 'mutant_003.fbt']
+MUT s03_valve_monitor {'killed': 5} []
+MUT s04_batch_steps {'killed': 4, 'survived': 1} ['mutant_001.fbt']
+MUT s05_lead_lag_array {'killed': 5} []
+MUT s06_status_word {'killed': 5} []
+MUT s07_heater_pi {'killed': 5} []
+MUT s08_packaging_counter {'killed': 5} []
+MUT TOTAL {'killed': 84, 'survived': 16}
+
+[exited with code 0]

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="HYST_SM">
+<InterfaceList>
+<EventInputs><Event Name="REQ" Type="Event"><With Var="RAW"/></Event></EventInputs>
+<EventOutputs><Event Name="CNF" Type="Event"><With Var="PUMP"/><With Var="FILTERED"/><With Var="STARTS"/></Event></EventOutputs>
+<InputVars><VarDeclaration Name="RAW" Type="INT"/></InputVars>
+<OutputVars><VarDeclaration Name="PUMP" Type="BOOL"/><VarDeclaration Name="FILTERED" Type="INT"/><VarDeclaration Name="STARTS" Type="INT"/></OutputVars>
+</InterfaceList>
+<BasicFB>
+<InternalVars></InternalVars>
+<ECC>
+<ECState Name="START"></ECState>
+<ECState Name="OFF_K"><ECAction Algorithm="filt" Output="CNF"/></ECState>
+<ECState Name="TURN_ON"><ECAction Algorithm="on" Output="CNF"/></ECState>
+<ECState Name="WON"></ECState>
+<ECState Name="ON_K"><ECAction Algorithm="filt" Output="CNF"/></ECState>
+<ECState Name="TURN_OFF"><ECAction Algorithm="off" Output="CNF"/></ECState>
+<ECTransition Source="START" Destination="TURN_ON" Condition="REQ[FILTERED &gt; 10]"/>
+<ECTransition Source="START" Destination="OFF_K" Condition="REQ"/>
+<ECTransition Source="OFF_K" Destination="START" Condition="1"/>
+<ECTransition Source="TURN_ON" Destination="WON" Condition="1"/>
+<ECTransition Source="WON" Destination="TURN_OFF" Condition="REQ[FILTERED &lt; 5]"/>
+<ECTransition Source="WON" Destination="ON_K" Condition="REQ"/>
+<ECTransition Source="ON_K" Destination="WON" Condition="1"/>
+<ECTransition Source="TURN_OFF" Destination="START" Condition="1"/>
+</ECC>
+<Algorithm Name="filt"><ST><![CDATA[
+FILTERED := (FILTERED + RAW) / 2;
+]]></ST></Algorithm>
+<Algorithm Name="on"><ST><![CDATA[
+PUMP := TRUE;
+STARTS := STARTS + 1;
+FILTERED := (FILTERED + RAW) / 2;
+]]></ST></Algorithm>
+<Algorithm Name="off"><ST><![CDATA[
+PUMP := FALSE;
+FILTERED := (FILTERED + RAW) / 2;
+]]></ST></Algorithm>
+</BasicFB>
+</FBType>

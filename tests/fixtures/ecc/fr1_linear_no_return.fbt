@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="LINEAR_START">
+<InterfaceList>
+<EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/><With Var="READY"/></Event></EventInputs>
+<EventOutputs><Event Name="CNF" Type="Event"><With Var="STP"/><With Var="CHARGING"/><With Var="RUNNING"/></Event></EventOutputs>
+<InputVars><VarDeclaration Name="GO" Type="BOOL"/><VarDeclaration Name="READY" Type="BOOL"/></InputVars>
+<OutputVars><VarDeclaration Name="STP" Type="INT"/><VarDeclaration Name="CHARGING" Type="BOOL"/><VarDeclaration Name="RUNNING" Type="BOOL"/></OutputVars>
+</InterfaceList>
+<BasicFB>
+<InternalVars></InternalVars>
+<ECC>
+<ECState Name="START"></ECState>
+<ECState Name="IDLE_S"><ECAction Algorithm="idle" Output="CNF"/></ECState>
+<ECState Name="W1"></ECState>
+<ECState Name="CHG_S"><ECAction Algorithm="chg" Output="CNF"/></ECState>
+<ECState Name="W2"></ECState>
+<ECState Name="RUN_S"><ECAction Algorithm="run" Output="CNF"/></ECState>
+<ECTransition Source="START" Destination="IDLE_S" Condition="REQ"/>
+<ECTransition Source="IDLE_S" Destination="W1" Condition="[GO]"/>
+<ECTransition Source="IDLE_S" Destination="START" Condition="1"/>
+<ECTransition Source="W1" Destination="CHG_S" Condition="REQ"/>
+<ECTransition Source="CHG_S" Destination="W2" Condition="[READY]"/>
+<ECTransition Source="CHG_S" Destination="W1" Condition="1"/>
+<ECTransition Source="W2" Destination="RUN_S" Condition="REQ"/>
+<ECTransition Source="RUN_S" Destination="W2" Condition="1"/>
+</ECC>
+<Algorithm Name="idle"><ST><![CDATA[
+CHARGING := FALSE;
+IF GO THEN STP := 1; END_IF;
+]]></ST></Algorithm>
+<Algorithm Name="chg"><ST><![CDATA[
+CHARGING := TRUE;
+IF READY THEN STP := 2; END_IF;
+]]></ST></Algorithm>
+<Algorithm Name="run"><ST><![CDATA[
+CHARGING := FALSE;
+RUNNING := TRUE;
+]]></ST></Algorithm>
+</BasicFB>
+</FBType>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Negative C1: a second waiting state, but START is only ever left once">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="RUN"><ECAction Algorithm="step_a" Output="CNF"/></ECState>
+      <ECState Name="WAIT"/>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ"/>
+      <ECTransition Source="RUN" Destination="WAIT" Condition="1"/>
+      <ECTransition Source="WAIT" Destination="RUN" Condition="REQ"/>
+    </ECC>
+    <Algorithm Name="step_a"><ST><![CDATA[
+SEQ := 0;
+IF GO THEN
+  SEQ := 1;
+END_IF;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

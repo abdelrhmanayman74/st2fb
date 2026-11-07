@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>st2fb pump station (simulated)</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    color-scheme: light;
+    --surface: #f4f3f0; --card: #fcfcfb; --text: #0b0b0b; --text2: #52514e; --grid: #e4e3df;
+    --series-1: #2a78d6;
+    --good: #1baf7a; --warning: #eda100; --serious: #eb6834; --critical: #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface: #111110; --card: #1a1a19; --text: #f0efec; --text2: #c3c2b7; --grid: #33332f;
+      --series-1: #3987e5;
+      --good: #199e70; --warning: #c98500; --serious: #d95926; --critical: #e66767;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface); color: var(--text); font: 15px/1.45 system-ui, sans-serif; }
+  header { padding: 14px 20px; display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  h1 { font-size: 19px; margin: 0; font-weight: 600; }
+  h2 { font-size: 13px; margin: 0 0 10px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .04em; }
+  .sim { font-size: 13px; color: var(--text2); }
+  main { display: grid; gap: 14px; padding: 0 20px 20px; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
+  section { background: var(--card); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+  .wide { grid-column: 1 / -1; }
+  .hero { font-size: 40px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .unit { font-size: 16px; font-weight: 400; color: var(--text2); }
+  .muted { color: var(--text2); font-size: 13px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px solid var(--grid); }
+  .row:last-child { border-bottom: 0; }
+  .row b { font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+  .pump { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--grid); }
+  .dot.on { background: var(--good); }
+  .alarm { display: flex; gap: 8px; align-items: center; padding: 5px 0; }
+  .alarm .tag { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  svg { display: block; width: 100%; }
+  #chart { height: 190px; }
+  #pumpChart { height: 70px; }
+  .chartTitle { font-size: 13px; color: var(--text2); margin: 8px 0 2px; }
+  #tip { position: fixed; display: none; background: var(--card); border: 1px solid var(--grid); border-radius: 6px; padding: 5px 8px; font-size: 13px; pointer-events: none; }
+  form { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; align-items: end; }
+  label { font-size: 13px; color: var(--text2); display: block; }
+  input { width: 100%; padding: 6px 8px; font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--grid); border-radius: 6px; }
+  button { padding: 7px 12px; font: inherit; border: 1px solid var(--grid); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; }
+  button:hover { border-color: var(--text2); }
+  #login { max-width: 420px; margin: 40px auto; }
+  #msg { min-height: 20px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pump station</h1>
+  <span class="sim">Simulated plant and I/O. Demo only, not a control or safety system.</span>
+  <span class="sim" id="updated"></span>
+</header>
+
+<section id="login">
+  <h2>Sign in</h2>
+  <form id="loginForm">
+    <div style="grid-column: 1 / -1"><label for="token">API token (see edge/.env)</label>
+      <input id="token" type="password" autocomplete="off"></div>
+    <button type="submit">Open dashboard</button>
+  </form>
+  <p class="muted" id="loginMsg"></p>
+</section>
+
+<main id="app" hidden>
+  <section>
+    <h2>Level</h2>
+    <div class="hero"><span id="level">-</span> <span class="unit">m</span></div>
+    <div class="muted" id="levelNote"></div>
+    <div class="row" style="margin-top:10px"><span>Station state</span><b id="state">-</b></div>
+    <div class="row"><span>Discharge flow</span><b id="flow">-</b></div>
+    <div class="row"><span>Total pumped</span><b id="total">-</b></div>
+  </section>
+  <section>
+    <h2>Pumps</h2>
+    <div class="pump"><span class="dot" id="p1dot"></span><span id="p1">Pump 1</span></div>
+    <div class="pump"><span class="dot" id="p2dot"></span><span id="p2">Pump 2</span></div>
+    <div class="row"><span>Lead pump</span><b id="lead">-</b></div>
+    <div class="row"><span>Starts</span><b id="starts">-</b></div>
+  </section>
+  <section>
+    <h2>Alarms</h2>
+    <div id="alarms"></div>
+    <button id="ack" style="margin-top:10px">Acknowledge</button>
+  </section>
+  <section>
+    <h2>Controller health</h2>
+    <div class="row"><span>Active node</span><b id="node">-</b></div>
+    <div class="row"><span>Fencing epoch</span><b id="epoch">-</b></div>
+    <div class="row"><span>Lease age / limit</span><b id="lease">-</b></div>
+    <div class="row"><span>Cycle time, last / max</span><b id="dt">-</b></div>
+    <div class="row"><span>Scan work, last</span><b id="exec">-</b></div>
+    <div class="row"><span>I/O watchdog</span><b id="wd">-</b></div>
+    <div class="row"><span>Control writes refused</span><b id="rejected">-</b></div>
+    <div class="row"><span>Gateway: I/O, MQTT, history</span><b id="links">-</b></div>
+  </section>
+  <section class="wide">
+    <h2>History, last 15 minutes</h2>
+    <div class="chartTitle">Filtered level, m</div>
+    <svg id="chart" role="img" aria-label="Filtered level history"></svg>
+    <div class="chartTitle">Pumps commanded on</div>
+    <svg id="pumpChart" role="img" aria-label="Pumps commanded on, history"></svg>
+    <div class="muted" id="chartNote"></div>
+  </section>
+  <section class="wide">
+    <h2>Setpoints (operator token)</h2>
+    <form id="setForm">
+      <div><label for="STOP_LEVEL">Stop, m</label><input id="STOP_LEVEL" type="number" step="0.05" min="0.2" max="5.5" required></div>
+      <div><label for="START_LEVEL">Start, m</label><input id="START_LEVEL" type="number" step="0.05" min="0.2" max="5.5" required></div>
+      <div><label for="LAG_LEVEL">Lag, m</label><input id="LAG_LEVEL" type="number" step="0.05" min="0.2" max="5.5" required></div>
+      <div><label for="HIGH_LEVEL">High alarm, m</label><input id="HIGH_LEVEL" type="number" step="0.05" min="0.2" max="5.5" required></div>
+      <button type="submit">Write setpoints</button>
+    </form>
+    <p class="muted" id="msg"></p>
+  </section>
+</main>
+<div id="tip"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let token = sessionStorage.getItem('st2fbToken') || '';
+let setpointsLoaded = false;
+
+async function api(path, options = {}) {
+  const res = await fetch(path, {...options, headers: {...(options.headers || {}), Authorization: 'Bearer ' + token, 'Content-Type': 'application/json'}});
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) { const e = new Error(typeof body.detail === 'string' ? body.detail : JSON.stringify(body.detail)); e.status = res.status; throw e; }
+  return body;
+}
+const fmt = (v, d) => (v === undefined || v === null) ? '-' : Number(v).toFixed(d);
+const ms = us => (us === undefined || us === null) ? '-' : (us / 1000).toFixed(1) + ' ms';
+const SEVERITY = {critical: 'var(--critical)', serious: 'var(--serious)', warning: 'var(--warning)'};
+
+function render(d) {
+  const t = d.tags, h = d.health, c = h.controller, r = h.remote_io, g = h.gateway;
+  $('level').textContent = fmt(t.FILTERED_LEVEL, 2);
+  $('levelNote').textContent = `Sensor ${fmt(t.RAW_LEVEL, 3)} m. Stop ${fmt(t.STOP_LEVEL,2)}, start ${fmt(t.START_LEVEL,2)}, lag ${fmt(t.LAG_LEVEL,2)}, high ${fmt(t.HIGH_LEVEL,2)}.`;
+  $('state').textContent = `${c.state_no} ${c.state_name}`;
+  $('flow').textContent = fmt(t.FLOW, 0) + ' m3/h';
+  $('total').textContent = fmt(t.TOTAL, 1) + ' m3';
+  for (const n of [1, 2]) {
+    const on = !!t['OUTPUT_' + n], fb = !!t['FB_' + n], trip = !!t['TRIP_' + n];
+    $(`p${n}dot`).className = 'dot' + (on ? ' on' : '');
+    $(`p${n}`).textContent = `Pump ${n}: ${on ? 'commanded on' : 'off'}, ${fb ? 'running' : 'stopped'}${trip ? ', TRIPPED' : ''}`;
+  }
+  $('lead').textContent = t.LEAD_IS_2 ? 'Pump 2' : 'Pump 1';
+  $('starts').textContent = t.STARTS ?? '-';
+  const list = d.alarms.alarms;
+  $('alarms').replaceChildren(...(list.length ? list.map(a => {
+    const row = document.createElement('div'); row.className = 'alarm';
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.style.background = SEVERITY[a.severity];
+    const text = document.createElement('span'); text.textContent = `${a.severity.toUpperCase()}: ${a.text}`;
+    row.append(tag, text); return row;
+  }) : [Object.assign(document.createElement('div'), {className: 'muted', textContent: 'No active alarms'})]));
+  $('node').textContent = c.active_node;
+  $('epoch').textContent = c.epoch ?? '-';
+  $('lease').textContent = `${c.lease_age_ms ?? '-'} / ${c.lease_ttl_ms ?? '-'} ms`;
+  $('dt').textContent = `${ms(c.last_dt_us)} / ${ms(c.max_dt_us)}`;
+  $('exec').textContent = ms(c.last_exec_us);
+  $('wd').textContent = r.watchdog_tripped ? 'TRIPPED, outputs safe' : `OK, trips ${r.watchdog_trips ?? '-'}`;
+  $('rejected').textContent = r.writes_rejected ?? '-';
+  $('links').textContent = [g.io_link_ok, g.mqtt_connected, g.tsdb_ok].map(x => x ? 'up' : 'DOWN').join(', ');
+  $('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+  if (!setpointsLoaded && t.STOP_LEVEL !== undefined) {
+    for (const k of ['STOP_LEVEL', 'START_LEVEL', 'LAG_LEVEL', 'HIGH_LEVEL']) $(k).value = t[k].toFixed(2);
+    setpointsLoaded = true;
+  }
+}
+
+function drawSeries(svg, points, yMax, ticks, height, color, describe, xLabels) {
+  const W = svg.clientWidth || 800, L = 34, R = 10, T = 8, B = xLabels ? 22 : 6;
+  svg.setAttribute('viewBox', `0 0 ${W} ${height}`);
+  const t0 = points[0][0], t1 = points[points.length - 1][0] || t0 + 1;
+  const x = t => L + (t - t0) / Math.max(1, t1 - t0) * (W - L - R), y = v => T + (1 - v / yMax) * (height - T - B);
+  let out = '';
+  for (const v of ticks) out += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--grid)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--text2)">${v}</text>`;
+  const d = 'M' + points.map(([t, v]) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join('L');
+  out += `<path d="${d}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if (xLabels) {
+    const fmtT = t => new Date(t * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+    out += `<text x="${L}" y="${height - 6}" font-size="11" fill="var(--text2)">${fmtT(t0)}</text><text x="${W - R}" y="${height - 6}" text-anchor="end" font-size="11" fill="var(--text2)">${fmtT(t1)}</text>`;
+  }
+  svg.innerHTML = out + `<line class="cross" y1="${T}" y2="${height - B}" stroke="var(--text2)" visibility="hidden"/>`;
+  svg.onmousemove = e => {
+    const box = svg.getBoundingClientRect(), px = (e.clientX - box.left) / box.width * W;
+    const t = t0 + (px - L) / (W - L - R) * (t1 - t0);
+    let best = points[0]; for (const p of points) if (Math.abs(p[0] - t) < Math.abs(best[0] - t)) best = p;
+    const cross = svg.querySelector('.cross'); cross.setAttribute('x1', x(best[0])); cross.setAttribute('x2', x(best[0])); cross.setAttribute('visibility', 'visible');
+    const tip = $('tip'); tip.style.display = 'block'; tip.style.left = (e.clientX + 14) + 'px'; tip.style.top = (e.clientY - 10) + 'px';
+    tip.textContent = `${new Date(best[0] * 1000).toLocaleTimeString()}  ${describe(best[1])}`;
+  };
+  svg.onmouseleave = () => { $('tip').style.display = 'none'; svg.querySelector('.cross').setAttribute('visibility', 'hidden'); };
+}
+
+function drawChart(level, p1, p2) {
+  if (!level.length) { $('chart').innerHTML = ''; $('pumpChart').innerHTML = ''; $('chartNote').textContent = 'No history yet.'; return; }
+  drawSeries($('chart'), level, 6, [0, 2, 4, 6], 190, 'var(--series-1)', v => `level ${v.toFixed(2)} m`, true);
+  const running = new Map(p1.map(([t, v]) => [t, v]));
+  for (const [t, v] of p2) running.set(t, (running.get(t) || 0) + v);
+  const steps = [...running.entries()].sort((a, b) => a[0] - b[0]);
+  if (steps.length) drawSeries($('pumpChart'), steps, 2, [0, 2], 70, 'var(--series-1)', v => `${v} pumps on`, false);
+  $('chartNote').textContent = `From the time-series database, ${level.length} points.`;
+}
+
+async function tick() {
+  try { render(await api('/api/v1/dashboard')); }
+  catch (e) {
+    if (e.status === 401) { signOut('Token refused.'); return; }
+    $('updated').textContent = 'No data: ' + e.message;
+  }
+}
+async function loadChart() {
+  try {
+    const q = t => api(`/api/v1/history?tag=${t}&minutes=15`).then(r => r.points);
+    const [level, p1, p2] = await Promise.all([q('filtered_level'), q('output_1'), q('output_2')]);
+    drawChart(level, p1, p2);
+  } catch (e) { $('chartNote').textContent = 'History unavailable: ' + e.message; }
+}
+let timers = [];
+function start() {
+  $('login').hidden = true; $('app').hidden = false;
+  tick(); loadChart();
+  timers = [setInterval(tick, 1000), setInterval(loadChart, 15000)];
+}
+function signOut(message) {
+  timers.forEach(clearInterval); token = ''; sessionStorage.removeItem('st2fbToken');
+  $('app').hidden = true; $('login').hidden = false; $('loginMsg').textContent = message;
+}
+$('loginForm').onsubmit = e => { e.preventDefault(); token = $('token').value.trim(); sessionStorage.setItem('st2fbToken', token); start(); };
+$('setForm').onsubmit = async e => {
+  e.preventDefault();
+  const body = {}; for (const k of ['STOP_LEVEL', 'START_LEVEL', 'LAG_LEVEL', 'HIGH_LEVEL']) body[k] = Number($(k).value);
+  try { await api('/api/v1/setpoints', {method: 'PUT', body: JSON.stringify(body)}); $('msg').textContent = 'Written.'; }
+  catch (err) { $('msg').textContent = 'Refused: ' + err.message; }
+};
+$('ack').onclick = async () => {
+  try { await api('/api/v1/alarms/ack', {method: 'POST'}); $('msg').textContent = 'Acknowledge sent.'; }
+  catch (err) { $('msg').textContent = 'Refused: ' + err.message; }
+};
+if (token) start();
+</script>
+</body>
+</html>

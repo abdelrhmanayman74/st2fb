@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_BatchSteps" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_start"/><With Var="i_abort"/><With Var="i_doseDone"/><With Var="i_tempReached"/><With Var="i_tankEmpty"/><With Var="i_mixTime"/><With Var="i_holdTime"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_step"/><With Var="o_doseValve"/><With Var="o_mixer"/><With Var="o_heater"/><With Var="o_drainValve"/><With Var="o_batches"/><With Var="o_stepElapsed"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_start" Type="BOOL"/>
+      <VarDeclaration Name="i_abort" Type="BOOL"/>
+      <VarDeclaration Name="i_doseDone" Type="BOOL"/>
+      <VarDeclaration Name="i_tempReached" Type="BOOL"/>
+      <VarDeclaration Name="i_tankEmpty" Type="BOOL"/>
+      <VarDeclaration Name="i_mixTime" Type="TIME"/>
+      <VarDeclaration Name="i_holdTime" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_step" Type="INT"/>
+      <VarDeclaration Name="o_doseValve" Type="BOOL"/>
+      <VarDeclaration Name="o_mixer" Type="BOOL"/>
+      <VarDeclaration Name="o_heater" Type="BOOL"/>
+      <VarDeclaration Name="o_drainValve" Type="BOOL"/>
+      <VarDeclaration Name="o_batches" Type="INT"/>
+      <VarDeclaration Name="o_stepElapsed" Type="TIME"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statStepTimer_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStepTimer_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statStepTimer_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStepTimer_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statStepTimer_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="statStepTimer_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStepTimer_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statBatchCounter_CU" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statBatchCounter_R" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statBatchCounter_PV" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="statBatchCounter_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statBatchCounter_CV" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="statBatchCounter_CU_T_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statBatchCounter_CU_T_M" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStartEdge_CLK" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStartEdge_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStartEdge_M" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStepTimerRun" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statBatchDone" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statStepPreset" Type="TIME" InitialValue="T#0s"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+statStartEdge_CLK := i_start;
+statStartEdge_Q := statStartEdge_CLK AND NOT statStartEdge_M;
+statStartEdge_M := statStartEdge_CLK;
+
+statStepTimer_IN := statStepTimerRun;
+statStepTimer_PT := statStepPreset;
+IF (statStepTimer_STATE = 0) AND NOT statStepTimer_PREV_IN AND statStepTimer_IN THEN
+  statStepTimer_STATE := 1;
+  statStepTimer_Q := FALSE;
+  statStepTimer_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT statStepTimer_IN THEN
+    statStepTimer_ET := T#0s;
+    statStepTimer_Q := FALSE;
+    statStepTimer_STATE := 0;
+  ELSIF statStepTimer_STATE = 1 THEN
+    IF statStepTimer_START_TIME + statStepTimer_PT <= ST2FB_NOW THEN
+      statStepTimer_STATE := 2;
+      statStepTimer_Q := TRUE;
+      statStepTimer_ET := statStepTimer_PT;
+    ELSE
+      statStepTimer_ET := ST2FB_NOW - statStepTimer_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+statStepTimer_PREV_IN := statStepTimer_IN;
+o_stepElapsed := statStepTimer_ET;
+
+o_doseValve := FALSE;
+o_mixer := FALSE;
+o_heater := FALSE;
+o_drainValve := FALSE;
+statBatchDone := FALSE;
+IF i_abort AND o_step <> 0 THEN
+  o_step := 90;
+  statStepTimerRun := FALSE;
+END_IF;
+
+CASE o_step OF
+  0:
+    IF statStartEdge_Q AND NOT i_abort THEN
+      o_step := 10;
+    END_IF;
+  10:
+    o_doseValve := TRUE;
+    IF i_doseDone THEN
+      o_step := 20;
+      statStepPreset := i_mixTime;
+      statStepTimerRun := TRUE;
+    END_IF;
+  20:
+    o_mixer := TRUE;
+    IF statStepTimer_Q THEN
+      statStepTimerRun := FALSE;
+      o_step := 30;
+    END_IF;
+  30:
+    o_mixer := TRUE;
+    o_heater := TRUE;
+    IF i_tempReached THEN
+      o_step := 40;
+      statStepPreset := i_holdTime;
+      statStepTimerRun := TRUE;
+    END_IF;
+  40:
+    o_mixer := TRUE;
+    o_heater := NOT i_tempReached;
+    IF statStepTimer_Q THEN
+      statStepTimerRun := FALSE;
+      o_step := 50;
+    END_IF;
+  50:
+    o_drainValve := TRUE;
+    IF i_tankEmpty THEN
+      statBatchDone := TRUE;
+      o_step := 0;
+    END_IF;
+  90:
+    o_drainValve := TRUE;
+    IF i_tankEmpty AND NOT i_abort THEN
+      o_step := 0;
+    END_IF;
+ELSE
+  o_step := 0;
+END_CASE;
+
+statBatchCounter_CU := statBatchDone;
+statBatchCounter_R := FALSE;
+statBatchCounter_PV := 500;
+statBatchCounter_CU_T_Q := statBatchCounter_CU AND NOT statBatchCounter_CU_T_M;
+statBatchCounter_CU_T_M := statBatchCounter_CU;
+IF statBatchCounter_R THEN
+  statBatchCounter_CV := 0;
+ELSIF statBatchCounter_CU_T_Q AND (statBatchCounter_CV < statBatchCounter_PV) THEN
+  statBatchCounter_CV := statBatchCounter_CV + 1;
+END_IF;
+statBatchCounter_Q := statBatchCounter_CV >= statBatchCounter_PV;
+o_batches := statBatchCounter_CV;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

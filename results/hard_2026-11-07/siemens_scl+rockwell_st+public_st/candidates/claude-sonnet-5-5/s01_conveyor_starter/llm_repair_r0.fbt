@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_ConveyorStarter" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_start"/><With Var="i_stop"/><With Var="i_estopOk"/><With Var="i_overload"/><With Var="i_reset"/><With Var="i_hornTime"/><With Var="i_coastTime"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_run"/><With Var="o_horn"/><With Var="o_tripped"/><With Var="o_coasting"/><With Var="o_hornElapsed"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_start" Type="BOOL"/>
+      <VarDeclaration Name="i_stop" Type="BOOL"/>
+      <VarDeclaration Name="i_estopOk" Type="BOOL"/>
+      <VarDeclaration Name="i_overload" Type="BOOL"/>
+      <VarDeclaration Name="i_reset" Type="BOOL"/>
+      <VarDeclaration Name="i_hornTime" Type="TIME"/>
+      <VarDeclaration Name="i_coastTime" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_run" Type="BOOL"/>
+      <VarDeclaration Name="o_horn" Type="BOOL"/>
+      <VarDeclaration Name="o_tripped" Type="BOOL"/>
+      <VarDeclaration Name="o_coasting" Type="BOOL"/>
+      <VarDeclaration Name="o_hornElapsed" Type="TIME"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="statRunRequest" Type="BOOL"/>
+      <VarDeclaration Name="statTrip" Type="BOOL"/>
+      <VarDeclaration Name="statHornPreset" Type="TIME"/>
+      <VarDeclaration Name="statCoastPreset" Type="TIME"/>
+      <VarDeclaration Name="tempPermit" Type="BOOL"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+      <VarDeclaration Name="statStartEdge_CLK" Type="BOOL"/>
+      <VarDeclaration Name="statStartEdge_Q" Type="BOOL"/>
+      <VarDeclaration Name="statStartEdge_M" Type="BOOL"/>
+      <VarDeclaration Name="statHornTimer_IN" Type="BOOL"/>
+      <VarDeclaration Name="statHornTimer_PT" Type="TIME"/>
+      <VarDeclaration Name="statHornTimer_Q" Type="BOOL"/>
+      <VarDeclaration Name="statHornTimer_ET" Type="TIME"/>
+      <VarDeclaration Name="statHornTimer_STATE" Type="INT"/>
+      <VarDeclaration Name="statHornTimer_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="statHornTimer_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="statCoastTimer_IN" Type="BOOL"/>
+      <VarDeclaration Name="statCoastTimer_PT" Type="TIME"/>
+      <VarDeclaration Name="statCoastTimer_Q" Type="BOOL"/>
+      <VarDeclaration Name="statCoastTimer_ET" Type="TIME"/>
+      <VarDeclaration Name="statCoastTimer_STATE" Type="INT"/>
+      <VarDeclaration Name="statCoastTimer_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="statCoastTimer_START_TIME" Type="TIME"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+IF i_overload OR NOT i_estopOk THEN
+  statTrip := TRUE;
+ELSIF i_reset THEN
+  statTrip := FALSE;
+END_IF;
+tempPermit := i_estopOk AND NOT statTrip;
+
+IF NOT statRunRequest THEN
+  statHornPreset := i_hornTime;
+END_IF;
+IF o_run THEN
+  statCoastPreset := i_coastTime;
+END_IF;
+statStartEdge_CLK := i_start;
+statStartEdge_Q := statStartEdge_CLK AND NOT statStartEdge_M;
+statStartEdge_M := statStartEdge_CLK;
+IF i_stop OR NOT tempPermit THEN
+  statRunRequest := FALSE;
+ELSIF statStartEdge_Q THEN
+  statRunRequest := TRUE;
+END_IF;
+
+statHornTimer_IN := statRunRequest;
+statHornTimer_PT := statHornPreset;
+IF (statHornTimer_STATE = 0) AND NOT statHornTimer_PREV_IN AND statHornTimer_IN THEN
+  statHornTimer_STATE := 1;
+  statHornTimer_Q := FALSE;
+  statHornTimer_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT statHornTimer_IN THEN
+    statHornTimer_ET := T#0s;
+    statHornTimer_Q := FALSE;
+    statHornTimer_STATE := 0;
+  ELSIF statHornTimer_STATE = 1 THEN
+    IF statHornTimer_START_TIME + statHornTimer_PT <= ST2FB_NOW THEN
+      statHornTimer_STATE := 2;
+      statHornTimer_Q := TRUE;
+      statHornTimer_ET := statHornTimer_PT;
+    ELSE
+      statHornTimer_ET := ST2FB_NOW - statHornTimer_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+statHornTimer_PREV_IN := statHornTimer_IN;
+o_hornElapsed := statHornTimer_ET;
+o_horn := statRunRequest AND NOT statHornTimer_Q;
+o_run := statRunRequest AND statHornTimer_Q;
+
+statCoastTimer_IN := o_run;
+statCoastTimer_PT := statCoastPreset;
+IF (statCoastTimer_STATE = 0) AND statCoastTimer_PREV_IN AND NOT statCoastTimer_IN THEN
+  statCoastTimer_STATE := 1;
+  statCoastTimer_START_TIME := ST2FB_NOW;
+ELSE
+  IF statCoastTimer_IN THEN
+    statCoastTimer_ET := T#0s;
+    statCoastTimer_STATE := 0;
+  ELSIF statCoastTimer_STATE = 1 THEN
+    IF statCoastTimer_START_TIME + statCoastTimer_PT <= ST2FB_NOW THEN
+      statCoastTimer_STATE := 2;
+      statCoastTimer_ET := statCoastTimer_PT;
+    ELSE
+      statCoastTimer_ET := ST2FB_NOW - statCoastTimer_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+statCoastTimer_Q := statCoastTimer_IN OR (statCoastTimer_STATE = 1);
+statCoastTimer_PREV_IN := statCoastTimer_IN;
+o_coasting := statCoastTimer_Q AND NOT o_run;
+o_tripped := statTrip;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

@@ -1,0 +1,8 @@
+.env
+secrets/
+.venv/
+__pycache__/
+*.pyc
+firmware/esp32/.pio/
+firmware/esp32/include/wifi_secrets.h
+results/raw/

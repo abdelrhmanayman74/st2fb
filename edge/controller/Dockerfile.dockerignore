@@ -1,0 +1,8 @@
+**
+!controller/module/**
+!controller/patches/**
+!controller/generated/**
+!controller/agent/**
+!common/**
+!regmap.json
+**/__pycache__

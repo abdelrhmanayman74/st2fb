@@ -1,0 +1,93 @@
+FUNCTION_BLOCK "FB_PackagingCounter"
+TITLE = 'Carton counter with reject pulse and jam detection'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Packaging
+NAME : PackagingCounter
+VERSION : 1.0
+//Counts cartons on the falling edge of the photo eye, and fires a timed reject on the falling edge of the reject request.
+   VAR_INPUT 
+      i_photoEye : Bool;
+      i_rejectRequest : Bool;
+      i_resetCount : Bool;
+      i_batchSize : Int;
+      i_rejectPulse : Time;
+      i_jamTime : Time;
+      i_clearJam : Bool;
+      i_maxSpeed : Real;
+      i_speedRef : Real;
+   END_VAR
+
+   VAR_OUTPUT 
+      o_count : Int;
+      o_batchFull : Bool;
+      o_reject : Bool;
+      o_rejectElapsed : Time;
+      o_jam : Bool;
+      o_speed : Real;
+      o_rejected : Int;
+   END_VAR
+
+   VAR 
+      statEyePrev : Bool;
+      statRequestPrev : Bool;
+      statRejectPrev : Bool;
+      statRejectPreset : Time;
+      statJamPreset : Time;
+      statRejectPulse {InstructionName := 'TP_TIME'; LibVersion := '1.0'} : TP_TIME;
+      statJamTimer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+   END_VAR
+
+   VAR_TEMP 
+      tempCartonEdge : Bool;
+      tempRejectEdge : Bool;
+   END_VAR
+
+
+BEGIN
+	REGION Counting
+	    #tempCartonEdge := #statEyePrev AND NOT #i_photoEye;
+	    IF #i_resetCount THEN
+	        #o_count := 0;
+	    ELSIF #tempCartonEdge AND #o_count < #i_batchSize THEN
+	        #o_count += 1;
+	    END_IF;
+	    #o_batchFull := #o_count >= #i_batchSize;
+	END_REGION
+	
+	REGION Reject
+	    #tempRejectEdge := #statRequestPrev AND NOT #i_rejectRequest;
+	    #statRequestPrev := #i_rejectRequest;
+	    // A pulse keeps the length it started with.
+	    IF NOT #o_reject THEN
+	        #statRejectPreset := #i_rejectPulse;
+	    END_IF;
+	    #statRejectPulse(IN := #tempRejectEdge AND NOT #o_jam,
+	                     PT := #statRejectPreset,
+	                     Q => #o_reject,
+	                     ET => #o_rejectElapsed);
+	    IF #i_resetCount THEN
+	        #o_rejected := 0;
+	    ELSIF #o_reject AND NOT #statRejectPrev THEN
+	        #o_rejected += 1;
+	    END_IF;
+	    #statRejectPrev := #o_reject;
+	END_REGION
+	
+	REGION Jam
+	    // A carton on the eye is judged against the jam time in force when it arrived.
+	    IF NOT #statEyePrev THEN
+	        #statJamPreset := #i_jamTime;
+	    END_IF;
+	    #statEyePrev := #i_photoEye;
+	    #statJamTimer(IN := #i_photoEye, PT := #statJamPreset);
+	    IF #statJamTimer.Q THEN
+	        #o_jam := TRUE;
+	    ELSIF #i_clearJam THEN
+	        #o_jam := FALSE;
+	    END_IF;
+	    #o_speed := SEL(G := #o_jam OR #o_batchFull,
+	                    IN0 := MIN(IN1 := #i_speedRef, IN2 := #i_maxSpeed),
+	                    IN1 := 0.0);
+	END_REGION
+END_FUNCTION_BLOCK

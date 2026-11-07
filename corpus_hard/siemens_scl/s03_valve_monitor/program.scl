@@ -1,0 +1,76 @@
+FUNCTION_BLOCK "FB_ValveMonitor"
+TITLE = 'Valve with travel supervision'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Valves
+NAME : ValveMonitor
+VERSION : 2.0
+//Open and close travel are supervised against the same time budget. Maintenance mode skips all logic and holds outputs.
+   VAR_INPUT 
+      i_openCmd : Bool;
+      i_atOpen : Bool;
+      i_atClosed : Bool;
+      i_maintenance : Bool;
+      i_ack : Bool;
+      i_travelTime : Time;
+      i_margin : Time;
+   END_VAR
+
+   VAR_OUTPUT 
+      o_coil : Bool;
+      o_fault : Bool;
+      o_opening : Bool;
+      o_closing : Bool;
+      o_openElapsed : Time;
+      o_closeElapsed : Time;
+      o_faultCount : DInt;
+   END_VAR
+
+   VAR 
+      statOpenTimer {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'} : IEC_TIMER;
+      statCloseTimer {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'} : IEC_TIMER;
+      statOpenBudget : Time;
+      statCloseBudget : Time;
+      statFaultEdge {InstructionName := 'R_TRIG'; LibVersion := '1.0'} : R_TRIG;
+   END_VAR
+
+   VAR_TEMP 
+      tempBudget : Time;
+   END_VAR
+
+
+BEGIN
+	REGION Maintenance
+	    IF #i_maintenance THEN
+	        RETURN;
+	    END_IF;
+	END_REGION
+	
+	REGION Travel supervision
+	    #tempBudget := T_ADD(IN1 := #i_travelTime, IN2 := #i_margin);
+	    #o_coil := #i_openCmd AND NOT #o_fault;
+	    // A travel is judged against the budget in force when it began.
+	    IF NOT #o_opening THEN
+	        #statOpenBudget := #tempBudget;
+	    END_IF;
+	    IF NOT #o_closing THEN
+	        #statCloseBudget := #tempBudget;
+	    END_IF;
+	    #o_opening := #o_coil AND NOT #i_atOpen;
+	    #o_closing := NOT #o_coil AND NOT #i_atClosed;
+	    #statOpenTimer.TON(IN := #o_opening, PT := #statOpenBudget, ET => #o_openElapsed);
+	    #statCloseTimer.TON(IN := #o_closing, PT := #statCloseBudget, ET => #o_closeElapsed);
+	END_REGION
+	
+	REGION Fault latch
+	    IF #i_ack THEN
+	        #o_fault := FALSE;
+	    ELSIF #statOpenTimer.Q OR #statCloseTimer.Q OR (#i_atOpen AND #i_atClosed) THEN
+	        #o_fault := TRUE;
+	    END_IF;
+	    #statFaultEdge(CLK := #o_fault);
+	    IF #statFaultEdge.Q THEN
+	        #o_faultCount += 1;
+	    END_IF;
+	END_REGION
+END_FUNCTION_BLOCK

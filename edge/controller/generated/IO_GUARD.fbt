@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="IO_GUARD" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="R_AUTO"/><With Var="R_ACK"/><With Var="R_FB_1"/><With Var="R_FB_2"/><With Var="R_TRIP_1"/><With Var="R_TRIP_2"/><With Var="HEARTBEAT"/><With Var="RAW_LEVEL"/><With Var="STUCK_EPS"/><With Var="COMMS_TIMEOUT"/><With Var="STUCK_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="AUTO_MODE"/><With Var="ACK"/><With Var="FB_1"/><With Var="FB_2"/><With Var="TRIP_1"/><With Var="TRIP_2"/><With Var="COMMS_OK"/><With Var="SENSOR_FAULT"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="R_AUTO" Type="UINT"/>
+      <VarDeclaration Name="R_ACK" Type="UINT"/>
+      <VarDeclaration Name="R_FB_1" Type="UINT"/>
+      <VarDeclaration Name="R_FB_2" Type="UINT"/>
+      <VarDeclaration Name="R_TRIP_1" Type="UINT"/>
+      <VarDeclaration Name="R_TRIP_2" Type="UINT"/>
+      <VarDeclaration Name="HEARTBEAT" Type="UINT"/>
+      <VarDeclaration Name="RAW_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="STUCK_EPS" Type="REAL"/>
+      <VarDeclaration Name="COMMS_TIMEOUT" Type="TIME"/>
+      <VarDeclaration Name="STUCK_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="AUTO_MODE" Type="BOOL"/>
+      <VarDeclaration Name="ACK" Type="BOOL"/>
+      <VarDeclaration Name="FB_1" Type="BOOL"/>
+      <VarDeclaration Name="FB_2" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_1" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_2" Type="BOOL"/>
+      <VarDeclaration Name="COMMS_OK" Type="BOOL"/>
+      <VarDeclaration Name="SENSOR_FAULT" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="LAST_HEARTBEAT" Type="UINT"/>
+      <VarDeclaration Name="LAST_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="SEEN_BEAT" Type="BOOL"/>
+      <VarDeclaration Name="UNCHANGED" Type="BOOL"/>
+      <VarDeclaration Name="DELTA" Type="REAL"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+      <VarDeclaration Name="COMMS_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="COMMS_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="COMMS_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="COMMS_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="COMMS_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="COMMS_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="COMMS_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="STUCK_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="STUCK_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="STUCK_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="STUCK_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="STUCK_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="STUCK_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="STUCK_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="ACK_EDGE_CLK" Type="BOOL"/>
+      <VarDeclaration Name="ACK_EDGE_Q" Type="BOOL"/>
+      <VarDeclaration Name="ACK_EDGE_M" Type="BOOL"/>
+      <VarDeclaration Name="FAULT_LATCH_S1" Type="BOOL"/>
+      <VarDeclaration Name="FAULT_LATCH_R" Type="BOOL"/>
+      <VarDeclaration Name="FAULT_LATCH_Q1" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="400" y="0">
+        <ECAction Algorithm="scan" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="200" y="-60"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="200" y="60"/>
+    </ECC>
+    <Algorithm Name="scan">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+IF HEARTBEAT <> LAST_HEARTBEAT THEN
+  SEEN_BEAT := TRUE;
+END_IF;
+COMMS_TIMER_IN := HEARTBEAT = LAST_HEARTBEAT;
+COMMS_TIMER_PT := COMMS_TIMEOUT;
+IF COMMS_TIMER_STATE = 0 AND NOT COMMS_TIMER_PREV_IN AND COMMS_TIMER_IN THEN
+  COMMS_TIMER_STATE := 1;
+  COMMS_TIMER_Q := FALSE;
+  COMMS_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT COMMS_TIMER_IN THEN
+    COMMS_TIMER_ET := T#0s;
+    COMMS_TIMER_Q := FALSE;
+    COMMS_TIMER_STATE := 0;
+  ELSIF COMMS_TIMER_STATE = 1 THEN
+    IF COMMS_TIMER_START_TIME + COMMS_TIMER_PT <= ST2FB_NOW THEN
+      COMMS_TIMER_STATE := 2;
+      COMMS_TIMER_Q := TRUE;
+      COMMS_TIMER_ET := COMMS_TIMER_PT;
+    ELSE
+      COMMS_TIMER_ET := ST2FB_NOW - COMMS_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+COMMS_TIMER_PREV_IN := COMMS_TIMER_IN;
+LAST_HEARTBEAT := HEARTBEAT;
+COMMS_OK := SEEN_BEAT AND NOT COMMS_TIMER_Q;
+DELTA := RAW_LEVEL - LAST_LEVEL;
+UNCHANGED := DELTA <= STUCK_EPS AND DELTA >= -STUCK_EPS;
+LAST_LEVEL := RAW_LEVEL;
+STUCK_TIMER_IN := UNCHANGED AND COMMS_OK;
+STUCK_TIMER_PT := STUCK_TIME;
+IF STUCK_TIMER_STATE = 0 AND NOT STUCK_TIMER_PREV_IN AND STUCK_TIMER_IN THEN
+  STUCK_TIMER_STATE := 1;
+  STUCK_TIMER_Q := FALSE;
+  STUCK_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT STUCK_TIMER_IN THEN
+    STUCK_TIMER_ET := T#0s;
+    STUCK_TIMER_Q := FALSE;
+    STUCK_TIMER_STATE := 0;
+  ELSIF STUCK_TIMER_STATE = 1 THEN
+    IF STUCK_TIMER_START_TIME + STUCK_TIMER_PT <= ST2FB_NOW THEN
+      STUCK_TIMER_STATE := 2;
+      STUCK_TIMER_Q := TRUE;
+      STUCK_TIMER_ET := STUCK_TIMER_PT;
+    ELSE
+      STUCK_TIMER_ET := ST2FB_NOW - STUCK_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+STUCK_TIMER_PREV_IN := STUCK_TIMER_IN;
+ACK := R_ACK <> 0;
+ACK_EDGE_CLK := ACK;
+ACK_EDGE_Q := ACK_EDGE_CLK AND NOT ACK_EDGE_M;
+ACK_EDGE_M := ACK_EDGE_CLK;
+FAULT_LATCH_S1 := STUCK_TIMER_Q;
+FAULT_LATCH_R := ACK_EDGE_Q;
+FAULT_LATCH_Q1 := FAULT_LATCH_S1 OR NOT FAULT_LATCH_R AND FAULT_LATCH_Q1;
+SENSOR_FAULT := FAULT_LATCH_Q1;
+AUTO_MODE := R_AUTO <> 0 AND COMMS_OK AND NOT SENSOR_FAULT;
+FB_1 := R_FB_1 <> 0;
+FB_2 := R_FB_2 <> 0;
+TRIP_1 := R_TRIP_1 <> 0;
+TRIP_2 := R_TRIP_2 <> 0;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

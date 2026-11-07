@@ -1,0 +1,60 @@
+ADD_ON_INSTRUCTION_DEFINITION MotorControl_AOI (Description := "Motor start with delay, feedback timeout and latched fault",
+                                                Revision := "1.0",
+                                                Vendor := "st2fb")
+	PARAMETERS
+		StartPB : BOOL (Usage := Input);
+		StopPB : BOOL (Usage := Input);
+		Overload : BOOL (Usage := Input);
+		RunFeedback : BOOL (Usage := Input);
+		FaultReset : BOOL (Usage := Input);
+		StartDelayMs : DINT (Usage := Input);
+		FeedbackTimeoutMs : DINT (Usage := Input);
+		TaskPeriodMs : DINT (Usage := Input);
+		RunCmd : BOOL (Usage := Output);
+		Starting : BOOL (Usage := Output);
+		Faulted : BOOL (Usage := Output);
+		DelayEnabled : BOOL (Usage := Output);
+		DelayElapsedMs : DINT (Usage := Output);
+	END_PARAMETERS
+	LOCAL_TAGS
+		StartDelay : FBD_TIMER;
+		FeedbackTimer : FBD_TIMER;
+		StartOneShot : FBD_ONESHOT;
+		RunLatch : BOOL;
+		FaultLatch : BOOL;
+	END_LOCAL_TAGS
+	ST_ROUTINE Logic
+		// One shot on the start button
+		StartOneShot.InputBit := StartPB;
+		OSRI(StartOneShot);
+
+		if StopPB or Overload or FaultLatch then
+		    RunLatch := 0;
+		elsif StartOneShot.OutputBit then
+		    RunLatch := 1;
+		end_if;
+
+		/* Delay before the contactor closes */
+		StartDelay.TimerEnable := RunLatch;
+		StartDelay.PRE := StartDelayMs;
+		TONR(StartDelay);
+		Starting := StartDelay.TT;
+		RunCmd := StartDelay.DN;
+		DelayEnabled := StartDelay.EN;
+		DelayElapsedMs := StartDelay.ACC;
+
+		// Feedback must follow the command
+		FeedbackTimer.TimerEnable := RunCmd & NOT RunFeedback;
+		FeedbackTimer.PRE := FeedbackTimeoutMs;
+		TONR(FeedbackTimer);
+
+		if FeedbackTimer.DN or Overload then
+		    FaultLatch := 1;
+		end_if;
+		if FaultReset & NOT Overload then
+		    FaultLatch := 0;
+		    RES(FeedbackTimer);
+		end_if;
+		Faulted := FaultLatch;
+	END_ST_ROUTINE
+END_ADD_ON_INSTRUCTION_DEFINITION

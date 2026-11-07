@@ -19,18 +19,23 @@ and comparison. Baseline, LLM-only and LLM-with-repair are benchmarked on identi
 - Standard FBs usable in source ST: TON, TOF, TP, R_TRIG, F_TRIG, CTU, CTD, SR, RS.
 - One FUNCTION_BLOCK per program.st, with VAR_INPUT, VAR_OUTPUT and VAR.
 
+`corpus_hard/` deliberately goes beyond this scope in its sources: the model has to rewrite them into it. See `docs/HARD_CORPUS.md`.
+
 ## Contract (all parts must follow this exactly)
 
 Pinned runtime: eclipse-4diac/4diac-forte commit efcd63c. Builds on ubuntu:24.04 with g++ 13,
-Ninja and CMake >= 3.30 from pip, using -DFORTE_ARCHITECTURE=Posix (verified).
+Ninja from apt and CMake >= 3.30 from pip, using -DFORTE_ARCHITECTURE=Posix (verified).
 Reference compiler: beremiz/matiec commit 3a41303. It is GPLv3, so it is only invoked as an
 external tool inside a container and is never linked or vendored.
 
 Corpus: `corpus/<name>/program.st`, `corpus/<name>/stimulus.json`, optional `corpus/<name>/README.md`.
+A file with helper blocks marks the block under test with the comment `(* st2fb:dut *)` just before its `FUNCTION_BLOCK`.
 
 stimulus.json:
     {"scan_ms": 10, "scans": [{"S": true, "R": false}, ...]}
 Every scan lists every VAR_INPUT. Values: JSON bool, number; TIME in integer milliseconds.
+One file has one scan period. A program that needs scoring at more than one period has more than one file: `corpus_hard/` scores
+`heldout_stimulus.json` and `heldout_stimulus_2.json`, at different periods, and a run must pass both. See `docs/HARD_CORPUS.md`.
 
 trace.json (both runners produce this, and only this):
     {"source": "forte|matiec", "scan_ms": 10, "outputs": ["Q"],

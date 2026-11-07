@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="MotorControl_AOI" Comment="Migrated from Rockwell AOI">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="StartPB"/><With Var="StopPB"/><With Var="Overload"/><With Var="RunFeedback"/><With Var="FaultReset"/><With Var="StartDelayMs"/><With Var="FeedbackTimeoutMs"/><With Var="TaskPeriodMs"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="RunCmd"/><With Var="Starting"/><With Var="Faulted"/><With Var="DelayEnabled"/><With Var="DelayElapsedMs"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="StartPB" Type="BOOL"/>
+      <VarDeclaration Name="StopPB" Type="BOOL"/>
+      <VarDeclaration Name="Overload" Type="BOOL"/>
+      <VarDeclaration Name="RunFeedback" Type="BOOL"/>
+      <VarDeclaration Name="FaultReset" Type="BOOL"/>
+      <VarDeclaration Name="StartDelayMs" Type="DINT"/>
+      <VarDeclaration Name="FeedbackTimeoutMs" Type="DINT"/>
+      <VarDeclaration Name="TaskPeriodMs" Type="DINT"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="RunCmd" Type="BOOL"/>
+      <VarDeclaration Name="Starting" Type="BOOL"/>
+      <VarDeclaration Name="Faulted" Type="BOOL"/>
+      <VarDeclaration Name="DelayEnabled" Type="BOOL"/>
+      <VarDeclaration Name="DelayElapsedMs" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="SD_EN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="SD_TT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="SD_DN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="SD_ACC" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="SD_PRE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="SD_PREV" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FT_EN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FT_TT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FT_DN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FT_ACC" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="FT_PRE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="FT_PREV" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OS_PREV" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OS_OUT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RunLatch" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FaultLatch" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="logic" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="50"/>
+    </ECC>
+    <Algorithm Name="logic">
+      <ST><![CDATA[
+OS_OUT := StartPB AND NOT OS_PREV;
+OS_PREV := StartPB;
+
+IF StopPB OR Overload OR FaultLatch THEN
+  RunLatch := FALSE;
+ELSIF OS_OUT THEN
+  RunLatch := TRUE;
+END_IF;
+
+SD_EN := RunLatch;
+SD_PRE := StartDelayMs;
+IF SD_EN THEN
+  IF SD_PREV AND NOT SD_DN THEN
+    SD_ACC := SD_ACC + TaskPeriodMs;
+    IF SD_ACC >= SD_PRE THEN
+      SD_ACC := SD_PRE;
+      SD_DN := TRUE;
+    END_IF;
+  END_IF;
+ELSE
+  SD_ACC := 0;
+  SD_DN := FALSE;
+END_IF;
+SD_TT := SD_EN AND NOT SD_DN;
+SD_PREV := SD_EN;
+Starting := SD_TT;
+RunCmd := SD_DN;
+DelayEnabled := SD_EN;
+DelayElapsedMs := SD_ACC;
+
+FT_EN := RunCmd AND NOT RunFeedback;
+FT_PRE := FeedbackTimeoutMs;
+IF FT_EN THEN
+  IF FT_PREV AND NOT FT_DN THEN
+    FT_ACC := FT_ACC + TaskPeriodMs;
+    IF FT_ACC >= FT_PRE THEN
+      FT_ACC := FT_PRE;
+      FT_DN := TRUE;
+    END_IF;
+  END_IF;
+ELSE
+  FT_ACC := 0;
+  FT_DN := FALSE;
+END_IF;
+FT_TT := FT_EN AND NOT FT_DN;
+FT_PREV := FT_EN;
+
+IF FT_DN OR Overload THEN
+  FaultLatch := TRUE;
+END_IF;
+IF FaultReset AND NOT Overload THEN
+  FaultLatch := FALSE;
+  FT_ACC := 0;
+  FT_EN := FALSE;
+  FT_TT := FALSE;
+  FT_DN := FALSE;
+  FT_PREV := FALSE;
+END_IF;
+Faulted := FaultLatch;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

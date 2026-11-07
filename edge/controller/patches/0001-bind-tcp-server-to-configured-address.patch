@@ -1,0 +1,21 @@
+Bind FORTE's TCP server sockets to the address they were given.
+
+At efcd63c, openTCPServerConnection ignores its address and binds INADDR_ANY, so `forte -c 127.0.0.1:61499`
+still exposes the unauthenticated management port (DEV_MGR) on every interface. test_stack.py found this.
+Any peer on the OT network could then rewrite the running application, including the fencing token.
+With this patch the management port is reachable from inside the container only.
+
+--- a/core/arch/common/src/bsdsocketinterf.cpp
++++ b/core/arch/common/src/bsdsocketinterf.cpp
+@@ -62,7 +62,10 @@
+ #else
+     stSockAddr.sin_port = htons(paPort);
+ #endif
+-    stSockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
++    stSockAddr.sin_addr.s_addr = inet_addr(paIPAddr);
++    if (stSockAddr.sin_addr.s_addr == INADDR_NONE) {
++      stSockAddr.sin_addr.s_addr = htonl(INADDR_ANY); // A host name such as "localhost": keep the old behaviour.
++    }
+ 
+     if (bind(nSocket, (struct sockaddr *) &stSockAddr, sizeof(struct sockaddr)) != 0) {
+       DEVLOG_ERROR("CBSDSocketInterface: bind() failed: %s\n", strerror(errno));

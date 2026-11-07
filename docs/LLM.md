@@ -3,9 +3,8 @@
 The model proposes a Basic FB. It never decides correctness. Its `.fbt` goes through the same exporter, FORTE
 build, matiec reference and `st2fb.compare` as the deterministic translator's.
 
-**No result from a real model exists yet.** This layer has only run against fake clients and a stub HTTP server
-on localhost. No request has ever been sent to Anthropic, so nothing here shows that the API accepts this request
-shape or how well any model does. Those are the first things a live run will find out, and a human approves that run.
+**One live run exists, on `corpus/` only, in `results/benchmark_2026-11-06/`.** A human approved it, and its report and candidates are kept there, read-only. **No model has run on `corpus_hard/`.** Everything
+said of that corpus in `docs/HARD_CORPUS.md` comes from the translator, matiec, FORTE and scripted fake replies. The tests use fake clients and a stub HTTP server on localhost, and they send nothing to Anthropic.
 
 ## Layout
 
@@ -23,6 +22,10 @@ shape or how well any model does. Those are the first things a live run will fin
 | `st2fb/llm/heldout_check.py` | Checks the held-out stimuli with the deterministic translator |
 | `st2fb/llm/prompts.py`, `st2fb/llm/prompt_files/` | The prompts, as plain files |
 | `corpus/generate_heldout.py` | Generates `corpus/*/heldout_stimulus.json` |
+| `st2fb/llm/ecc_metric.py` | The strict `ecc_persistent` metric. See `docs/HARD_CORPUS.md` |
+| `st2fb/llm/hard_check.py` | Checks `corpus_hard/` with no model: both deterministic tiers, oracle, solvability controls |
+| `st2fb/llm/manifest.py` | The hash of what `hard_check` passed on. A real benchmark on `corpus_hard/` refuses to run without a match |
+| `st2fb/vendor_frontend.py` | A small syntax rewrite of the vendor dialects, the `frontend+translator` comparator. See `docs/HARD_CORPUS.md` |
 | `st2fb/forte_eval.py` | Judges any `.fbt` on FORTE. Shared with the mutation campaign |
 
 The core pipeline needs only the standard library. A test imports it under `python3 -S` and checks that the SDK
@@ -184,7 +187,9 @@ The mode is deliberately **not** in the key. `llm_only` and `llm_repair` send an
     python3 -m st2fb.llm.benchmark --programs 00_latch                    # fake client, no key, no network
     .venv/bin/python -m st2fb.llm.benchmark --live --budget-usd 1 --programs 00_latch --modes llm_only
 
-Options: `--programs` (names or `all`), `--modes`, `--repeats`, `--model` (one or more `MODEL` or `MODEL:REPEATS`), `--effort`, `--max-tokens`, `--no-fallbacks`, `--budget-usd`, `--live`, `--dry-run`, `--env-file`, `--corpus`, `--out-dir`.
+Options: `--programs` (names or `all`), `--modes`, `--repeats`, `--model` (one or more `MODEL` or `MODEL:REPEATS`), `--effort`, `--max-tokens`, `--no-fallbacks`, `--budget-usd`, `--live`, `--dry-run`, `--env-file`, `--corpus`, `--out-dir`, `--corpus-dir`, `--form`. The last two select the hard corpus, its prompts and its report format, and have their own reports, ledger and cache under `build/llm_hard/`. There, `--max-tokens` overrides a program's setting recorded in its `set.json`, and each held-out file of a program is scored. See `docs/HARD_CORPUS.md`. Without them the prompts, cache keys and report format are those of the first benchmark.
+
+The published run in `results/benchmark_2026-11-06/` used `--no-fallbacks`, which is part of the cache key.
 
 Requests run one at a time. Reports go to `benchmark.json` and `benchmark.md`, per program, mode and repeat: tuning equal, held-out equal, passed, attempts, tokens, cost, ECC states, failure category. They also have the deterministic baseline, and an aggregate with cost per run that passes held-out. A rerun overwrites the report and rebuilds it from the cache at no cost.
 

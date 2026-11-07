@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Negative C5: two positions that only toggle and run the same algorithm">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="A"><ECAction Algorithm="scan" Output="CNF"/></ECState>
+      <ECState Name="WAIT_B"/>
+      <ECState Name="B"><ECAction Algorithm="scan" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="A" Condition="REQ"/>
+      <ECTransition Source="A" Destination="WAIT_B" Condition="1"/>
+      <ECTransition Source="WAIT_B" Destination="B" Condition="REQ"/>
+      <ECTransition Source="B" Destination="START" Condition="1"/>
+    </ECC>
+    <Algorithm Name="scan"><ST><![CDATA[
+IF GO THEN
+  SEQ := 1;
+ELSE
+  SEQ := 0;
+END_IF;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

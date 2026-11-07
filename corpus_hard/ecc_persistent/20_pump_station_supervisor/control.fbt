@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PUMP_STATION_SUPERVISOR" Comment="Solvability control: ecc_persistent form, designed by hand. Never shown to a model.">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="AUTO_MODE"/><With Var="ACK"/><With Var="RAW_LEVEL"/><With Var="STOP_LEVEL"/><With Var="START_LEVEL"/><With Var="LAG_LEVEL"/><With Var="HIGH_LEVEL"/><With Var="FB_1"/><With Var="FB_2"/><With Var="TRIP_1"/><With Var="TRIP_2"/><With Var="FLOW"/><With Var="SCAN_HOURS"/><With Var="PULSE_SIZE"/><With Var="PROOF_TIME"/><With Var="ALARM_DELAY"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="STATE_NO"/><With Var="PUMP_1"/><With Var="PUMP_2"/><With Var="LEAD_IS_2"/><With Var="HIGH_ALARM"/><With Var="STATION_FAULT"/><With Var="FILTERED_LEVEL"/><With Var="TOTAL"/><With Var="PULSES"/><With Var="STARTS"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="AUTO_MODE" Type="BOOL"/>
+      <VarDeclaration Name="ACK" Type="BOOL"/>
+      <VarDeclaration Name="RAW_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="STOP_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="START_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="LAG_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="HIGH_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="FB_1" Type="BOOL"/>
+      <VarDeclaration Name="FB_2" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_1" Type="BOOL"/>
+      <VarDeclaration Name="TRIP_2" Type="BOOL"/>
+      <VarDeclaration Name="FLOW" Type="REAL"/>
+      <VarDeclaration Name="SCAN_HOURS" Type="REAL"/>
+      <VarDeclaration Name="PULSE_SIZE" Type="REAL"/>
+      <VarDeclaration Name="PROOF_TIME" Type="TIME"/>
+      <VarDeclaration Name="ALARM_DELAY" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="STATE_NO" Type="INT"/>
+      <VarDeclaration Name="PUMP_1" Type="BOOL"/>
+      <VarDeclaration Name="PUMP_2" Type="BOOL"/>
+      <VarDeclaration Name="LEAD_IS_2" Type="BOOL"/>
+      <VarDeclaration Name="HIGH_ALARM" Type="BOOL"/>
+      <VarDeclaration Name="STATION_FAULT" Type="BOOL"/>
+      <VarDeclaration Name="FILTERED_LEVEL" Type="REAL"/>
+      <VarDeclaration Name="TOTAL" Type="REAL"/>
+      <VarDeclaration Name="PULSES" Type="DINT"/>
+      <VarDeclaration Name="STARTS" Type="UINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="PASSES" Type="INT"/>
+      <VarDeclaration Name="I" Type="INT"/>
+      <VarDeclaration Name="STEP_SIZE" Type="REAL"/>
+      <VarDeclaration Name="PENDING" Type="REAL"/>
+      <VarDeclaration Name="LEAD_RUNNING_FB" Type="BOOL"/>
+      <VarDeclaration Name="LEAD_FAILED" Type="BOOL"/>
+      <VarDeclaration Name="LAG_FAILED" Type="BOOL"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+      <VarDeclaration Name="FAILED_1_S1" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_1_R" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_1_Q1" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_2_S1" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_2_R" Type="BOOL"/>
+      <VarDeclaration Name="FAILED_2_Q1" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="PROOF_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="PROOF_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="PROOF_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="ALARM_TIMER_IN" Type="BOOL"/>
+      <VarDeclaration Name="ALARM_TIMER_PT" Type="TIME"/>
+      <VarDeclaration Name="ALARM_TIMER_Q" Type="BOOL"/>
+      <VarDeclaration Name="ALARM_TIMER_ET" Type="TIME"/>
+      <VarDeclaration Name="ALARM_TIMER_STATE" Type="INT"/>
+      <VarDeclaration Name="ALARM_TIMER_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="ALARM_TIMER_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="ACK_EDGE_CLK" Type="BOOL"/>
+      <VarDeclaration Name="ACK_EDGE_Q" Type="BOOL"/>
+      <VarDeclaration Name="ACK_EDGE_M" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="STEP_0" x="200" y="0">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="prelude"/>
+        <ECAction Algorithm="step0"/>
+        <ECAction Algorithm="post" Output="CNF"/>
+      </ECState>
+      <ECState Name="WAIT_1" x="400" y="0"/>
+      <ECState Name="STEP_1" x="600" y="0">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="prelude"/>
+        <ECAction Algorithm="step1"/>
+        <ECAction Algorithm="post" Output="CNF"/>
+      </ECState>
+      <ECState Name="WAIT_2" x="800" y="0"/>
+      <ECState Name="STEP_2" x="1000" y="0">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="prelude"/>
+        <ECAction Algorithm="step2"/>
+        <ECAction Algorithm="post" Output="CNF"/>
+      </ECState>
+      <ECState Name="WAIT_3" x="200" y="150"/>
+      <ECState Name="STEP_3" x="400" y="150">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="prelude"/>
+        <ECAction Algorithm="step3"/>
+        <ECAction Algorithm="post" Output="CNF"/>
+      </ECState>
+      <ECState Name="WAIT_4" x="600" y="150"/>
+      <ECState Name="STEP_4" x="800" y="150">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="prelude"/>
+        <ECAction Algorithm="step4"/>
+        <ECAction Algorithm="post" Output="CNF"/>
+      </ECState>
+      <ECState Name="WAIT_5" x="1000" y="150"/>
+      <ECState Name="STEP_5" x="200" y="300">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="prelude"/>
+        <ECAction Algorithm="step5"/>
+        <ECAction Algorithm="post" Output="CNF"/>
+      </ECState>
+      <ECState Name="FORCED_OFF" x="400" y="300">
+        <ECAction Algorithm="clock"/>
+        <ECAction Algorithm="prelude"/>
+        <ECAction Algorithm="force_off"/>
+        <ECAction Algorithm="step0"/>
+        <ECAction Algorithm="post" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="WAIT_1" Destination="FORCED_OFF" Condition="REQ[NOT AUTO_MODE]" x="0" y="0"/>
+      <ECTransition Source="WAIT_2" Destination="FORCED_OFF" Condition="REQ[NOT AUTO_MODE]" x="0" y="0"/>
+      <ECTransition Source="WAIT_3" Destination="FORCED_OFF" Condition="REQ[NOT AUTO_MODE]" x="0" y="0"/>
+      <ECTransition Source="WAIT_4" Destination="FORCED_OFF" Condition="REQ[NOT AUTO_MODE]" x="0" y="0"/>
+      <ECTransition Source="START" Destination="STEP_0" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_1" Destination="STEP_1" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_2" Destination="STEP_2" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_3" Destination="STEP_3" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_4" Destination="STEP_4" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="WAIT_5" Destination="STEP_5" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP_0" Destination="WAIT_1" Condition="[STATE_NO = 1]" x="0" y="0"/>
+      <ECTransition Source="STEP_0" Destination="START" Condition="1" x="0" y="0"/>
+      <ECTransition Source="FORCED_OFF" Destination="WAIT_1" Condition="[STATE_NO = 1]" x="0" y="0"/>
+      <ECTransition Source="FORCED_OFF" Destination="START" Condition="1" x="0" y="0"/>
+      <ECTransition Source="STEP_1" Destination="WAIT_5" Condition="[STATE_NO = 5]" x="0" y="0"/>
+      <ECTransition Source="STEP_1" Destination="WAIT_2" Condition="[STATE_NO = 2]" x="0" y="0"/>
+      <ECTransition Source="STEP_1" Destination="WAIT_1" Condition="1" x="0" y="0"/>
+      <ECTransition Source="STEP_2" Destination="WAIT_1" Condition="[STATE_NO = 1]" x="0" y="0"/>
+      <ECTransition Source="STEP_2" Destination="WAIT_3" Condition="[STATE_NO = 3]" x="0" y="0"/>
+      <ECTransition Source="STEP_2" Destination="WAIT_2" Condition="1" x="0" y="0"/>
+      <ECTransition Source="STEP_3" Destination="WAIT_1" Condition="[STATE_NO = 1]" x="0" y="0"/>
+      <ECTransition Source="STEP_3" Destination="WAIT_4" Condition="[STATE_NO = 4]" x="0" y="0"/>
+      <ECTransition Source="STEP_3" Destination="WAIT_3" Condition="1" x="0" y="0"/>
+      <ECTransition Source="STEP_4" Destination="WAIT_1" Condition="[STATE_NO = 1]" x="0" y="0"/>
+      <ECTransition Source="STEP_4" Destination="WAIT_3" Condition="[STATE_NO = 3]" x="0" y="0"/>
+      <ECTransition Source="STEP_4" Destination="WAIT_4" Condition="1" x="0" y="0"/>
+      <ECTransition Source="STEP_5" Destination="START" Condition="[STATE_NO = 0]" x="0" y="0"/>
+      <ECTransition Source="STEP_5" Destination="WAIT_5" Condition="1" x="0" y="0"/>
+    </ECC>
+    <Algorithm Name="clock">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="prelude">
+      <ST><![CDATA[
+STEP_SIZE := RAW_LEVEL - FILTERED_LEVEL;
+IF STEP_SIZE > 1.0 OR STEP_SIZE < -1.0 THEN
+  PASSES := 4;
+ELSE
+  PASSES := 1;
+END_IF;
+FOR I := 1 TO PASSES DO
+  FILTERED_LEVEL := FILTERED_LEVEL + 0.25 * (RAW_LEVEL - FILTERED_LEVEL);
+END_FOR;
+ACK_EDGE_CLK := ACK;
+ACK_EDGE_Q := ACK_EDGE_CLK AND NOT ACK_EDGE_M;
+ACK_EDGE_M := ACK_EDGE_CLK;
+FAILED_1_S1 := TRIP_1 OR PROOF_TIMER_Q AND NOT LEAD_IS_2;
+FAILED_1_R := ACK_EDGE_Q;
+FAILED_1_Q1 := FAILED_1_S1 OR NOT FAILED_1_R AND FAILED_1_Q1;
+FAILED_2_S1 := TRIP_2 OR PROOF_TIMER_Q AND LEAD_IS_2;
+FAILED_2_R := ACK_EDGE_Q;
+FAILED_2_Q1 := FAILED_2_S1 OR NOT FAILED_2_R AND FAILED_2_Q1;
+IF LEAD_IS_2 THEN
+  LEAD_FAILED := FAILED_2_Q1;
+  LAG_FAILED := FAILED_1_Q1;
+  LEAD_RUNNING_FB := FB_2;
+ELSE
+  LEAD_FAILED := FAILED_1_Q1;
+  LAG_FAILED := FAILED_2_Q1;
+  LEAD_RUNNING_FB := FB_1;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="force_off">
+      <ST><![CDATA[
+STATE_NO := 0;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="step0">
+      <ST><![CDATA[
+IF AUTO_MODE THEN
+  STATE_NO := 1;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="step1">
+      <ST><![CDATA[
+IF LEAD_FAILED AND LAG_FAILED THEN
+  STATE_NO := 5;
+ELSIF LEAD_FAILED THEN
+  LEAD_IS_2 := NOT LEAD_IS_2;
+ELSIF FILTERED_LEVEL >= START_LEVEL THEN
+  STARTS := STARTS + 1;
+  STATE_NO := 2;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="step2">
+      <ST><![CDATA[
+IF LEAD_FAILED THEN
+  STATE_NO := 1;
+ELSIF LEAD_RUNNING_FB THEN
+  STATE_NO := 3;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="step3">
+      <ST><![CDATA[
+IF LEAD_FAILED THEN
+  STATE_NO := 1;
+ELSIF FILTERED_LEVEL <= STOP_LEVEL THEN
+  LEAD_IS_2 := NOT LEAD_IS_2;
+  STATE_NO := 1;
+ELSIF FILTERED_LEVEL >= LAG_LEVEL AND NOT LAG_FAILED THEN
+  STATE_NO := 4;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="step4">
+      <ST><![CDATA[
+IF LEAD_FAILED THEN
+  STATE_NO := 1;
+ELSIF LAG_FAILED OR FILTERED_LEVEL < LAG_LEVEL THEN
+  STATE_NO := 3;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="step5">
+      <ST><![CDATA[
+IF NOT (LEAD_FAILED OR LAG_FAILED) THEN
+  STATE_NO := 0;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="post">
+      <ST><![CDATA[
+PROOF_TIMER_IN := STATE_NO = 2 AND NOT LEAD_RUNNING_FB;
+PROOF_TIMER_PT := PROOF_TIME;
+IF PROOF_TIMER_STATE = 0 AND NOT PROOF_TIMER_PREV_IN AND PROOF_TIMER_IN THEN
+  PROOF_TIMER_STATE := 1;
+  PROOF_TIMER_Q := FALSE;
+  PROOF_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT PROOF_TIMER_IN THEN
+    PROOF_TIMER_ET := T#0s;
+    PROOF_TIMER_Q := FALSE;
+    PROOF_TIMER_STATE := 0;
+  ELSIF PROOF_TIMER_STATE = 1 THEN
+    IF PROOF_TIMER_START_TIME + PROOF_TIMER_PT <= ST2FB_NOW THEN
+      PROOF_TIMER_STATE := 2;
+      PROOF_TIMER_Q := TRUE;
+      PROOF_TIMER_ET := PROOF_TIMER_PT;
+    ELSE
+      PROOF_TIMER_ET := ST2FB_NOW - PROOF_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+PROOF_TIMER_PREV_IN := PROOF_TIMER_IN;
+STATION_FAULT := STATE_NO = 5;
+IF STATE_NO >= 2 AND STATE_NO <= 4 THEN
+  PUMP_1 := NOT LEAD_IS_2 OR STATE_NO = 4;
+  PUMP_2 := LEAD_IS_2 OR STATE_NO = 4;
+ELSE
+  PUMP_1 := FALSE;
+  PUMP_2 := FALSE;
+END_IF;
+ALARM_TIMER_IN := FILTERED_LEVEL >= HIGH_LEVEL;
+ALARM_TIMER_PT := ALARM_DELAY;
+IF ALARM_TIMER_STATE = 0 AND NOT ALARM_TIMER_PREV_IN AND ALARM_TIMER_IN THEN
+  ALARM_TIMER_STATE := 1;
+  ALARM_TIMER_Q := FALSE;
+  ALARM_TIMER_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT ALARM_TIMER_IN THEN
+    ALARM_TIMER_ET := T#0s;
+    ALARM_TIMER_Q := FALSE;
+    ALARM_TIMER_STATE := 0;
+  ELSIF ALARM_TIMER_STATE = 1 THEN
+    IF ALARM_TIMER_START_TIME + ALARM_TIMER_PT <= ST2FB_NOW THEN
+      ALARM_TIMER_STATE := 2;
+      ALARM_TIMER_Q := TRUE;
+      ALARM_TIMER_ET := ALARM_TIMER_PT;
+    ELSE
+      ALARM_TIMER_ET := ST2FB_NOW - ALARM_TIMER_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+ALARM_TIMER_PREV_IN := ALARM_TIMER_IN;
+HIGH_ALARM := ALARM_TIMER_Q;
+IF PUMP_1 OR PUMP_2 THEN
+  TOTAL := TOTAL + FLOW * SCAN_HOURS;
+  PENDING := PENDING + FLOW * SCAN_HOURS;
+  WHILE PENDING >= PULSE_SIZE DO
+    PENDING := PENDING - PULSE_SIZE;
+    PULSES := PULSES + 1;
+  END_WHILE;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

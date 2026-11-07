@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="VALVE_MANIFOLD" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="RUN_REQ"/><With Var="RESET"/><With Var="AT_OPEN_1"/><With Var="AT_OPEN_2"/><With Var="AT_OPEN_3"/><With Var="AT_CLOSED_1"/><With Var="AT_CLOSED_2"/><With Var="AT_CLOSED_3"/><With Var="TRAVEL"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="COIL_1"/><With Var="COIL_2"/><With Var="COIL_3"/><With Var="ANY_FAULT"/><With Var="ALL_OPEN"/><With Var="FAULT_COUNT"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="RUN_REQ" Type="BOOL"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="AT_OPEN_1" Type="BOOL"/>
+      <VarDeclaration Name="AT_OPEN_2" Type="BOOL"/>
+      <VarDeclaration Name="AT_OPEN_3" Type="BOOL"/>
+      <VarDeclaration Name="AT_CLOSED_1" Type="BOOL"/>
+      <VarDeclaration Name="AT_CLOSED_2" Type="BOOL"/>
+      <VarDeclaration Name="AT_CLOSED_3" Type="BOOL"/>
+      <VarDeclaration Name="TRAVEL" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="COIL_1" Type="BOOL"/>
+      <VarDeclaration Name="COIL_2" Type="BOOL"/>
+      <VarDeclaration Name="COIL_3" Type="BOOL"/>
+      <VarDeclaration Name="ANY_FAULT" Type="BOOL"/>
+      <VarDeclaration Name="ALL_OPEN" Type="BOOL"/>
+      <VarDeclaration Name="FAULT_COUNT" Type="INT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="V1_OPEN_CMD" Type="BOOL"/>
+      <VarDeclaration Name="V1_COIL" Type="BOOL"/>
+      <VarDeclaration Name="V1_FAULT" Type="BOOL"/>
+      <VarDeclaration Name="V1_OPENED" Type="BOOL"/>
+      <VarDeclaration Name="V1_W_IN" Type="BOOL"/>
+      <VarDeclaration Name="V1_W_PT" Type="TIME"/>
+      <VarDeclaration Name="V1_W_Q" Type="BOOL"/>
+      <VarDeclaration Name="V1_W_ET" Type="TIME"/>
+      <VarDeclaration Name="V1_W_STATE" Type="INT"/>
+      <VarDeclaration Name="V1_W_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="V1_W_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="V2_OPEN_CMD" Type="BOOL"/>
+      <VarDeclaration Name="V2_COIL" Type="BOOL"/>
+      <VarDeclaration Name="V2_FAULT" Type="BOOL"/>
+      <VarDeclaration Name="V2_OPENED" Type="BOOL"/>
+      <VarDeclaration Name="V2_W_IN" Type="BOOL"/>
+      <VarDeclaration Name="V2_W_PT" Type="TIME"/>
+      <VarDeclaration Name="V2_W_Q" Type="BOOL"/>
+      <VarDeclaration Name="V2_W_ET" Type="TIME"/>
+      <VarDeclaration Name="V2_W_STATE" Type="INT"/>
+      <VarDeclaration Name="V2_W_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="V2_W_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="V3_OPEN_CMD" Type="BOOL"/>
+      <VarDeclaration Name="V3_COIL" Type="BOOL"/>
+      <VarDeclaration Name="V3_FAULT" Type="BOOL"/>
+      <VarDeclaration Name="V3_OPENED" Type="BOOL"/>
+      <VarDeclaration Name="V3_W_IN" Type="BOOL"/>
+      <VarDeclaration Name="V3_W_PT" Type="TIME"/>
+      <VarDeclaration Name="V3_W_Q" Type="BOOL"/>
+      <VarDeclaration Name="V3_W_ET" Type="TIME"/>
+      <VarDeclaration Name="V3_W_STATE" Type="INT"/>
+      <VarDeclaration Name="V3_W_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="V3_W_START_TIME" Type="TIME"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+(* V1 *)
+V1_OPEN_CMD := RUN_REQ AND NOT ANY_FAULT;
+V1_COIL := V1_OPEN_CMD AND NOT V1_FAULT;
+V1_W_IN := (V1_COIL AND NOT AT_OPEN_1) OR (NOT V1_COIL AND NOT AT_CLOSED_1 AND NOT V1_FAULT);
+V1_W_PT := TRAVEL;
+IF (V1_W_STATE = 0) AND NOT V1_W_PREV_IN AND V1_W_IN THEN
+  V1_W_STATE := 1;
+  V1_W_Q := FALSE;
+  V1_W_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT V1_W_IN THEN
+    V1_W_ET := T#0s;
+    V1_W_Q := FALSE;
+    V1_W_STATE := 0;
+  ELSIF V1_W_STATE = 1 THEN
+    IF V1_W_START_TIME + V1_W_PT <= ST2FB_NOW THEN
+      V1_W_STATE := 2;
+      V1_W_Q := TRUE;
+      V1_W_ET := V1_W_PT;
+    ELSE
+      V1_W_ET := ST2FB_NOW - V1_W_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+V1_W_PREV_IN := V1_W_IN;
+V1_FAULT := V1_W_Q OR (NOT RESET AND V1_FAULT);
+V1_OPENED := V1_COIL AND AT_OPEN_1 AND NOT AT_CLOSED_1;
+
+(* V2 *)
+V2_OPEN_CMD := V1_OPENED;
+V2_COIL := V2_OPEN_CMD AND NOT V2_FAULT;
+V2_W_IN := (V2_COIL AND NOT AT_OPEN_2) OR (NOT V2_COIL AND NOT AT_CLOSED_2 AND NOT V2_FAULT);
+V2_W_PT := TRAVEL;
+IF (V2_W_STATE = 0) AND NOT V2_W_PREV_IN AND V2_W_IN THEN
+  V2_W_STATE := 1;
+  V2_W_Q := FALSE;
+  V2_W_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT V2_W_IN THEN
+    V2_W_ET := T#0s;
+    V2_W_Q := FALSE;
+    V2_W_STATE := 0;
+  ELSIF V2_W_STATE = 1 THEN
+    IF V2_W_START_TIME + V2_W_PT <= ST2FB_NOW THEN
+      V2_W_STATE := 2;
+      V2_W_Q := TRUE;
+      V2_W_ET := V2_W_PT;
+    ELSE
+      V2_W_ET := ST2FB_NOW - V2_W_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+V2_W_PREV_IN := V2_W_IN;
+V2_FAULT := V2_W_Q OR (NOT RESET AND V2_FAULT);
+V2_OPENED := V2_COIL AND AT_OPEN_2 AND NOT AT_CLOSED_2;
+
+(* V3 *)
+V3_OPEN_CMD := V2_OPENED;
+V3_COIL := V3_OPEN_CMD AND NOT V3_FAULT;
+V3_W_IN := (V3_COIL AND NOT AT_OPEN_3) OR (NOT V3_COIL AND NOT AT_CLOSED_3 AND NOT V3_FAULT);
+V3_W_PT := TRAVEL;
+IF (V3_W_STATE = 0) AND NOT V3_W_PREV_IN AND V3_W_IN THEN
+  V3_W_STATE := 1;
+  V3_W_Q := FALSE;
+  V3_W_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT V3_W_IN THEN
+    V3_W_ET := T#0s;
+    V3_W_Q := FALSE;
+    V3_W_STATE := 0;
+  ELSIF V3_W_STATE = 1 THEN
+    IF V3_W_START_TIME + V3_W_PT <= ST2FB_NOW THEN
+      V3_W_STATE := 2;
+      V3_W_Q := TRUE;
+      V3_W_ET := V3_W_PT;
+    ELSE
+      V3_W_ET := ST2FB_NOW - V3_W_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+V3_W_PREV_IN := V3_W_IN;
+V3_FAULT := V3_W_Q OR (NOT RESET AND V3_FAULT);
+V3_OPENED := V3_COIL AND AT_OPEN_3 AND NOT AT_CLOSED_3;
+
+COIL_1 := V1_COIL;
+COIL_2 := V2_COIL;
+COIL_3 := V3_COIL;
+FAULT_COUNT := 0;
+IF V1_FAULT THEN
+  FAULT_COUNT := FAULT_COUNT + 1;
+END_IF;
+IF V2_FAULT THEN
+  FAULT_COUNT := FAULT_COUNT + 1;
+END_IF;
+IF V3_FAULT THEN
+  FAULT_COUNT := FAULT_COUNT + 1;
+END_IF;
+ANY_FAULT := FAULT_COUNT > 0;
+ALL_OPEN := V3_OPENED;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

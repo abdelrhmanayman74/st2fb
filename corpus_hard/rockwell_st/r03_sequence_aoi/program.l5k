@@ -1,0 +1,82 @@
+ADD_ON_INSTRUCTION_DEFINITION CipSequence_AOI (Description := "Clean-in-place sequence: prerinse, wash, final rinse, with step timers",
+                                               Revision := "1.3",
+                                               Vendor := "st2fb")
+	PARAMETERS
+		StartCmd : BOOL (Usage := Input);
+		HoldCmd : BOOL (Usage := Input);
+		AbortCmd : BOOL (Usage := Input);
+		ConductivityOk : BOOL (Usage := Input);
+		RinseMs : DINT (Usage := Input);
+		WashMs : DINT (Usage := Input);
+		TaskPeriodMs : DINT (Usage := Input);
+		StepNo : DINT (Usage := Output);
+		WaterValve : BOOL (Usage := Output);
+		CausticValve : BOOL (Usage := Output);
+		ReturnPump : BOOL (Usage := Output);
+		StepRemainingMs : DINT (Usage := Output);
+		DeviationAlarm : BOOL (Usage := Output);
+		CycleCount : DINT (Usage := Output);
+	END_PARAMETERS
+	LOCAL_TAGS
+		StepTimer : FBD_TIMER;
+		DeviationTimer : FBD_TIMER;
+		StartOneShot : FBD_ONESHOT;
+		Preset : DINT;
+	END_LOCAL_TAGS
+	ST_ROUTINE Logic
+		StartOneShot.InputBit := StartCmd;
+		OSRI(StartOneShot);
+
+		// [:= is a non-retentive assignment. In a running routine it acts like :=
+		WaterValve [:= 0;
+		CausticValve [:= 0;
+		ReturnPump [:= 0;
+
+		if AbortCmd then
+		    StepNo := 0;
+		    RES(StepTimer);
+		end_if;
+
+		case StepNo of
+		    0:  // Idle
+		        Preset := RinseMs;
+		        if StartOneShot.OutputBit & NOT AbortCmd then
+		            StepNo := 10;
+		        end_if;
+		    10: // Prerinse
+		        WaterValve := 1;
+		        ReturnPump := 1;
+		        if StepTimer.DN then
+		            RES(StepTimer);
+		            Preset := WashMs;
+		            StepNo := 20;
+		        end_if;
+		    20: // Wash, the timer only counts in conductivity
+		        CausticValve := 1;
+		        ReturnPump := 1;
+		        if StepTimer.DN then
+		            RES(StepTimer);
+		            Preset := RinseMs;
+		            StepNo := 30;
+		        end_if;
+		    30: // Final rinse
+		        WaterValve := 1;
+		        ReturnPump := 1;
+		        if StepTimer.DN then
+		            RES(StepTimer);
+		            CycleCount := CycleCount + 1;
+		            StepNo := 0;
+		        end_if;
+		end_case;
+
+		StepTimer.TimerEnable := (StepNo = 10 or StepNo = 30 or (StepNo = 20 & ConductivityOk)) & NOT HoldCmd;
+		StepTimer.PRE := Preset;
+		TONR(StepTimer);
+		StepRemainingMs := Preset - StepTimer.ACC;
+
+		DeviationTimer.TimerEnable := StepNo = 20 & NOT ConductivityOk;
+		DeviationTimer.PRE := 200;
+		TONR(DeviationTimer);
+		DeviationAlarm := DeviationTimer.DN;
+	END_ST_ROUTINE
+END_ADD_ON_INSTRUCTION_DEFINITION

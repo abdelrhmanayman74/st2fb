@@ -1,0 +1,75 @@
+ADD_ON_INSTRUCTION_DEFINITION FillRetry_AOI (Description := "Tank fill valve with hysteresis, retries and lockout",
+                                             Revision := "2.1",
+                                             Vendor := "st2fb")
+	PARAMETERS
+		FillRequest : BOOL (Usage := Input);
+		LevelPct : REAL (Usage := Input);
+		StartPct : REAL (Usage := Input);
+		StopPct : REAL (Usage := Input);
+		ValveOpen : BOOL (Usage := Input);
+		InflowPerSec : REAL (Usage := Input);
+		OpenTimeoutMs : DINT (Usage := Input);
+		RetryWaitMs : DINT (Usage := Input);
+		MaxRetries : DINT (Usage := Input);
+		Acknowledge : BOOL (Usage := Input);
+		TaskPeriodMs : DINT (Usage := Input);
+		ValveCmd : BOOL (Usage := Output);
+		WaitingRetry : BOOL (Usage := Output);
+		LockedOut : BOOL (Usage := Output);
+		RetryCount : DINT (Usage := Output);
+		Totalised : REAL (Usage := Output);
+	END_PARAMETERS
+	LOCAL_TAGS
+		Demand : BOOL;
+		WaitActive : BOOL;
+		OpenTimer : FBD_TIMER;
+		WaitTimer : FBD_TIMER;
+		Retries : FBD_COUNTER;
+		AckOneShot : FBD_ONESHOT;
+	END_LOCAL_TAGS
+	ST_ROUTINE Logic
+		// Hysteresis on the level
+		if LevelPct <= StartPct then
+		    Demand := 1;
+		elsif LevelPct >= StopPct then
+		    Demand := 0;
+		end_if;
+
+		// A timeout counts one failed attempt, then waits before the next
+		Retries.CUEnable := OpenTimer.DN;
+		Retries.PRE := MaxRetries;
+		CTUD(Retries);
+		RetryCount := Retries.ACC;
+		LockedOut := Retries.DN;
+
+		if OpenTimer.DN & NOT LockedOut then
+		    WaitActive := 1;
+		end_if;
+		WaitTimer.TimerEnable := WaitActive;
+		WaitTimer.PRE := RetryWaitMs;
+		TONR(WaitTimer);
+		WaitingRetry := WaitTimer.TT;
+		if WaitTimer.DN then
+		    WaitActive := 0;
+		end_if;
+
+		ValveCmd := FillRequest & Demand & NOT LockedOut & NOT WaitActive;
+
+		OpenTimer.TimerEnable := ValveCmd & NOT ValveOpen;
+		OpenTimer.PRE := OpenTimeoutMs;
+		TONR(OpenTimer);
+
+		if ValveCmd & ValveOpen then
+		    Totalised := Totalised + InflowPerSec * TaskPeriodMs / 1000.0;
+		end_if;
+
+		AckOneShot.InputBit := Acknowledge;
+		OSRI(AckOneShot);
+		if AckOneShot.OutputBit then
+		    RES(Retries);
+		    RES(OpenTimer);
+		    RES(WaitTimer);
+		    WaitActive := 0;
+		end_if;
+	END_ST_ROUTINE
+END_ADD_ON_INSTRUCTION_DEFINITION

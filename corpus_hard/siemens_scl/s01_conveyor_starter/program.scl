@@ -1,0 +1,82 @@
+FUNCTION_BLOCK "FB_ConveyorStarter"
+TITLE = 'Conveyor starter with pre-start horn and coast-down'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Conveyors
+NAME : ConveyorStarter
+VERSION : 1.0
+//Sounds a horn before the belt starts, latches overload trips, and reports the coast-down after a stop.
+   VAR_INPUT 
+      i_start : Bool;   // Start push button, edge triggered
+      i_stop : Bool;   // Stop push button, normally closed contact wired as stop = TRUE
+      i_estopOk : Bool;   // E-stop relay healthy
+      i_overload : Bool;   // Thermal overload contact
+      i_reset : Bool;   // Fault reset
+      i_hornTime : Time;   // Duration of the horn
+      i_coastTime : Time;   // Coast-down time after the run command drops
+   END_VAR
+
+   VAR_OUTPUT 
+      o_run : Bool;   // Contactor
+      o_horn : Bool;   // Warning horn
+      o_tripped : Bool;   // Latched trip
+      o_coasting : Bool;   // Belt still moving after stop
+      o_hornElapsed : Time;
+   END_VAR
+
+   VAR 
+      statRunRequest : Bool;
+      statTrip : Bool;
+      statHornPreset : Time;
+      statCoastPreset : Time;
+      statStartEdge {InstructionName := 'R_TRIG'; LibVersion := '1.0'} : R_TRIG;
+      statHornTimer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+      statCoastTimer {InstructionName := 'TOF_TIME'; LibVersion := '1.0'} : TOF_TIME;
+   END_VAR
+
+   VAR_TEMP 
+      tempPermit : Bool;
+   END_VAR
+
+
+BEGIN
+	REGION Trip latch
+	    // An overload trips immediately. Reset only clears it once the overload has gone.
+	    IF #i_overload OR NOT #i_estopOk THEN
+	        #statTrip := TRUE;
+	    ELSIF #i_reset THEN
+	        #statTrip := FALSE;
+	    END_IF;
+	    #tempPermit := #i_estopOk AND NOT #statTrip;
+	END_REGION
+	
+	REGION Run request
+	    // The horn keeps the length it started with, and the coast-down the time in force when the run dropped.
+	    IF NOT #statRunRequest THEN
+	        #statHornPreset := #i_hornTime;
+	    END_IF;
+	    IF #o_run THEN
+	        #statCoastPreset := #i_coastTime;
+	    END_IF;
+	    #statStartEdge(CLK := #i_start);
+	    IF #i_stop OR NOT #tempPermit THEN
+	        #statRunRequest := FALSE;
+	    ELSIF #statStartEdge.Q THEN
+	        #statRunRequest := TRUE;
+	    END_IF;
+	END_REGION
+	
+	REGION Horn then run
+	    #statHornTimer(IN := #statRunRequest,
+	                   PT := #statHornPreset,
+	                   ET => #o_hornElapsed);
+	    #o_horn := #statRunRequest AND NOT #statHornTimer.Q;
+	    #o_run := #statRunRequest AND #statHornTimer.Q;
+	END_REGION
+	
+	REGION Coast-down
+	    #statCoastTimer(IN := #o_run, PT := #statCoastPreset);
+	    #o_coasting := #statCoastTimer.Q AND NOT #o_run;
+	    #o_tripped := #statTrip;
+	END_REGION
+END_FUNCTION_BLOCK

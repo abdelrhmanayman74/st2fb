@@ -1,0 +1,10 @@
+# Overlay for the jitter test only: lets FORTE ask for SCHED_FIFO.
+services:
+  ctrl-a:
+    cap_add: [SYS_NICE]
+    ulimits: {rtprio: 99}
+    security_opt: []
+  ctrl-b:
+    cap_add: [SYS_NICE]
+    ulimits: {rtprio: 99}
+    security_opt: []

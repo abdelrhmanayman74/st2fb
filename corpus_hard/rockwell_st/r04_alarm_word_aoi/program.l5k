@@ -1,0 +1,83 @@
+ADD_ON_INSTRUCTION_DEFINITION AlarmWord_AOI (Description := "Three delayed alarms in a bit-packed word, with mask, first-out and acknowledge",
+                                             Revision := "1.0",
+                                             Vendor := "st2fb")
+	PARAMETERS
+		Cond0 : BOOL (Usage := Input);
+		Cond1 : BOOL (Usage := Input);
+		Cond2 : BOOL (Usage := Input);
+		MaskWord : DINT (Usage := Input);
+		DelayMs : DINT (Usage := Input);
+		AckPB : BOOL (Usage := Input);
+		TaskPeriodMs : DINT (Usage := Input);
+		AlarmWord : DINT (Usage := Output);
+		UnackWord : DINT (Usage := Output);
+		FirstOut : DINT (Usage := Output);
+		Horn : BOOL (Usage := Output);
+		Timing : BOOL (Usage := Output);
+	END_PARAMETERS
+	LOCAL_TAGS
+		T0 : FBD_TIMER;
+		T1 : FBD_TIMER;
+		T2 : FBD_TIMER;
+		AckOneShot : FBD_ONESHOT;
+		Latched0 : BOOL;
+		Latched1 : BOOL;
+		Latched2 : BOOL;
+	END_LOCAL_TAGS
+	ST_ROUTINE Logic
+		// A masked alarm never starts its timer: bit n of MaskWord masks alarm n
+		T0.TimerEnable := Cond0 & NOT MaskWord.0;
+		T0.PRE := DelayMs;
+		TONR(T0);
+		T1.TimerEnable := Cond1 & NOT MaskWord.1;
+		T1.PRE := DelayMs;
+		TONR(T1);
+		T2.TimerEnable := Cond2 & NOT MaskWord.2;
+		T2.PRE := DelayMs;
+		TONR(T2);
+		Timing := T0.TT or T1.TT or T2.TT;
+
+		// First out: the lowest alarm of the first scan on which any is done
+		if FirstOut = 0 then
+		    if T0.DN then
+		        FirstOut := 1;
+		    elsif T1.DN then
+		        FirstOut := 2;
+		    elsif T2.DN then
+		        FirstOut := 3;
+		    end_if;
+		end_if;
+
+		// Latch until acknowledged
+		if T0.DN then
+		    Latched0 := 1;
+		end_if;
+		if T1.DN then
+		    Latched1 := 1;
+		end_if;
+		if T2.DN then
+		    Latched2 := 1;
+		end_if;
+
+		AckOneShot.InputBit := AckPB;
+		OSRI(AckOneShot);
+		if AckOneShot.OutputBit then
+		    Latched0 := 0;
+		    Latched1 := 0;
+		    Latched2 := 0;
+		    if NOT (T0.DN or T1.DN or T2.DN) then
+		        FirstOut := 0;
+		    end_if;
+		end_if;
+
+		AlarmWord := 0;
+		AlarmWord.0 := T0.DN;
+		AlarmWord.1 := T1.DN;
+		AlarmWord.2 := T2.DN;
+		UnackWord := 0;
+		UnackWord.0 := Latched0;
+		UnackWord.1 := Latched1;
+		UnackWord.2 := Latched2;
+		Horn := UnackWord <> 0;
+	END_ST_ROUTINE
+END_ADD_ON_INSTRUCTION_DEFINITION

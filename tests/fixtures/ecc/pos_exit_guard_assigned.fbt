@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Positive: exit guards read a variable that this scan's algorithm has just assigned, which is not dispatch">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="A"><ECAction Algorithm="step_a" Output="CNF"/></ECState>
+      <ECState Name="WAIT_B"/>
+      <ECState Name="B"><ECAction Algorithm="step_b2" Output="CNF"/></ECState>
+      <ECState Name="WAIT_C"/>
+      <ECState Name="C"><ECAction Algorithm="step_c" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="A" Condition="REQ"/>
+      <ECTransition Source="A" Destination="WAIT_B" Condition="[SEQ = 1]"/>
+      <ECTransition Source="A" Destination="START" Condition="1"/>
+      <ECTransition Source="WAIT_B" Destination="B" Condition="REQ"/>
+      <ECTransition Source="B" Destination="WAIT_C" Condition="[SEQ = 2]"/>
+      <ECTransition Source="B" Destination="START" Condition="[SEQ = 0]"/>
+      <ECTransition Source="B" Destination="WAIT_B" Condition="1"/>
+      <ECTransition Source="WAIT_C" Destination="C" Condition="REQ"/>
+      <ECTransition Source="C" Destination="START" Condition="1"/>
+    </ECC>
+    <Algorithm Name="step_a"><ST><![CDATA[
+SEQ := 0;
+IF GO THEN
+  SEQ := 1;
+END_IF;
+]]></ST></Algorithm>
+    <Algorithm Name="step_b2"><ST><![CDATA[
+IF GO THEN
+  SEQ := 2;
+ELSE
+  SEQ := 0;
+END_IF;
+]]></ST></Algorithm>
+    <Algorithm Name="step_c"><ST><![CDATA[
+SEQ := 0;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

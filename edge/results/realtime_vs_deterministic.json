@@ -1,0 +1,374 @@
+{
+  "machine": {
+    "date": "2026-11-07T03:37:48+02:00",
+    "cpu": "Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz",
+    "cpus": 12,
+    "kernel": "6.8.0-138-generic",
+    "kernel_version": "#138~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Aug  7 13:43:15 UTC ",
+    "docker": "28.0.0",
+    "environment": "simulated: one x86_64 PC, Docker bridge networks, no Raspberry Pi or ESP32"
+  },
+  "stimulus_scans": 1990,
+  "scan_ms": 100,
+  "runs": [
+    {
+      "phase_ms": 0,
+      "real_time_writes": 2007,
+      "player": {
+        "t_start_ns": 599100162716282,
+        "t_end_ns": 599299162794785,
+        "late_slots": 0
+      },
+      "lag_sweep": [
+        {
+          "lag_scans": 0,
+          "compared": 1990,
+          "mismatched_by_signal": {
+            "STATE_NO": 72,
+            "PUMP_1": 24,
+            "PUMP_2": 27,
+            "LEAD_IS_2": 26,
+            "HIGH_ALARM": 1,
+            "STATION_FAULT": 11
+          },
+          "mismatched_scans_total": 161
+        },
+        {
+          "lag_scans": 1,
+          "compared": 1989,
+          "mismatched_by_signal": {
+            "STATE_NO": 45,
+            "PUMP_1": 14,
+            "PUMP_2": 19,
+            "LEAD_IS_2": 25,
+            "HIGH_ALARM": 5,
+            "STATION_FAULT": 4
+          },
+          "mismatched_scans_total": 112
+        },
+        {
+          "lag_scans": 2,
+          "compared": 1988,
+          "mismatched_by_signal": {
+            "STATE_NO": 125,
+            "PUMP_1": 46,
+            "PUMP_2": 41,
+            "LEAD_IS_2": 38,
+            "HIGH_ALARM": 11,
+            "STATION_FAULT": 19
+          },
+          "mismatched_scans_total": 280
+        },
+        {
+          "lag_scans": 3,
+          "compared": 1987,
+          "mismatched_by_signal": {
+            "STATE_NO": 183,
+            "PUMP_1": 78,
+            "PUMP_2": 63,
+            "LEAD_IS_2": 51,
+            "HIGH_ALARM": 17,
+            "STATION_FAULT": 34
+          },
+          "mismatched_scans_total": 426
+        }
+      ],
+      "best_lag": {
+        "lag_scans": 1,
+        "compared": 1989,
+        "mismatched_by_signal": {
+          "STATE_NO": 45,
+          "PUMP_1": 14,
+          "PUMP_2": 19,
+          "LEAD_IS_2": 25,
+          "HIGH_ALARM": 5,
+          "STATION_FAULT": 4
+        },
+        "mismatched_scans_total": 112
+      },
+      "state_changes_deterministic": 94,
+      "state_changes_real_time": 91,
+      "same_state_sequence": false,
+      "state_change_lag_scans": {
+        "n": 81,
+        "mean": 3.296,
+        "median": 1,
+        "p95": 24,
+        "max": 30,
+        "min": -1
+      },
+      "state_changes_unmatched": [
+        [
+          579,
+          2
+        ],
+        [
+          580,
+          3
+        ],
+        [
+          586,
+          4
+        ],
+        [
+          601,
+          1
+        ],
+        [
+          602,
+          5
+        ],
+        [
+          618,
+          0
+        ],
+        [
+          619,
+          1
+        ],
+        [
+          620,
+          2
+        ],
+        [
+          669,
+          2
+        ],
+        [
+          670,
+          3
+        ],
+        [
+          674,
+          4
+        ],
+        [
+          685,
+          3
+        ],
+        [
+          688,
+          1
+        ]
+      ],
+      "final": {
+        "deterministic": {
+          "STARTS": 23,
+          "PULSES": 427,
+          "TOTAL": 427.9560546875,
+          "LEAD_IS_2": 1
+        },
+        "real_time": {
+          "STARTS": 21,
+          "PULSES": 430,
+          "TOTAL": 430.7685546875,
+          "LEAD_IS_2": 1
+        }
+      }
+    },
+    {
+      "phase_ms": 33,
+      "real_time_writes": 2004,
+      "player": {
+        "t_start_ns": 599324215572875,
+        "t_end_ns": 599523215653192,
+        "late_slots": 0
+      },
+      "lag_sweep": [
+        {
+          "lag_scans": 0,
+          "compared": 1990,
+          "mismatched_by_signal": {
+            "STATE_NO": 1,
+            "PUMP_1": 1,
+            "PUMP_2": 0,
+            "LEAD_IS_2": 0,
+            "HIGH_ALARM": 0,
+            "STATION_FAULT": 0
+          },
+          "mismatched_scans_total": 2
+        },
+        {
+          "lag_scans": 1,
+          "compared": 1989,
+          "mismatched_by_signal": {
+            "STATE_NO": 95,
+            "PUMP_1": 35,
+            "PUMP_2": 26,
+            "LEAD_IS_2": 17,
+            "HIGH_ALARM": 6,
+            "STATION_FAULT": 15
+          },
+          "mismatched_scans_total": 194
+        },
+        {
+          "lag_scans": 2,
+          "compared": 1988,
+          "mismatched_by_signal": {
+            "STATE_NO": 161,
+            "PUMP_1": 69,
+            "PUMP_2": 52,
+            "LEAD_IS_2": 32,
+            "HIGH_ALARM": 12,
+            "STATION_FAULT": 30
+          },
+          "mismatched_scans_total": 356
+        },
+        {
+          "lag_scans": 3,
+          "compared": 1987,
+          "mismatched_by_signal": {
+            "STATE_NO": 209,
+            "PUMP_1": 99,
+            "PUMP_2": 76,
+            "LEAD_IS_2": 47,
+            "HIGH_ALARM": 18,
+            "STATION_FAULT": 45
+          },
+          "mismatched_scans_total": 494
+        }
+      ],
+      "best_lag": {
+        "lag_scans": 0,
+        "compared": 1990,
+        "mismatched_by_signal": {
+          "STATE_NO": 1,
+          "PUMP_1": 1,
+          "PUMP_2": 0,
+          "LEAD_IS_2": 0,
+          "HIGH_ALARM": 0,
+          "STATION_FAULT": 0
+        },
+        "mismatched_scans_total": 2
+      },
+      "state_changes_deterministic": 94,
+      "state_changes_real_time": 94,
+      "same_state_sequence": true,
+      "state_change_lag_scans": {
+        "n": 94,
+        "mean": -0.011,
+        "median": 0.0,
+        "p95": 0,
+        "max": 0,
+        "min": -1
+      },
+      "state_changes_unmatched": [],
+      "final": {
+        "deterministic": {
+          "STARTS": 23,
+          "PULSES": 427,
+          "TOTAL": 427.9560546875,
+          "LEAD_IS_2": 1
+        },
+        "real_time": {
+          "STARTS": 23,
+          "PULSES": 427,
+          "TOTAL": 427.9560546875,
+          "LEAD_IS_2": 1
+        }
+      }
+    },
+    {
+      "phase_ms": 66,
+      "real_time_writes": 2004,
+      "player": {
+        "t_start_ns": 599548215256406,
+        "t_end_ns": 599747215335483,
+        "late_slots": 0
+      },
+      "lag_sweep": [
+        {
+          "lag_scans": 0,
+          "compared": 1990,
+          "mismatched_by_signal": {
+            "STATE_NO": 94,
+            "PUMP_1": 33,
+            "PUMP_2": 26,
+            "LEAD_IS_2": 17,
+            "HIGH_ALARM": 6,
+            "STATION_FAULT": 15
+          },
+          "mismatched_scans_total": 191
+        },
+        {
+          "lag_scans": 1,
+          "compared": 1989,
+          "mismatched_by_signal": {
+            "STATE_NO": 1,
+            "PUMP_1": 1,
+            "PUMP_2": 0,
+            "LEAD_IS_2": 0,
+            "HIGH_ALARM": 0,
+            "STATION_FAULT": 0
+          },
+          "mismatched_scans_total": 2
+        },
+        {
+          "lag_scans": 2,
+          "compared": 1988,
+          "mismatched_by_signal": {
+            "STATE_NO": 95,
+            "PUMP_1": 35,
+            "PUMP_2": 26,
+            "LEAD_IS_2": 17,
+            "HIGH_ALARM": 6,
+            "STATION_FAULT": 15
+          },
+          "mismatched_scans_total": 194
+        },
+        {
+          "lag_scans": 3,
+          "compared": 1987,
+          "mismatched_by_signal": {
+            "STATE_NO": 161,
+            "PUMP_1": 69,
+            "PUMP_2": 52,
+            "LEAD_IS_2": 32,
+            "HIGH_ALARM": 12,
+            "STATION_FAULT": 30
+          },
+          "mismatched_scans_total": 356
+        }
+      ],
+      "best_lag": {
+        "lag_scans": 1,
+        "compared": 1989,
+        "mismatched_by_signal": {
+          "STATE_NO": 1,
+          "PUMP_1": 1,
+          "PUMP_2": 0,
+          "LEAD_IS_2": 0,
+          "HIGH_ALARM": 0,
+          "STATION_FAULT": 0
+        },
+        "mismatched_scans_total": 2
+      },
+      "state_changes_deterministic": 94,
+      "state_changes_real_time": 95,
+      "same_state_sequence": false,
+      "state_change_lag_scans": {
+        "n": 94,
+        "mean": 0.989,
+        "median": 1.0,
+        "p95": 1,
+        "max": 1,
+        "min": 0
+      },
+      "state_changes_unmatched": [],
+      "final": {
+        "deterministic": {
+          "STARTS": 23,
+          "PULSES": 427,
+          "TOTAL": 427.9560546875,
+          "LEAD_IS_2": 1
+        },
+        "real_time": {
+          "STARTS": 23,
+          "PULSES": 427,
+          "TOTAL": 427.9560546875,
+          "LEAD_IS_2": 1
+        }
+      }
+    }
+  ]
+}

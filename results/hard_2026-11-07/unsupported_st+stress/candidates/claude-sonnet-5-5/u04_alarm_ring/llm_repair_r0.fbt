@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="ALARM_RING" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="RAISE_CODE"/><With Var="ACK_OLDEST"/><With Var="CLEAR_ALL"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="NEWEST_CODE"/><With Var="OLDEST_UNACKED"/><With Var="OLDEST_AGE"/><With Var="UNACKED"/><With Var="OVERWRITES"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="RAISE_CODE" Type="INT"/>
+      <VarDeclaration Name="ACK_OLDEST" Type="BOOL"/>
+      <VarDeclaration Name="CLEAR_ALL" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="NEWEST_CODE" Type="INT"/>
+      <VarDeclaration Name="OLDEST_UNACKED" Type="INT"/>
+      <VarDeclaration Name="OLDEST_AGE" Type="DINT"/>
+      <VarDeclaration Name="UNACKED" Type="INT"/>
+      <VarDeclaration Name="OVERWRITES" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="RING_CODE_1" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="RING_CODE_2" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="RING_CODE_3" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="RING_CODE_4" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="RING_ACKED_1" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RING_ACKED_2" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RING_ACKED_3" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RING_ACKED_4" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RING_AGE_1" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="RING_AGE_2" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="RING_AGE_3" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="RING_AGE_4" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="HEAD" Type="INT" InitialValue="1"/>
+      <VarDeclaration Name="USED" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="I" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="SLOT" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="PREV_CODE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="ACK_EDGE_CLK" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="ACK_EDGE_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="ACK_EDGE_M" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FOUND" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CUR_CODE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="CUR_ACKED" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CUR_AGE" Type="DINT" InitialValue="0"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ACK_EDGE_CLK := ACK_OLDEST;
+ACK_EDGE_Q := ACK_EDGE_CLK AND NOT ACK_EDGE_M;
+ACK_EDGE_M := ACK_EDGE_CLK;
+
+IF CLEAR_ALL THEN
+  RING_CODE_1 := 0; RING_CODE_2 := 0; RING_CODE_3 := 0; RING_CODE_4 := 0;
+  RING_ACKED_1 := FALSE; RING_ACKED_2 := FALSE; RING_ACKED_3 := FALSE; RING_ACKED_4 := FALSE;
+  RING_AGE_1 := 0; RING_AGE_2 := 0; RING_AGE_3 := 0; RING_AGE_4 := 0;
+  HEAD := 1;
+  USED := 0;
+  NEWEST_CODE := 0;
+ELSIF (RAISE_CODE <> 0) AND (RAISE_CODE <> PREV_CODE) THEN
+  IF USED = 4 THEN
+    OVERWRITES := OVERWRITES + 1;
+  ELSE
+    USED := USED + 1;
+  END_IF;
+  CASE HEAD OF
+    1: RING_CODE_1 := RAISE_CODE; RING_ACKED_1 := FALSE; RING_AGE_1 := 0;
+    2: RING_CODE_2 := RAISE_CODE; RING_ACKED_2 := FALSE; RING_AGE_2 := 0;
+    3: RING_CODE_3 := RAISE_CODE; RING_ACKED_3 := FALSE; RING_AGE_3 := 0;
+    4: RING_CODE_4 := RAISE_CODE; RING_ACKED_4 := FALSE; RING_AGE_4 := 0;
+  END_CASE;
+  NEWEST_CODE := RAISE_CODE;
+  HEAD := HEAD MOD 4 + 1;
+END_IF;
+PREV_CODE := RAISE_CODE;
+
+OLDEST_UNACKED := 0;
+OLDEST_AGE := 0;
+UNACKED := 0;
+FOR I := 1 TO USED DO
+  SLOT := (HEAD - USED + I + 3) MOD 4 + 1;
+  CASE SLOT OF
+    1: RING_AGE_1 := RING_AGE_1 + 1;
+    2: RING_AGE_2 := RING_AGE_2 + 1;
+    3: RING_AGE_3 := RING_AGE_3 + 1;
+    4: RING_AGE_4 := RING_AGE_4 + 1;
+  END_CASE;
+END_FOR;
+IF ACK_EDGE_Q THEN
+  FOUND := FALSE;
+  FOR I := 1 TO USED DO
+    IF NOT FOUND THEN
+      SLOT := (HEAD - USED + I + 3) MOD 4 + 1;
+      CASE SLOT OF
+        1: CUR_ACKED := RING_ACKED_1;
+        2: CUR_ACKED := RING_ACKED_2;
+        3: CUR_ACKED := RING_ACKED_3;
+        4: CUR_ACKED := RING_ACKED_4;
+      END_CASE;
+      IF NOT CUR_ACKED THEN
+        CASE SLOT OF
+          1: RING_ACKED_1 := TRUE;
+          2: RING_ACKED_2 := TRUE;
+          3: RING_ACKED_3 := TRUE;
+          4: RING_ACKED_4 := TRUE;
+        END_CASE;
+        FOUND := TRUE;
+      END_IF;
+    END_IF;
+  END_FOR;
+END_IF;
+FOR I := USED TO 1 BY -1 DO
+  SLOT := (HEAD - USED + I + 3) MOD 4 + 1;
+  CASE SLOT OF
+    1: CUR_ACKED := RING_ACKED_1; CUR_CODE := RING_CODE_1; CUR_AGE := RING_AGE_1;
+    2: CUR_ACKED := RING_ACKED_2; CUR_CODE := RING_CODE_2; CUR_AGE := RING_AGE_2;
+    3: CUR_ACKED := RING_ACKED_3; CUR_CODE := RING_CODE_3; CUR_AGE := RING_AGE_3;
+    4: CUR_ACKED := RING_ACKED_4; CUR_CODE := RING_CODE_4; CUR_AGE := RING_AGE_4;
+  END_CASE;
+  IF NOT CUR_ACKED THEN
+    UNACKED := UNACKED + 1;
+    OLDEST_UNACKED := CUR_CODE;
+    OLDEST_AGE := CUR_AGE;
+  END_IF;
+END_FOR;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

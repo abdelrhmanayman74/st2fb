@@ -1,0 +1,6 @@
+# The gateway publishes; the read-only viewer account can only subscribe. Nothing can publish commands.
+user st2fb-gateway
+topic write st2fb/station1/#
+
+user st2fb-viewer
+topic read st2fb/station1/#

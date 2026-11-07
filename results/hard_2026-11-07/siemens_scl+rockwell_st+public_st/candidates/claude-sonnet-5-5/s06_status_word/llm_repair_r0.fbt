@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_DriveStatus" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_controlWord"/><With Var="i_speedRef"/><With Var="i_driveFault"/><With Var="i_atSpeed"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_statusWord"/><With Var="o_runForward"/><With Var="o_runReverse"/><With Var="o_speedPercent"/><With Var="o_faultCount"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_controlWord" Type="UINT"/>
+      <VarDeclaration Name="i_speedRef" Type="INT"/>
+      <VarDeclaration Name="i_driveFault" Type="BOOL"/>
+      <VarDeclaration Name="i_atSpeed" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_statusWord" Type="UINT"/>
+      <VarDeclaration Name="o_runForward" Type="BOOL"/>
+      <VarDeclaration Name="o_runReverse" Type="BOOL"/>
+      <VarDeclaration Name="o_speedPercent" Type="REAL"/>
+      <VarDeclaration Name="o_faultCount" Type="UINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="statFaultLatched" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statFaultEdge_CLK" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statFaultEdge_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statFaultEdge_M" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+statFaultEdge_CLK := i_driveFault;
+statFaultEdge_Q := statFaultEdge_CLK AND NOT statFaultEdge_M;
+statFaultEdge_M := statFaultEdge_CLK;
+IF statFaultEdge_Q THEN
+  o_faultCount := o_faultCount + 1;
+END_IF;
+IF i_driveFault THEN
+  statFaultLatched := TRUE;
+ELSIF (UINT_TO_INT(i_controlWord / 128) MOD 2) = 1 THEN
+  statFaultLatched := FALSE;
+END_IF;
+o_runForward := ((i_controlWord MOD 2) = 1) AND ((UINT_TO_INT(i_controlWord / 2) MOD 2) = 1) AND NOT ((UINT_TO_INT(i_controlWord / 4) MOD 2) = 1) AND NOT statFaultLatched;
+o_runReverse := ((i_controlWord MOD 2) = 1) AND ((UINT_TO_INT(i_controlWord / 2) MOD 2) = 1) AND ((UINT_TO_INT(i_controlWord / 4) MOD 2) = 1) AND NOT statFaultLatched;
+IF o_runForward OR o_runReverse THEN
+  o_speedPercent := INT_TO_REAL(i_speedRef) * 100.0 / 16384.0;
+ELSE
+  o_speedPercent := 0.0;
+END_IF;
+o_statusWord := 0;
+IF ((i_controlWord MOD 2) = 1) AND NOT statFaultLatched THEN
+  o_statusWord := o_statusWord + 1;
+END_IF;
+IF o_runForward OR o_runReverse THEN
+  o_statusWord := o_statusWord + 2;
+END_IF;
+IF o_runReverse THEN
+  o_statusWord := o_statusWord + 4;
+END_IF;
+IF statFaultLatched THEN
+  o_statusWord := o_statusWord + 8;
+END_IF;
+IF i_atSpeed AND (o_runForward OR o_runReverse) THEN
+  o_statusWord := o_statusWord + 16;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

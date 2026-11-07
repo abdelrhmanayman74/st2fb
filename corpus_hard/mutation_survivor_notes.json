@@ -1,0 +1,434 @@
+{
+ "survivors": {
+  "p02_pi_controller|line 102:64: boundary: '<' -> '<='": {
+   "verdict": "equivalent",
+   "reason": "With PV equal to SP the error is 0, so not pausing adds exactly 0 to the integral, and pausing keeps Term, which already equals it."
+  },
+  "p02_pi_controller|line 103:67: boundary: '>' -> '>='": {
+   "verdict": "equivalent",
+   "reason": "With PV equal to SP the error is 0, so not pausing adds exactly 0 to the integral, and pausing keeps Term, which already equals it."
+  },
+  "p02_pi_controller|line 58:22: boundary: '>' -> '>='": {
+   "verdict": "equivalent",
+   "reason": "On the boundary the integral equals the limit, and the clamp gives the same value."
+  },
+  "p02_pi_controller|line 60:25: boundary: '<' -> '<='": {
+   "verdict": "equivalent",
+   "reason": "On the boundary the integral equals the limit, and the clamp gives the same value."
+  },
+  "p03_alpha_beta_filter|line 19:1: remove: removed 'velocityIntegrator := velocityEstimate;'": {
+   "verdict": "equivalent",
+   "reason": "velocityIntegrator was set to velocityEstimate at the end of the last scan, so it already holds that value. The upstream statement is redundant."
+  },
+  "r01_motor_aoi|line 64:9: remove: removed 'Fb_ACC := FeedbackTimeoutMs;'": {
+   "verdict": "equivalent",
+   "reason": "ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r01_motor_aoi|line 70:5: remove: removed 'Fb_DN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "DN set means the fault latched on the same scan, and the run latch drops, so the timer stays disabled until a reset, whose RES clears DN anyway. A reset on the same scan as the timeout goes through RES too."
+  },
+  "r01_motor_aoi|line 72:18: operator: 'AND' -> 'OR'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r01_motor_aoi|line 72:3: remove: removed 'Fb_TT := Fb_EN AND NOT Fb_DN;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r01_motor_aoi|line 82:14: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r01_motor_aoi|line 82:5: remove: removed 'Fb_EN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r01_motor_aoi|line 83:14: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r01_motor_aoi|line 83:5: remove: removed 'Fb_TT := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r02_fill_retry_aoi|line 101:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r02_fill_retry_aoi|line 101:5: remove: removed 'Open_EN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r02_fill_retry_aoi|line 102:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r02_fill_retry_aoi|line 102:5: remove: removed 'Open_TT := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r02_fill_retry_aoi|line 104:17: constant: '0' -> '-1'": {
+   "verdict": "equivalent",
+   "reason": "The same acknowledge clears WaitActive, so the next call is disabled and sets ACC to 0 before anything reads it."
+  },
+  "r02_fill_retry_aoi|line 104:17: constant: '0' -> '1'": {
+   "verdict": "equivalent",
+   "reason": "The same acknowledge clears WaitActive, so the next call is disabled and sets ACC to 0 before anything reads it."
+  },
+  "r02_fill_retry_aoi|line 104:5: remove: removed 'Wait_ACC := 0;'": {
+   "verdict": "equivalent",
+   "reason": "The same acknowledge clears WaitActive, so the next call is disabled and sets ACC to 0 before anything reads it."
+  },
+  "r02_fill_retry_aoi|line 105:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "The same acknowledge clears WaitActive, so the next call is disabled and clears DN before it is read."
+  },
+  "r02_fill_retry_aoi|line 105:5: remove: removed 'Wait_DN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "The same acknowledge clears WaitActive, so the next call is disabled and clears DN before it is read."
+  },
+  "r02_fill_retry_aoi|line 106:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r02_fill_retry_aoi|line 106:5: remove: removed 'Wait_EN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r02_fill_retry_aoi|line 107:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "Wait_TT is assigned afresh at the next call, before WaitingRetry reads it."
+  },
+  "r02_fill_retry_aoi|line 107:5: remove: removed 'Wait_TT := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "Wait_TT is assigned afresh at the next call, before WaitingRetry reads it."
+  },
+  "r02_fill_retry_aoi|line 108:18: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "The same acknowledge clears WaitActive, so the next call is disabled and overwrites PREV."
+  },
+  "r02_fill_retry_aoi|line 108:5: remove: removed 'Wait_PREV := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "The same acknowledge clears WaitActive, so the next call is disabled and overwrites PREV."
+  },
+  "r02_fill_retry_aoi|line 46:3: remove: removed 'Retries_PREV := Retries_CU;'": {
+   "verdict": "equivalent",
+   "reason": "The counter's input is the open timer's DN, which is high for one scan only: the valve command drops the next scan, which disables the timer, or an acknowledge clears it. So there is never a second high scan for the edge memory to hold back. This is what the program really exercises of CTUD's edge."
+  },
+  "r02_fill_retry_aoi|line 58:9: remove: removed 'Wait_ACC := RetryWaitMs;'": {
+   "verdict": "equivalent",
+   "reason": "ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r02_fill_retry_aoi|line 80:9: remove: removed 'Open_ACC := OpenTimeoutMs;'": {
+   "verdict": "equivalent",
+   "reason": "ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r02_fill_retry_aoi|line 88:22: operator: 'AND' -> 'OR'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r02_fill_retry_aoi|line 88:3: remove: removed 'Open_TT := Open_EN AND NOT Open_DN;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r02_fill_retry_aoi|line 98:19: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "The counter's DN is assigned afresh from ACC at the next call, before anything reads it."
+  },
+  "r02_fill_retry_aoi|line 98:5: remove: removed 'Retries_DN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "The counter's DN is assigned afresh from ACC at the next call, before anything reads it."
+  },
+  "r03_sequence_aoi|line 101:22: operator: 'AND' -> 'OR'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 101:3: remove: removed 'Step_TT := Step_EN AND NOT Step_DN;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 109:21: constant: '200' -> '199'": {
+   "verdict": "gap, listed",
+   "reason": "ACC moves in whole task periods, and no multiple of 10 or 7 lies at 199 or between it and 200 that the test could separate. Only a period of 1 or 199 ms would show it. No scored stimulus runs at either."
+  },
+  "r03_sequence_aoi|line 110:20: constant: '200' -> '199'": {
+   "verdict": "equivalent",
+   "reason": "The clamp value of an internal ACC, once DN is set. ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r03_sequence_aoi|line 110:20: constant: '200' -> '201'": {
+   "verdict": "equivalent",
+   "reason": "The clamp value of an internal ACC, once DN is set. ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r03_sequence_aoi|line 110:9: remove: removed 'Dev_ACC := 200;'": {
+   "verdict": "equivalent",
+   "reason": "ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r03_sequence_aoi|line 115:16: constant: '0' -> '1'": {
+   "verdict": "gap, listed",
+   "reason": "ACC restarts from 1. 1 + 10k reaches 200 on the same scan as 10k, and 1 + 7k on the same scan as 7k. The preset is a literal, so no stimulus can move it off these grids. Only another scan period could show it."
+  },
+  "r03_sequence_aoi|line 118:20: operator: 'AND' -> 'OR'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 118:3: remove: removed 'Dev_TT := Dev_EN AND NOT Dev_DN;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 37:17: constant: '0' -> '-1'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 37:17: constant: '0' -> '1'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 37:5: remove: removed 'Step_ACC := 0;'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 38:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 38:5: remove: removed 'Step_DN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 39:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 39:5: remove: removed 'Step_EN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 40:16: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 40:5: remove: removed 'Step_TT := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 41:18: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 41:5: remove: removed 'Step_PREV := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES runs on the abort, which sets StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 56:20: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r03_sequence_aoi|line 56:9: remove: removed 'Step_EN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r03_sequence_aoi|line 57:20: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 57:9: remove: removed 'Step_TT := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 68:20: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r03_sequence_aoi|line 68:9: remove: removed 'Step_EN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's EN member is assigned afresh by the next call before anything reads it, and it reaches no output."
+  },
+  "r03_sequence_aoi|line 69:20: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 69:9: remove: removed 'Step_TT := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "a timer's TT member reaches no output, and nothing reads it."
+  },
+  "r03_sequence_aoi|line 78:21: constant: '0' -> '-1'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 78:21: constant: '0' -> '1'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 78:9: remove: removed 'Step_ACC := 0;'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 79:20: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 79:9: remove: removed 'Step_DN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 80:20: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 80:9: remove: removed 'Step_EN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 81:20: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 81:9: remove: removed 'Step_TT := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 82:22: constant: 'FALSE' -> 'TRUE'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 82:9: remove: removed 'Step_PREV := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "This RES ends the cycle, setting StepNo to 0 on the same scan, so the timer's next call in this scan is disabled and clears ACC and DN and overwrites EN, TT and PREV. The whole RES is redundant in the source."
+  },
+  "r03_sequence_aoi|line 99:5: remove: removed 'Step_DN := FALSE;'": {
+   "verdict": "equivalent",
+   "reason": "DN is set on one scan, and the next scan's CASE clears it with RES before the timer's call. So it is never set when the disabled branch runs."
+  },
+  "r04_alarm_word_aoi|line 39:9: remove: removed 'T0_ACC := DelayMs;'": {
+   "verdict": "equivalent",
+   "reason": "ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r04_alarm_word_aoi|line 54:9: remove: removed 'T1_ACC := DelayMs;'": {
+   "verdict": "equivalent",
+   "reason": "ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "r04_alarm_word_aoi|line 69:9: remove: removed 'T2_ACC := DelayMs;'": {
+   "verdict": "equivalent",
+   "reason": "ACC is internal here, DN is set by the same test, and ACC is not added to again once DN is set, so the clamp shows nowhere."
+  },
+  "s02_analog_input|line 35:35: operator: '-' -> '+'": {
+   "verdict": "equivalent",
+   "reason": "Subtracting or adding 0.0: NORM_X's MIN is 0 here."
+  },
+  "s02_analog_input|line 35:53: operator: '-' -> '+'": {
+   "verdict": "equivalent",
+   "reason": "Subtracting or adding 0.0: NORM_X's MIN is 0 here."
+  },
+  "s04_batch_steps|line 86:15: constant: '0' -> '-1'": {
+   "verdict": "equivalent",
+   "reason": "The CASE ELSE. o_step is only ever assigned listed values, so this cannot run."
+  },
+  "s04_batch_steps|line 86:15: constant: '0' -> '1'": {
+   "verdict": "equivalent",
+   "reason": "The CASE ELSE. o_step is only ever assigned listed values, so this cannot run."
+  },
+  "s04_batch_steps|line 89:59: constant: '500' -> '499'": {
+   "verdict": "gap, listed",
+   "reason": "The counter would have to count 499 batches. Not provoked, for the same reason as 501."
+  },
+  "s04_batch_steps|line 89:59: constant: '500' -> '501'": {
+   "verdict": "gap, listed",
+   "reason": "The counter would have to count 500 batches. No stimulus goes that far, and it should not: past PV is where matiec's CTU and a real CTU_INT are read differently, so staying under it keeps the result independent of that reading."
+  },
+  "s05_lead_lag_array|line 32:70: constant: '1' -> '0'": {
+   "verdict": "meaningless",
+   "reason": "Only differs when o_lead is 0, and then `o_lead = 0` is already true. It reads element 0 of the array, out of range, with no visible effect."
+  },
+  "s05_lead_lag_array|line 34:28: constant: '3' -> '4'": {
+   "verdict": "equivalent",
+   "reason": "A fourth offset visits the same pump as the first, modulo 3, so the search finds nothing new."
+  },
+  "s05_lead_lag_array|line 48:32: constant: '0' -> '-1'": {
+   "verdict": "equivalent",
+   "reason": "o_lead is 0 only when no pump is available, and then the loop finds no lag anyway."
+  },
+  "u04_alarm_ring|line 35:14: constant: '1' -> '0'": {
+   "verdict": "meaningless",
+   "reason": "The clear loop also writes RING[0], one element before the array. Undefined in C, with no visible effect here."
+  },
+  "u04_alarm_ring|line 35:14: constant: '1' -> '2'": {
+   "verdict": "equivalent",
+   "reason": "The clear leaves element 1 alone, but USED is 0 and every field of a record is written before it can be read again."
+  },
+  "u04_alarm_ring|line 35:19: constant: '4' -> '5'": {
+   "verdict": "meaningless",
+   "reason": "The clear loop also writes RING[5], one element past the array. Undefined in C, with no visible effect here."
+  },
+  "u04_alarm_ring|line 40:13: constant: '1' -> '0'": {
+   "verdict": "meaningless",
+   "reason": "HEAD 0 writes RING[0], before the array, on the next raise. Undefined in C. Reads are relative to HEAD, so it does not show here."
+  },
+  "u04_alarm_ring|line 40:13: constant: '1' -> '2'": {
+   "verdict": "equivalent",
+   "reason": "After a clear the ring is empty, and every read is relative to HEAD, so where it restarts cannot show."
+  },
+  "u04_alarm_ring|line 40:5: remove: removed 'HEAD := 1;'": {
+   "verdict": "equivalent",
+   "reason": "After a clear the ring is empty, and every read is relative to HEAD, so where it restarts cannot show."
+  },
+  "u05_pump_duty_records|line 45:12: constant: '1' -> '0'": {
+   "verdict": "meaningless",
+   "reason": "The loop also reads PUMP[0], one element before the array. Undefined in C, with no visible effect here."
+  },
+  "u05_pump_duty_records|line 48:7: remove: removed 'EXIT;'": {
+   "verdict": "equivalent",
+   "reason": "EXIT only saves time: CHANGED is already TRUE and stays so."
+  },
+  "u05_pump_duty_records|line 54:14: constant: '1' -> '0'": {
+   "verdict": "meaningless",
+   "reason": "The loop also touches PUMP[0] and WAS_RUNNING[0], before the arrays. Undefined in C, with no visible effect here."
+  },
+  "u05_pump_duty_records|line 61:21: constant: '2147483647' -> '2147483646'": {
+   "verdict": "equivalent on any realistic stimulus",
+   "reason": "No score comes near it."
+  },
+  "u05_pump_duty_records|line 62:16: constant: '1' -> '0'": {
+   "verdict": "meaningless",
+   "reason": "The loop also reads PUMP[0], one element before the array. Undefined in C, with no visible effect here."
+  },
+  "u06_cascade_nested|line 10:13: boundary: '>' -> '>='": {
+   "verdict": "equivalent",
+   "reason": "On the boundary TARGET equals VALUE + MAX_STEP, and both branches give that value."
+  },
+  "u06_cascade_nested|line 12:16: boundary: '<' -> '<='": {
+   "verdict": "equivalent",
+   "reason": "On the boundary TARGET equals VALUE - MAX_STEP, and both branches give that value."
+  },
+  "x01_pump_station|line 151:13: boundary: '>' -> '>='": {
+   "verdict": "equivalent",
+   "reason": "With STAGES equal to WANTED both branches leave STAGES alone: the timer's input was false this scan, so Q is false."
+  },
+  "x01_pump_station|line 160:57: constant: '1' -> '0'": {
+   "verdict": "meaningless",
+   "reason": "Only differs when DUTY is 0, and then `DUTY = 0` is already true. It reads VIEW[0], out of range, with no visible effect."
+  },
+  "x01_pump_station|line 161:5: remove: removed 'BEST := 0;'": {
+   "verdict": "equivalent",
+   "reason": "A stale BEST is the pump chosen last time, which is DUTY, so `DUTY := BEST` changes nothing when no pump qualifies."
+  },
+  "x01_pump_station|line 162:19: constant: '2147483647' -> '2147483646'": {
+   "verdict": "equivalent on any realistic stimulus",
+   "reason": "No run tick count comes near it."
+  },
+  "x01_pump_station|line 187:29: constant: '1' -> '0'": {
+   "verdict": "equivalent",
+   "reason": "Only differs when DUTY is 0, which means no pump has ever been available, and then no candidate is available either."
+  },
+  "x01_pump_station|line 38:16: constant: '0' -> '1'": {
+   "verdict": "equivalent",
+   "reason": "A locked pump is not available, so it has no call on the reset scan, and state 1 with no call returns to 0 on the same scan."
+  }
+ },
+ "findings": [
+  "- **`r03_sequence_aoi`, the RES on abort and the RES at the end of a cycle.** All the statements that write out these two RES calls can be removed with no visible change. Each sets `StepNo` to 0 on the same scan, so the `TONR` call later in that scan is disabled, and that alone clears `ACC` and `DN` and overwrites `EN`, `TT` and `PREV`. So they exercise nothing: a migration may leave them out and be correct. The two RES calls between steps do matter, for `ACC`, `DN` and `PREV`, and removing any of those is killed.",
+  "- **`r02_fill_retry_aoi`, `Retries_PREV`.** The counter's edge memory cannot show, since its input, the open timer's `DN`, is high for one scan at a time. And the dialect file's rule that RES on a counter keeps the previous input cannot show either, since `RES(OpenTimer)` clears that input on the same scan. `scripts/check_plausible_faults.py` confirms the second. So CTUD's edge detection is read here but not tested by this program. No other program uses CTUD.",
+  "- **The `EN` and `TT` members of Logix timers** are written and never read in `r01`, `r02` and `r03`, except where a program copies them to an output. The dialect file gives them meaning, but only `r01`'s `DelayEnabled` and `Starting`, `r02`'s `WaitingRetry` and `r04`'s `Timing` observe one.",
+  "- **Out-of-range index mutants** are marked `meaningless`. They read or write outside an array, which is undefined in C, and the fact that they survive says nothing about the stimulus."
+ ]
+}

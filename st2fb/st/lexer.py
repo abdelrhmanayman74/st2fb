@@ -62,6 +62,7 @@ def tokenize(source: str) -> list[Token]:
                 pos = match.end()
                 break
         else:
-            raise STParseError(f"unexpected character {source[pos]!r}", line, pos - line_start + 1)
+            hint = ": arrays are outside the v1 subset" if source[pos] == "[" else ""
+            raise STParseError(f"unexpected character {source[pos]!r}{hint}", line, pos - line_start + 1)
     tokens.append(Token("END", "", line, pos - line_start + 1))
     return tokens

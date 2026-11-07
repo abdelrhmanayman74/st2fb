@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="AlarmWord_AOI" Comment="Migrated from Rockwell AOI">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="Cond0"/><With Var="Cond1"/><With Var="Cond2"/><With Var="MaskWord"/><With Var="DelayMs"/><With Var="AckPB"/><With Var="TaskPeriodMs"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="AlarmWord"/><With Var="UnackWord"/><With Var="FirstOut"/><With Var="Horn"/><With Var="Timing"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="Cond0" Type="BOOL"/>
+      <VarDeclaration Name="Cond1" Type="BOOL"/>
+      <VarDeclaration Name="Cond2" Type="BOOL"/>
+      <VarDeclaration Name="MaskWord" Type="DINT"/>
+      <VarDeclaration Name="DelayMs" Type="DINT"/>
+      <VarDeclaration Name="AckPB" Type="BOOL"/>
+      <VarDeclaration Name="TaskPeriodMs" Type="DINT"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="AlarmWord" Type="DINT"/>
+      <VarDeclaration Name="UnackWord" Type="DINT"/>
+      <VarDeclaration Name="FirstOut" Type="DINT"/>
+      <VarDeclaration Name="Horn" Type="BOOL"/>
+      <VarDeclaration Name="Timing" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="T0_EN" Type="BOOL"/>
+      <VarDeclaration Name="T0_PREV" Type="BOOL"/>
+      <VarDeclaration Name="T0_TT" Type="BOOL"/>
+      <VarDeclaration Name="T0_DN" Type="BOOL"/>
+      <VarDeclaration Name="T0_ACC" Type="DINT"/>
+      <VarDeclaration Name="T1_EN" Type="BOOL"/>
+      <VarDeclaration Name="T1_PREV" Type="BOOL"/>
+      <VarDeclaration Name="T1_TT" Type="BOOL"/>
+      <VarDeclaration Name="T1_DN" Type="BOOL"/>
+      <VarDeclaration Name="T1_ACC" Type="DINT"/>
+      <VarDeclaration Name="T2_EN" Type="BOOL"/>
+      <VarDeclaration Name="T2_PREV" Type="BOOL"/>
+      <VarDeclaration Name="T2_TT" Type="BOOL"/>
+      <VarDeclaration Name="T2_DN" Type="BOOL"/>
+      <VarDeclaration Name="T2_ACC" Type="DINT"/>
+      <VarDeclaration Name="AckPrev" Type="BOOL"/>
+      <VarDeclaration Name="AckOut" Type="BOOL"/>
+      <VarDeclaration Name="Latched0" Type="BOOL"/>
+      <VarDeclaration Name="Latched1" Type="BOOL"/>
+      <VarDeclaration Name="Latched2" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="logic" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="50"/>
+    </ECC>
+    <Algorithm Name="logic">
+      <ST><![CDATA[
+(* timer 0 *)
+T0_EN := Cond0 AND NOT ((MaskWord / 1) MOD 2 = 1);
+IF T0_EN AND T0_PREV AND NOT T0_DN THEN
+  T0_ACC := T0_ACC + TaskPeriodMs;
+  IF T0_ACC >= DelayMs THEN
+    T0_ACC := DelayMs;
+    T0_DN := TRUE;
+  END_IF;
+END_IF;
+IF NOT T0_EN THEN
+  T0_ACC := 0;
+  T0_DN := FALSE;
+END_IF;
+T0_TT := T0_EN AND NOT T0_DN;
+T0_PREV := T0_EN;
+(* timer 1 *)
+T1_EN := Cond1 AND NOT ((MaskWord / 2) MOD 2 = 1);
+IF T1_EN AND T1_PREV AND NOT T1_DN THEN
+  T1_ACC := T1_ACC + TaskPeriodMs;
+  IF T1_ACC >= DelayMs THEN
+    T1_ACC := DelayMs;
+    T1_DN := TRUE;
+  END_IF;
+END_IF;
+IF NOT T1_EN THEN
+  T1_ACC := 0;
+  T1_DN := FALSE;
+END_IF;
+T1_TT := T1_EN AND NOT T1_DN;
+T1_PREV := T1_EN;
+(* timer 2 *)
+T2_EN := Cond2 AND NOT ((MaskWord / 4) MOD 2 = 1);
+IF T2_EN AND T2_PREV AND NOT T2_DN THEN
+  T2_ACC := T2_ACC + TaskPeriodMs;
+  IF T2_ACC >= DelayMs THEN
+    T2_ACC := DelayMs;
+    T2_DN := TRUE;
+  END_IF;
+END_IF;
+IF NOT T2_EN THEN
+  T2_ACC := 0;
+  T2_DN := FALSE;
+END_IF;
+T2_TT := T2_EN AND NOT T2_DN;
+T2_PREV := T2_EN;
+
+Timing := T0_TT OR T1_TT OR T2_TT;
+
+IF FirstOut = 0 THEN
+  IF T0_DN THEN
+    FirstOut := 1;
+  ELSIF T1_DN THEN
+    FirstOut := 2;
+  ELSIF T2_DN THEN
+    FirstOut := 3;
+  END_IF;
+END_IF;
+
+IF T0_DN THEN
+  Latched0 := TRUE;
+END_IF;
+IF T1_DN THEN
+  Latched1 := TRUE;
+END_IF;
+IF T2_DN THEN
+  Latched2 := TRUE;
+END_IF;
+
+AckOut := AckPB AND NOT AckPrev;
+AckPrev := AckPB;
+IF AckOut THEN
+  Latched0 := FALSE;
+  Latched1 := FALSE;
+  Latched2 := FALSE;
+  IF NOT (T0_DN OR T1_DN OR T2_DN) THEN
+    FirstOut := 0;
+  END_IF;
+END_IF;
+
+AlarmWord := 0;
+IF T0_DN THEN
+  AlarmWord := AlarmWord + 1;
+END_IF;
+IF T1_DN THEN
+  AlarmWord := AlarmWord + 2;
+END_IF;
+IF T2_DN THEN
+  AlarmWord := AlarmWord + 4;
+END_IF;
+UnackWord := 0;
+IF Latched0 THEN
+  UnackWord := UnackWord + 1;
+END_IF;
+IF Latched1 THEN
+  UnackWord := UnackWord + 2;
+END_IF;
+IF Latched2 THEN
+  UnackWord := UnackWord + 4;
+END_IF;
+Horn := UnackWord <> 0;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

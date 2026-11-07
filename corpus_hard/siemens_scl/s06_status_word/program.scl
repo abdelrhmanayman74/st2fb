@@ -1,0 +1,68 @@
+FUNCTION_BLOCK "FB_DriveStatus"
+TITLE = 'Drive control and status words'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Drives
+NAME : DriveStatus
+VERSION : 1.0
+//Decodes a fieldbus control word into commands, and packs drive state into a status word, using bit slices.
+   VAR_INPUT 
+      i_controlWord : UInt;   // Bit 0 enable, bit 1 run, bit 2 reverse, bit 7 fault reset
+      i_speedRef : Int;   // 0..16384 is 0..100 %
+      i_driveFault : Bool;
+      i_atSpeed : Bool;
+   END_VAR
+
+   VAR_OUTPUT 
+      o_statusWord : UInt;   // Bit 0 ready, bit 1 running, bit 2 reversed, bit 3 faulted, bit 4 at speed
+      o_runForward : Bool;
+      o_runReverse : Bool;
+      o_speedPercent : Real;
+      o_faultCount : UInt;
+   END_VAR
+
+   VAR 
+      statFaultLatched : Bool;
+      statFaultEdge {InstructionName := 'R_TRIG'; LibVersion := '1.0'} : R_TRIG;
+   END_VAR
+
+   VAR_TEMP 
+      tempCtl : Word;
+      tempStat : Word;
+   END_VAR
+
+
+BEGIN
+	REGION Decode
+	    #tempCtl := UINT_TO_WORD(#i_controlWord);
+	    #statFaultEdge(CLK := #i_driveFault);
+	    IF #statFaultEdge.Q THEN
+	        #o_faultCount += 1;
+	    END_IF;
+	    IF #i_driveFault THEN
+	        #statFaultLatched := TRUE;
+	    ELSIF #tempCtl.%X7 THEN
+	        #statFaultLatched := FALSE;
+	    END_IF;
+	END_REGION
+	
+	REGION Commands
+	    #o_runForward := #tempCtl.%X0 AND #tempCtl.%X1 AND NOT #tempCtl.%X2 AND NOT #statFaultLatched;
+	    #o_runReverse := #tempCtl.%X0 AND #tempCtl.%X1 AND #tempCtl.%X2 AND NOT #statFaultLatched;
+	    IF #o_runForward OR #o_runReverse THEN
+	        #o_speedPercent := INT_TO_REAL(#i_speedRef) * 100.0 / 16384.0;
+	    ELSE
+	        #o_speedPercent := 0.0;
+	    END_IF;
+	END_REGION
+	
+	REGION Encode
+	    #tempStat := 16#0000;
+	    #tempStat.%X0 := #tempCtl.%X0 AND NOT #statFaultLatched;
+	    #tempStat.%X1 := #o_runForward OR #o_runReverse;
+	    #tempStat.%X2 := #o_runReverse;
+	    #tempStat.%X3 := #statFaultLatched;
+	    #tempStat.%X4 := #i_atSpeed AND (#o_runForward OR #o_runReverse);
+	    #o_statusWord := WORD_TO_UINT(#tempStat);
+	END_REGION
+END_FUNCTION_BLOCK

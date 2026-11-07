@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_AnalogInput" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_raw"/><With Var="i_scaleMin"/><With Var="i_scaleMax"/><With Var="i_highLimit"/><With Var="i_lowLimit"/><With Var="i_alarmDelay"/><With Var="i_simulate"/><With Var="i_simValue"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_value"/><With Var="o_percent"/><With Var="o_wireBreak"/><With Var="o_highAlarm"/><With Var="o_lowAlarm"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_raw" Type="INT"/>
+      <VarDeclaration Name="i_scaleMin" Type="REAL"/>
+      <VarDeclaration Name="i_scaleMax" Type="REAL"/>
+      <VarDeclaration Name="i_highLimit" Type="REAL"/>
+      <VarDeclaration Name="i_lowLimit" Type="REAL"/>
+      <VarDeclaration Name="i_alarmDelay" Type="TIME"/>
+      <VarDeclaration Name="i_simulate" Type="BOOL"/>
+      <VarDeclaration Name="i_simValue" Type="REAL"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_value" Type="REAL"/>
+      <VarDeclaration Name="o_percent" Type="INT"/>
+      <VarDeclaration Name="o_wireBreak" Type="BOOL"/>
+      <VarDeclaration Name="o_highAlarm" Type="BOOL"/>
+      <VarDeclaration Name="o_lowAlarm" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statLastGood" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="statDelay" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statTiming" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tempNorm" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="tempScaled" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="tempBreak" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tempHigh" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tempLow" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="H_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="H_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="H_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="H_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="H_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="H_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="H_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="L_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="L_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="L_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="L_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="L_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="L_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="L_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="B_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="B_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="B_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="B_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="B_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="B_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="B_START_TIME" Type="TIME" InitialValue="T#0s"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+tempNorm := (INT_TO_REAL(i_raw) - 0.0) / (27648.0 - 0.0);
+tempScaled := tempNorm * (i_scaleMax - i_scaleMin) + i_scaleMin;
+
+IF NOT statTiming THEN
+  statDelay := i_alarmDelay;
+END_IF;
+
+tempBreak := i_raw = 32767;
+B_IN := tempBreak;
+B_PT := statDelay;
+IF (B_STATE = 0) AND NOT B_PREV_IN AND B_IN THEN
+  B_STATE := 1;
+  B_Q := FALSE;
+  B_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT B_IN THEN
+    B_ET := T#0s;
+    B_Q := FALSE;
+    B_STATE := 0;
+  ELSIF B_STATE = 1 THEN
+    IF B_START_TIME + B_PT <= ST2FB_NOW THEN
+      B_STATE := 2;
+      B_Q := TRUE;
+      B_ET := B_PT;
+    ELSE
+      B_ET := ST2FB_NOW - B_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+B_PREV_IN := B_IN;
+o_wireBreak := B_Q;
+IF i_raw <> 32767 THEN
+  statLastGood := tempScaled;
+END_IF;
+
+IF i_simulate THEN
+  o_value := i_simValue;
+ELSE
+  o_value := statLastGood;
+END_IF;
+o_percent := REAL_TO_INT(100.0 * LIMIT(0.0, tempNorm, 1.0));
+
+tempHigh := o_value > i_highLimit;
+tempLow := o_value < i_lowLimit;
+
+H_IN := tempHigh;
+H_PT := statDelay;
+IF (H_STATE = 0) AND NOT H_PREV_IN AND H_IN THEN
+  H_STATE := 1;
+  H_Q := FALSE;
+  H_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT H_IN THEN
+    H_ET := T#0s;
+    H_Q := FALSE;
+    H_STATE := 0;
+  ELSIF H_STATE = 1 THEN
+    IF H_START_TIME + H_PT <= ST2FB_NOW THEN
+      H_STATE := 2;
+      H_Q := TRUE;
+      H_ET := H_PT;
+    ELSE
+      H_ET := ST2FB_NOW - H_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+H_PREV_IN := H_IN;
+o_highAlarm := H_Q;
+
+L_IN := tempLow;
+L_PT := statDelay;
+IF (L_STATE = 0) AND NOT L_PREV_IN AND L_IN THEN
+  L_STATE := 1;
+  L_Q := FALSE;
+  L_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT L_IN THEN
+    L_ET := T#0s;
+    L_Q := FALSE;
+    L_STATE := 0;
+  ELSIF L_STATE = 1 THEN
+    IF L_START_TIME + L_PT <= ST2FB_NOW THEN
+      L_STATE := 2;
+      L_Q := TRUE;
+      L_ET := L_PT;
+    ELSE
+      L_ET := ST2FB_NOW - L_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+L_PREV_IN := L_IN;
+o_lowAlarm := L_Q;
+
+statTiming := tempBreak OR tempHigh OR tempLow;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

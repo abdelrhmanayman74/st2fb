@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_PI_Controller" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="Reset"/><With Var="ProcessVariable"/><With Var="Setpoint"/><With Var="Kp"/><With Var="IntegralConstant"/><With Var="RepeatsPerMinute"/><With Var="MaxLoopOutput"/><With Var="MinLoopOutput"/><With Var="Bias"/><With Var="CycleTimeInSecs"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="Output"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="Reset" Type="BOOL"/>
+      <VarDeclaration Name="ProcessVariable" Type="REAL"/>
+      <VarDeclaration Name="Setpoint" Type="REAL"/>
+      <VarDeclaration Name="Kp" Type="REAL"/>
+      <VarDeclaration Name="IntegralConstant" Type="REAL"/>
+      <VarDeclaration Name="RepeatsPerMinute" Type="BOOL" InitialValue="TRUE"/>
+      <VarDeclaration Name="MaxLoopOutput" Type="REAL"/>
+      <VarDeclaration Name="MinLoopOutput" Type="REAL"/>
+      <VarDeclaration Name="Bias" Type="REAL"/>
+      <VarDeclaration Name="CycleTimeInSecs" Type="REAL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="Output" Type="REAL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="preClampedOutput" Type="REAL"/>
+      <VarDeclaration Name="p_Term" Type="REAL"/>
+      <VarDeclaration Name="i_Term" Type="REAL"/>
+      <VarDeclaration Name="i_Ki" Type="REAL"/>
+      <VarDeclaration Name="i_Pause" Type="BOOL"/>
+      <VarDeclaration Name="i_Ki2" Type="REAL"/>
+      <VarDeclaration Name="i_integral" Type="REAL"/>
+      <VarDeclaration Name="i_error" Type="REAL"/>
+      <VarDeclaration Name="i_Max" Type="REAL" InitialValue="1000.0"/>
+      <VarDeclaration Name="i_Min" Type="REAL" InitialValue="-1000.0"/>
+      <VarDeclaration Name="i_done" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+p_Term := (Setpoint - ProcessVariable) * Kp;
+
+i_Ki := IntegralConstant / SEL(RepeatsPerMinute, 1.0, 60.0);
+i_Pause := ((preClampedOutput > MaxLoopOutput) AND (ProcessVariable < Setpoint)) OR ((preClampedOutput < MinLoopOutput) AND (ProcessVariable > Setpoint));
+i_done := FALSE;
+IF i_Ki <= 0.0 THEN
+  i_Term := 0.0;
+  i_done := TRUE;
+END_IF;
+IF NOT i_done THEN
+  IF Reset THEN
+    i_integral := 0.0;
+  ELSIF i_Pause THEN
+    i_done := TRUE;
+  END_IF;
+END_IF;
+IF NOT i_done THEN
+  i_Ki2 := i_Ki * CycleTimeInSecs;
+  i_error := Setpoint - ProcessVariable;
+  i_integral := i_integral + i_Ki2 * i_error;
+  IF i_integral > i_Max THEN
+    i_integral := i_Max;
+  ELSIF i_integral < i_Min THEN
+    i_integral := i_Min;
+  END_IF;
+  i_Term := i_integral;
+END_IF;
+
+preClampedOutput := p_Term + i_Term + Bias;
+Output := LIMIT(MinLoopOutput, preClampedOutput, MaxLoopOutput);
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

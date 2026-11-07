@@ -11,6 +11,9 @@ Three modes:
     # Whole corpus, matiec against mutated matiec, and write docs/MUTATION_RESULTS.md.
     python3 -m st2fb.mutate campaign --corpus corpus --count 20 --seed 61499 --report docs/MUTATION_RESULTS.md
 
+    # Every mutant on every scored stimulus, with no cap, and which stimulus saw what. See docs/HARD_MUTATION_RESULTS.md.
+    python3 -m st2fb.mutate campaign --corpus corpus_hard --uncapped --report docs/HARD_MUTATION_RESULTS.md --save-json corpus_hard/mutation_results.json
+
 A mutant the compiler rejects says nothing about the comparison, so it is not counted. A mutant that
 crashes or hangs is counted as killed, and shown separately. A survivor may be equivalent to the
 original or may expose a weak stimulus, and only inspection can tell which. Detection rate is
@@ -40,21 +43,22 @@ _TOKEN = re.compile(
     r"""
     (?P<skip>\s+|\(\*.*?\*\)|//[^\n]*)
   | (?P<time>(?:TIME|T)\#[0-9a-zA-Z_.]+)
+  | (?P<based>[0-9A-Za-z_]+\#[0-9a-zA-Z_.]+)
   | (?P<real>\d[\d_]*\.\d[\d_]*(?:[eE][-+]?\d+)?)
   | (?P<int>\d[\d_]*)
   | (?P<word>[A-Za-z_]\w*)
-  | (?P<op>:=|<=|>=|<>|\.\.|[-+*/=<>(),;:.&])
+  | (?P<op>:=|<=|>=|<>|\.\.|\*\*|[-+*/=<>(),;:.&\[\]])
     """,
     re.VERBOSE | re.DOTALL | re.IGNORECASE,
 )
 
-_OPERATOR_SWAPS = {"AND": "OR", "OR": "AND", "XOR": "OR", "+": "-", "-": "+", "*": "/", "/": "*", "MOD": "/"}
+_OPERATOR_SWAPS = {"AND": "OR", "OR": "AND", "XOR": "OR", "+": "-", "-": "+", "*": "/", "/": "*", "MOD": "/", "**": "*"}
 _BOUNDARY_SWAPS = {"<": "<=", "<=": "<", ">": ">=", ">=": ">", "=": "<>", "<>": "="}
 _NOT_A_STATEMENT = {
     "IF", "ELSIF", "ELSE", "END_IF", "CASE", "END_CASE", "FOR", "END_FOR", "WHILE", "END_WHILE",
-    "END_FUNCTION_BLOCK",
+    "REPEAT", "UNTIL", "END_REPEAT", "END_FUNCTION_BLOCK", "END_FUNCTION",
 }  # fmt: skip
-_STATEMENT_BOUNDARY = {";", "THEN", "ELSE", "DO", ":"}
+_STATEMENT_BOUNDARY = {";", "THEN", "ELSE", "DO", "REPEAT", ":"}
 
 
 @dataclass(frozen=True)
@@ -124,7 +128,7 @@ def _is_binary(tokens: list[Token], i: int) -> bool:
     if i == 0:
         return False
     previous = tokens[i - 1]
-    keywords = {"IF", "ELSIF", "THEN", "NOT", "TO", "BY", "AND", "OR", "XOR", "MOD", "WHILE", "CASE"}
+    keywords = {"IF", "ELSIF", "THEN", "NOT", "TO", "BY", "AND", "OR", "XOR", "MOD", "WHILE", "CASE", "UNTIL"}
     return previous.text == ")" or previous.kind in ("real", "int", "time") or (
         previous.kind == "word" and previous.upper not in keywords
     )
@@ -158,9 +162,9 @@ def _simple_mutations(builder: _Builder, tokens: list[Token], time_step_ms: int)
 
 def _condition_mutations(builder: _Builder, tokens: list[Token]) -> None:
     for i, token in enumerate(tokens):
-        if token.upper not in ("IF", "ELSIF", "WHILE"):
+        if token.upper not in ("IF", "ELSIF", "WHILE", "UNTIL"):
             continue
-        closer = "DO" if token.upper == "WHILE" else "THEN"
+        closer = {"WHILE": "DO", "UNTIL": "END_REPEAT"}.get(token.upper, "THEN")
         j = next(k for k in range(i + 1, len(tokens)) if tokens[k].upper == closer)
         start, end = tokens[i + 1].start, tokens[j - 1].end
         condition = builder.text[start:end]
@@ -255,26 +259,36 @@ def select_mutants(mutants: list[Mutant], count: int, seed: str | int) -> list[M
     return selected
 
 
-def body_span(st_text: str) -> tuple[int, int]:
-    """Offsets of the statements of a FUNCTION_BLOCK: after the last END_VAR, up to its end."""
-    ends = list(re.finditer(r"\bEND_VAR\b", st_text, flags=re.IGNORECASE))
-    closing = re.search(r"\bEND_FUNCTION_BLOCK\b", st_text, flags=re.IGNORECASE)
-    if closing is None:
+def body_spans(st_text: str) -> list[tuple[int, int]]:
+    """Offsets of the statements of each FUNCTION_BLOCK or FUNCTION: after its last END_VAR, up to its end.
+
+    A helper block in the same file is mutated too, since it is part of what the oracle computes.
+    """
+    # Comments are blanked, keeping every offset, so that a comment cannot open or close a block.
+    masked = re.sub(r"\(\*.*?\*\)", lambda m: " " * len(m.group()), st_text, flags=re.DOTALL)
+    spans = []
+    position = 0
+    for closing in re.finditer(r"\bEND_FUNCTION(?:_BLOCK)?\b", masked, flags=re.IGNORECASE):
+        ends = list(re.finditer(r"\bEND_VAR\b", masked[position : closing.start()], flags=re.IGNORECASE))
+        start = position + ends[-1].end() if ends else position
+        spans.append((start, closing.start()))
+        position = closing.end()
+    if not spans:
         raise ValueError("no END_FUNCTION_BLOCK found")
-    return (ends[-1].end() if ends else 0), closing.start()
+    return spans
 
 
 def st_mutants(st_text: str, time_step_ms: int = DEFAULT_TIME_STEP_MS) -> list[Mutant]:
-    start, end = body_span(st_text)
-    body = st_text[start:end]
-    line_offset = st_text.count("\n", 0, start)
     result = []
-    for mutant in all_mutants(body, time_step_ms):
-        # Report lines as they are in the source file, not in the extracted body.
-        description = re.sub(
-            r"(line )(\d+)", lambda m: f"{m.group(1)}{int(m.group(2)) + line_offset}", mutant.description
-        )
-        result.append(Mutant(mutant.kind, description, st_text[:start] + mutant.text + st_text[end:]))
+    for start, end in body_spans(st_text):
+        body = st_text[start:end]
+        line_offset = st_text.count("\n", 0, start)
+        for mutant in all_mutants(body, time_step_ms):
+            # Report lines as they are in the source file, not in the extracted body.
+            description = re.sub(
+                r"(line )(\d+)", lambda m: f"{m.group(1)}{int(m.group(2)) + line_offset}", mutant.description
+            )
+            result.append(Mutant(mutant.kind, description, st_text[:start] + mutant.text + st_text[end:]))
     return result
 
 
@@ -324,10 +338,22 @@ def _run_mutant(st_text: str, stimulus: dict[str, Any], baseline: dict[str, Any]
     return "survived" if compare_traces(baseline, trace)["equal"] else "killed"
 
 
+def oracle_file(program_dir: Path) -> Path:
+    """The ST that matiec runs for this program: reference.st where a program is paired with one."""
+    reference = program_dir / "reference.st"
+    return reference if reference.exists() else program_dir / "program.st"
+
+
+def program_dirs(corpus: Path) -> list[Path]:
+    """Program directories directly under corpus, or one level further down for corpus_hard/<set>/<program>."""
+    direct = sorted(path.parent for path in corpus.glob("*/stimulus.json"))
+    return direct or sorted(path.parent for path in corpus.glob("*/*/stimulus.json"))
+
+
 def run_program(
     program_dir: Path, count: int, seed: int, pool: ThreadPoolExecutor, container: Container
 ) -> dict[str, Any]:
-    st_text = (program_dir / "program.st").read_text()
+    st_text = oracle_file(program_dir).read_text()
     stimulus = json.loads((program_dir / "stimulus.json").read_text())
     baseline = run_reference(st_text, stimulus, container)
     # Control: the unmutated program must equal itself, or a "kill" could just be flakiness.
@@ -346,6 +372,155 @@ def run_program(
             for m, outcome in zip(selected, outcomes)
         ],
     }
+
+
+def scored_stimuli(program_dir: Path) -> list[Path]:
+    """Tuning first, then every held-out file."""
+    return [program_dir / "stimulus.json", *sorted(program_dir.glob("heldout_stimulus*.json"))]
+
+
+def run_program_uncapped(program_dir: Path, pool: ThreadPoolExecutor, container: Container) -> dict[str, Any]:
+    """Every mutant, on every scored stimulus. A mutant the compiler rejects on one is rejected on all, so it runs once."""
+    st_text = oracle_file(program_dir).read_text()
+    paths = scored_stimuli(program_dir)
+    stimuli = {path.stem: json.loads(path.read_text()) for path in paths}
+    baselines = {name: run_reference(st_text, stimulus, container) for name, stimulus in stimuli.items()}
+    control_equal = all(compare_traces(baselines[name], run_reference(st_text, stimuli[name], container))["equal"] for name in stimuli)
+    available = st_mutants(st_text, stimuli["stimulus"]["scan_ms"])
+
+    def judge(mutant: Mutant) -> dict[str, str]:
+        outcomes: dict[str, str] = {}
+        for name, stimulus in stimuli.items():
+            outcomes[name] = _run_mutant(mutant.text, stimulus, baselines[name], container)
+            if outcomes[name] == "compile_failed":
+                return {other: "compile_failed" for other in stimuli}
+        return outcomes
+
+    results = list(pool.map(judge, available))
+    mutants = []
+    for mutant, outcomes in zip(available, results):
+        values = set(outcomes.values())
+        overall = "compile_failed" if "compile_failed" in values else "killed" if "killed" in values else "crashed" if "crashed" in values else "survived"
+        mutants.append({"kind": mutant.kind, "description": mutant.description, "outcome": overall, "by_stimulus": outcomes})
+    return {
+        "program": program_dir.name,
+        "set": program_dir.parent.name,
+        "scans": {name: len(stimulus["scans"]) for name, stimulus in stimuli.items()},
+        "scan_ms": {name: stimulus["scan_ms"] for name, stimulus in stimuli.items()},
+        "available": len(available),
+        "control_equal": control_equal,
+        "mutants": mutants,
+    }
+
+
+_DETECTED = ("killed", "crashed")
+
+
+def split_detection(mutant: dict[str, Any]) -> tuple[bool, bool]:
+    """(seen on tuning, seen on any held-out file)."""
+    outcomes = mutant["by_stimulus"]
+    return outcomes["stimulus"] in _DETECTED, any(value in _DETECTED for name, value in outcomes.items() if name != "stimulus")
+
+
+def render_uncapped_report(results: list[dict[str, Any]], notes: dict[str, Any], before: dict[str, int] | None, notes_path: str) -> str:
+    everything = [mutant for result in results for mutant in result["mutants"]]
+    counted = [mutant for mutant in everything if mutant["outcome"] != "compile_failed"]
+    survivors = [(result["program"], mutant) for result in results for mutant in result["mutants"] if mutant["outcome"] == "survived"]
+    tuning = sum(split_detection(mutant)[0] for mutant in counted)
+    heldout = sum(split_detection(mutant)[1] for mutant in counted)
+    only_tuning = sum(split_detection(mutant) == (True, False) for mutant in counted)
+    only_heldout = sum(split_detection(mutant) == (False, True) for mutant in counted)
+    lines = [
+        "# Mutation results, corpus_hard",
+        "",
+        "Generated by `python3 -m st2fb.mutate campaign --corpus corpus_hard --uncapped`. Every number comes from running matiec on the original and on each mutant, then",
+        f"comparing traces with `st2fb.compare`. The forward path and FORTE are not involved. Do not edit by hand, except through `{notes_path}`.",
+        "",
+        "Every mutant of every program, with no cap and no sampling, run on every scored stimulus: `stimulus.json`, `heldout_stimulus.json` and `heldout_stimulus_2.json`. For a paired",
+        "program it mutates `reference.st`, so it asks whether the stimuli would notice a slip in the hand translation of about this size. It does not show that a pairing is correct.",
+        "",
+        f"**Detected on some scored stimulus: {len(counted) - len(survivors)} of {len(counted)} counted mutants ({100.0 * (len(counted) - len(survivors)) / len(counted):.1f}%)**, "
+        f"{len(survivors)} survived all of them, {len(everything) - len(counted)} rejected by the compiler and not counted.",
+        "",
+        f"On tuning alone: {tuning} of {len(counted)}. On held-out alone: {heldout} of {len(counted)}. Only tuning saw {only_tuning}. **Only held-out saw {only_heldout}.**",
+    ]
+    if before:
+        lines += [
+            "",
+            f"Before this revision, from the independent review's uncapped run on the earlier corpus (tuning and one held-out file, {before['counted']} counted): tuning {before['tuning']}, held-out {before['heldout']}, "
+            f"neither {before['neither']}, only tuning {before['only_tuning']}, only held-out {before['only_heldout']}.",
+        ]
+    lines += [
+        "",
+        "Detected means killed or crashed, where crashed means the mutant hung past the time limit, died on a signal, or produced a non-finite REAL. Control is the unmutated program against a second run of itself on every stimulus.",
+        "",
+        "## Per program: what held-out sees and tuning does not",
+        "",
+        "| Set | Program | Mutants | Compile-failed | Counted | Tuning detected | Held-out detected | Both | Tuning only | Held-out only | Survived all | Rate | Control |",
+        "|---|---|--:|--:|--:|--:|--:|--:|--:|--:|--:|--:|---|",
+    ]
+    for result in results:
+        mine = [mutant for mutant in result["mutants"] if mutant["outcome"] != "compile_failed"]
+        split = [split_detection(mutant) for mutant in mine]
+        left = sum(mutant["outcome"] == "survived" for mutant in mine)
+        rate = f"{100.0 * (len(mine) - left) / len(mine):.1f}%" if mine else "n/a"
+        lines.append(
+            f"| {result['set']} | {result['program']} | {result['available']} | {result['available'] - len(mine)} | {len(mine)} | {sum(a for a, _ in split)} | {sum(b for _, b in split)} "
+            f"| {sum(a and b for a, b in split)} | {sum(a and not b for a, b in split)} | {sum(b and not a for a, b in split)} | {left} | {rate} | {'equal' if result['control_equal'] else 'DIFFERENT'} |"
+        )
+    lines += ["", "## By mutation kind", "", "| Kind | Compile-failed | Counted | Detected | Survived | Rate |", "|---|--:|--:|--:|--:|--:|"]
+    for kind in sorted({mutant["kind"] for mutant in everything}):
+        mine = [mutant for mutant in everything if mutant["kind"] == kind]
+        counted_kind = [mutant for mutant in mine if mutant["outcome"] != "compile_failed"]
+        left = sum(mutant["outcome"] == "survived" for mutant in counted_kind)
+        rate = f"{100.0 * (len(counted_kind) - left) / len(counted_kind):.1f}%" if counted_kind else "n/a"
+        lines.append(f"| {kind} | {len(mine) - len(counted_kind)} | {len(counted_kind)} | {len(counted_kind) - left} | {left} | {rate} |")
+    survivor_notes = notes.get("survivors", notes)
+    verdicts: dict[str, int] = {}
+    rows = []
+    for program, mutant in survivors:
+        note = survivor_notes.get(f"{program}|{mutant['description']}")
+        verdict, reason = (note["verdict"], note["reason"]) if isinstance(note, dict) else ("not analysed", note or "not analysed")
+        verdicts[verdict] = verdicts.get(verdict, 0) + 1
+        rows.append(f"| {program} | `{mutant['description'].replace('|', chr(92) + '|')}` | {verdict} | {reason} |")
+    lines += ["", "## Survivors", "", "Every mutant that survived all scored stimuli, read one by one. **Each analysis is a reasoned argument from reading the program and the mutant. It is not a proof, and no equivalence checker was run.**", ""]
+    lines += [f"Of {len(survivors)}: " + ", ".join(f"{count} {verdict}" for verdict, count in sorted(verdicts.items())) + ".", ""]
+    if rows:
+        lines += ["| Program | Mutant | Verdict | Analysis |", "|---|---|---|---|"] + rows
+    else:
+        lines.append("None.")
+    if notes.get("findings"):
+        lines += ["", "## Notes on what the mutants exercise", ""] + notes["findings"]
+    return "\n".join(lines) + "\n"
+
+
+def campaign_uncapped(args: argparse.Namespace) -> int:
+    results = []
+    if args.from_json:
+        results = json.loads(Path(args.from_json).read_text())
+    else:
+        ensure_image()
+        programs = program_dirs(Path(args.corpus))
+        if args.only:
+            programs = [path for path in programs if path.name in args.only]
+        with ThreadPoolExecutor(max_workers=args.jobs) as pool, Container() as container:
+            for program_dir in programs:
+                result = run_program_uncapped(program_dir, pool, container)
+                counts = {"survived": 0, "killed": 0, "crashed": 0, "compile_failed": 0}
+                for mutant in result["mutants"]:
+                    counts[mutant["outcome"]] += 1
+                split = [split_detection(mutant) for mutant in result["mutants"] if mutant["outcome"] != "compile_failed"]
+                print(f"{result['program']}: {counts} tuning only {sum(a and not b for a, b in split)} held-out only {sum(b and not a for a, b in split)}", flush=True)
+                results.append(result)
+                if args.save_json:  # After every program, so an interrupted run keeps what it did.
+                    Path(args.save_json).parent.mkdir(parents=True, exist_ok=True)
+                    Path(args.save_json).write_text(json.dumps(results, indent=1) + "\n")
+    notes = json.loads(Path(args.notes).read_text()) if args.notes and Path(args.notes).exists() else {}
+    before = json.loads(Path(args.before).read_text()) if args.before else None
+    if args.report:
+        Path(args.report).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.report).write_text(render_uncapped_report(results, notes, before, args.notes))
+    return 0 if all(result["control_equal"] for result in results) else 1
 
 
 def _tally(mutants: list[dict[str, Any]]) -> dict[str, int]:
@@ -368,6 +543,7 @@ def render_report(
     baseline: list[dict[str, Any]] | None,
     notes: dict[str, str],
     history: dict[str, list[dict[str, Any]]] | None = None,
+    notes_path: str = "corpus/mutation_survivor_notes.json",
 ) -> str:
     everything = [mutant for result in results for mutant in result["mutants"]]
     overall = _tally(everything)
@@ -377,7 +553,7 @@ def render_report(
         "",
         "Generated by `python3 -m st2fb.mutate campaign`. Every number comes from running matiec on the",
         "original and on each mutant, then comparing traces with `st2fb.compare`. The forward path and",
-        "FORTE are not involved. Do not edit by hand, except through `corpus/mutation_survivor_notes.json`.",
+        f"FORTE are not involved. Do not edit by hand, except through `{notes_path}`.",
         "",
         f"Run with `--count {count} --seed {seed}`. A count above what a program has selects all its mutants.",
         "",
@@ -469,7 +645,7 @@ def render_report(
 
 def campaign(args: argparse.Namespace) -> int:
     ensure_image()
-    programs = sorted(path.parent for path in Path(args.corpus).glob("*/program.st"))
+    programs = program_dirs(Path(args.corpus))
     if args.only:
         programs = [path for path in programs if path.name in args.only]
     results = []
@@ -488,7 +664,7 @@ def campaign(args: argparse.Namespace) -> int:
     history = {path: json.loads(Path(path).read_text()) for path in args.history}
     if args.report:
         Path(args.report).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.report).write_text(render_report(results, args.count, args.seed, baseline, notes, history))
+        Path(args.report).write_text(render_report(results, args.count, args.seed, baseline, notes, history, args.notes))
     return 0 if all(result["control_equal"] for result in results) else 1
 
 
@@ -513,10 +689,13 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--baseline", help="raw results of an earlier run, shown as 'before'")
     run.add_argument("--history", nargs="*", default=[], help="raw results of other runs to summarise")
     run.add_argument("--notes", default="corpus/mutation_survivor_notes.json", help="survivor analysis")
+    run.add_argument("--uncapped", action="store_true", help="every mutant on every scored stimulus. --count and --seed then play no part")
+    run.add_argument("--before", help="with --uncapped: a JSON file of the earlier totals, shown as 'before'")
+    run.add_argument("--from-json", help="with --uncapped: render the report from saved results, without running")
     args = parser.parse_args(argv)
 
     if args.mode == "campaign":
-        return campaign(args)
+        return campaign_uncapped(args) if args.uncapped else campaign(args)
     source = Path(args.path).read_text()
     generate = fbt_mutants if args.mode == "fbt" else st_mutants
     selected = select_mutants(generate(source, args.time_step_ms), args.count, args.seed)

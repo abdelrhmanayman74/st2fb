@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="TANK_STRAPPING" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="LEVEL_MM"/><With Var="DENSITY"/><With Var="HOLD"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="VOLUME_L"/><With Var="MASS_KG"/><With Var="SEGMENT"/><With Var="OUT_OF_RANGE"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="LEVEL_MM" Type="REAL"/>
+      <VarDeclaration Name="DENSITY" Type="REAL"/>
+      <VarDeclaration Name="HOLD" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="VOLUME_L" Type="REAL"/>
+      <VarDeclaration Name="MASS_KG" Type="DINT"/>
+      <VarDeclaration Name="SEGMENT" Type="INT"/>
+      <VarDeclaration Name="OUT_OF_RANGE" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="L0" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="L1" Type="REAL" InitialValue="200.0"/>
+      <VarDeclaration Name="L2" Type="REAL" InitialValue="400.0"/>
+      <VarDeclaration Name="L3" Type="REAL" InitialValue="800.0"/>
+      <VarDeclaration Name="L4" Type="REAL" InitialValue="1200.0"/>
+      <VarDeclaration Name="L5" Type="REAL" InitialValue="2000.0"/>
+      <VarDeclaration Name="V0" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="V1" Type="REAL" InitialValue="150.0"/>
+      <VarDeclaration Name="V2" Type="REAL" InitialValue="340.0"/>
+      <VarDeclaration Name="V3" Type="REAL" InitialValue="800.0"/>
+      <VarDeclaration Name="V4" Type="REAL" InitialValue="1350.0"/>
+      <VarDeclaration Name="V5" Type="REAL" InitialValue="2600.0"/>
+      <VarDeclaration Name="I" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="FRACTION" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="LA" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="LB" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="VA" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="VB" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="DONE" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECState Name="HELD" x="200" y="200">
+        <ECAction Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="HELD" Condition="REQ[HOLD]" x="100" y="100"/>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="-100"/>
+      <ECTransition Source="HELD" Destination="START" Condition="1" x="100" y="300"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+OUT_OF_RANGE := (LEVEL_MM < L0) OR (LEVEL_MM > L5);
+I := 0;
+DONE := FALSE;
+WHILE NOT DONE DO
+  CASE I OF
+    0: LB := L1;
+    1: LB := L2;
+    2: LB := L3;
+    3: LB := L4;
+    ELSE LB := L5;
+  END_CASE;
+  IF LEVEL_MM <= LB THEN
+    DONE := TRUE;
+  ELSE
+    I := I + 1;
+    IF I >= 4 THEN
+      DONE := TRUE;
+    END_IF;
+  END_IF;
+END_WHILE;
+SEGMENT := I;
+CASE I OF
+  0: LA := L0; LB := L1; VA := V0; VB := V1;
+  1: LA := L1; LB := L2; VA := V1; VB := V2;
+  2: LA := L2; LB := L3; VA := V2; VB := V3;
+  3: LA := L3; LB := L4; VA := V3; VB := V4;
+  ELSE LA := L4; LB := L5; VA := V4; VB := V5;
+END_CASE;
+FRACTION := (LEVEL_MM - LA) / (LB - LA);
+FRACTION := LIMIT(0.0, FRACTION, 1.0);
+VOLUME_L := VA + FRACTION * (VB - VA);
+MASS_KG := REAL_TO_DINT(VOLUME_L * DENSITY);
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

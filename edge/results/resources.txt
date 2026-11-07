@@ -1,0 +1,20 @@
+2026-11-07T03:01:10+02:00
+NAME                                 CPU %     MEM USAGE / LIMIT
+st2fb-matiec-st2fb-matiec-mqq_11k4   0.00%     644KiB / 15.49GiB
+st2fb-edge-ctrl-b-1                  1.98%     11.8MiB / 15.49GiB
+st2fb-edge-ctrl-a-1                  2.07%     11.82MiB / 15.49GiB
+st2fb-edge-ctrl-c-1                  1.09%     11.66MiB / 15.49GiB
+st2fb-edge-remote-io-1               2.76%     19.2MiB / 15.49GiB
+st2fb-edge-gateway-1                 0.54%     412.4MiB / 15.49GiB
+st2fb-edge-api-1                     0.07%     39.31MiB / 15.49GiB
+st2fb-edge-mosquitto-1               0.05%     1.113MiB / 15.49GiB
+st2fb-edge-plant-1                   0.56%     14.87MiB / 15.49GiB
+st2fb-edge-tsdb-1                    0.34%     85.3MiB / 15.49GiB
+st2fb-edge-it:1 169MB
+st2fb-edge-sim:1 120MB
+st2fb-edge-it:1-arm64 193MB
+st2fb-edge-controller:efcd63c-arm64 142MB
+st2fb-edge-controller:efcd63c 118MB
+st2fb-edge-iocore-host:1 1.36MB
+victoriametrics/victoria-metrics:v1.106.1 32.1MB
+eclipse-mosquitto:2.0.20 9.38MB

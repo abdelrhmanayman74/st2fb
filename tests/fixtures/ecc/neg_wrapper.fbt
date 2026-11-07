@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Negative C1: the deterministic translator's form, START to RUN to START">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="RUN"><ECAction Algorithm="scan" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1"/>
+    </ECC>
+    <Algorithm Name="scan"><ST><![CDATA[
+CASE SEQ OF
+  0:
+    IF GO THEN
+      SEQ := 1;
+    END_IF;
+  1:
+    SEQ := 0;
+END_CASE;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

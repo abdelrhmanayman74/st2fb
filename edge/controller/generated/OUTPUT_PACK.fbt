@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="OUTPUT_PACK" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="EPOCH"/><With Var="PUMP_1"/><With Var="PUMP_2"/><With Var="STATE_NO"/><With Var="LEAD_IS_2"/><With Var="HIGH_ALARM"/><With Var="STATION_FAULT"/><With Var="COMMS_OK"/><With Var="SENSOR_FAULT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="W_TOKEN"/><With Var="W_PUMP_1"/><With Var="W_PUMP_2"/><With Var="W_STATE_NO"/><With Var="W_LEAD_IS_2"/><With Var="W_HIGH_ALARM"/><With Var="W_STATION_FAULT"/><With Var="W_COMMS_OK"/><With Var="W_SENSOR_FAULT"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="EPOCH" Type="UINT"/>
+      <VarDeclaration Name="PUMP_1" Type="BOOL"/>
+      <VarDeclaration Name="PUMP_2" Type="BOOL"/>
+      <VarDeclaration Name="STATE_NO" Type="INT"/>
+      <VarDeclaration Name="LEAD_IS_2" Type="BOOL"/>
+      <VarDeclaration Name="HIGH_ALARM" Type="BOOL"/>
+      <VarDeclaration Name="STATION_FAULT" Type="BOOL"/>
+      <VarDeclaration Name="COMMS_OK" Type="BOOL"/>
+      <VarDeclaration Name="SENSOR_FAULT" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="W_TOKEN" Type="UINT"/>
+      <VarDeclaration Name="W_PUMP_1" Type="UINT"/>
+      <VarDeclaration Name="W_PUMP_2" Type="UINT"/>
+      <VarDeclaration Name="W_STATE_NO" Type="UINT"/>
+      <VarDeclaration Name="W_LEAD_IS_2" Type="UINT"/>
+      <VarDeclaration Name="W_HIGH_ALARM" Type="UINT"/>
+      <VarDeclaration Name="W_STATION_FAULT" Type="UINT"/>
+      <VarDeclaration Name="W_COMMS_OK" Type="UINT"/>
+      <VarDeclaration Name="W_SENSOR_FAULT" Type="UINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="400" y="0">
+        <ECAction Algorithm="scan" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="200" y="-60"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="200" y="60"/>
+    </ECC>
+    <Algorithm Name="scan">
+      <ST><![CDATA[
+W_TOKEN := EPOCH;
+W_PUMP_1 := BOOL_TO_UINT(PUMP_1);
+W_PUMP_2 := BOOL_TO_UINT(PUMP_2);
+W_STATE_NO := INT_TO_UINT(STATE_NO);
+W_LEAD_IS_2 := BOOL_TO_UINT(LEAD_IS_2);
+W_HIGH_ALARM := BOOL_TO_UINT(HIGH_ALARM);
+W_STATION_FAULT := BOOL_TO_UINT(STATION_FAULT);
+W_COMMS_OK := BOOL_TO_UINT(COMMS_OK);
+W_SENSOR_FAULT := BOOL_TO_UINT(SENSOR_FAULT);
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

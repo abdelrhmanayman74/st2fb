@@ -1,0 +1,50 @@
+(* Solvability control, never shown to a model: the same behaviour in the translator's v1 subset. Functions are
+   inlined and RETURN became ELSE. If this equals matiec on the original program, the target can express it. *)
+FUNCTION_BLOCK SENSOR_VOTER
+VAR_INPUT
+  ENABLE : BOOL;
+  PT_A, PT_B, PT_C : REAL;
+  BAND : REAL;
+  HIGH_LIMIT : REAL;
+  SPAN : REAL;
+  DISAGREE_DELAY : TIME;
+  RESET : BOOL;
+END_VAR
+VAR_OUTPUT
+  VOTED : REAL;
+  PERCENT : INT;
+  BAD_COUNT : INT;
+  DISAGREE : BOOL;
+  TRIP : BOOL;
+END_VAR
+VAR
+  MIDDLE : REAL;
+  DISAGREE_TIMER : TON;
+  TRIP_LATCH : RS;
+  OVER_HIGH : BOOL;
+END_VAR
+  IF NOT ENABLE THEN
+    DISAGREE_TIMER(IN := FALSE, PT := DISAGREE_DELAY);
+    DISAGREE := FALSE;
+    BAD_COUNT := 0;
+  ELSE
+    MIDDLE := MAX(MIN(PT_A, PT_B), MIN(MAX(PT_A, PT_B), PT_C));
+    BAD_COUNT := 0;
+    IF ABS(PT_A - MIDDLE) > BAND THEN
+      BAD_COUNT := BAD_COUNT + 1;
+    END_IF;
+    IF ABS(PT_B - MIDDLE) > BAND THEN
+      BAD_COUNT := BAD_COUNT + 1;
+    END_IF;
+    IF ABS(PT_C - MIDDLE) > BAND THEN
+      BAD_COUNT := BAD_COUNT + 1;
+    END_IF;
+    DISAGREE_TIMER(IN := BAD_COUNT > 0, PT := DISAGREE_DELAY);
+    DISAGREE := DISAGREE_TIMER.Q;
+    VOTED := MIDDLE;
+    PERCENT := REAL_TO_INT(100.0 * VOTED / SPAN);
+    OVER_HIGH := (VOTED > HIGH_LIMIT) AND (BAD_COUNT < 2);
+    TRIP_LATCH(S := OVER_HIGH, R1 := RESET);
+    TRIP := TRIP_LATCH.Q1;
+  END_IF;
+END_FUNCTION_BLOCK

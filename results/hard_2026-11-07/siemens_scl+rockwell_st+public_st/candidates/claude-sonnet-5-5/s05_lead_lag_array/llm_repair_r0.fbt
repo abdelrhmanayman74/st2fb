@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_LeadLag" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_rotate"/><With Var="i_lagDemand"/><With Var="i_avail1"/><With Var="i_avail2"/><With Var="i_avail3"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_lead"/><With Var="o_lag"/><With Var="o_run1"/><With Var="o_run2"/><With Var="o_run3"/><With Var="o_rotations"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_rotate" Type="BOOL"/>
+      <VarDeclaration Name="i_lagDemand" Type="BOOL"/>
+      <VarDeclaration Name="i_avail1" Type="BOOL"/>
+      <VarDeclaration Name="i_avail2" Type="BOOL"/>
+      <VarDeclaration Name="i_avail3" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_lead" Type="INT"/>
+      <VarDeclaration Name="o_lag" Type="INT"/>
+      <VarDeclaration Name="o_run1" Type="BOOL"/>
+      <VarDeclaration Name="o_run2" Type="BOOL"/>
+      <VarDeclaration Name="o_run3" Type="BOOL"/>
+      <VarDeclaration Name="o_rotations" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="av1" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="av2" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="av3" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="rot_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="rot_M" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tempIdx" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="tempCandidate" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="tempOffset" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="curAv" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="idxAv" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="done" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+av1 := i_avail1;
+av2 := i_avail2;
+av3 := i_avail3;
+
+rot_Q := i_rotate AND NOT rot_M;
+rot_M := i_rotate;
+
+IF MAX(o_lead, 1) = 1 THEN
+  curAv := av1;
+ELSIF MAX(o_lead, 1) = 2 THEN
+  curAv := av2;
+ELSE
+  curAv := av3;
+END_IF;
+
+IF rot_Q OR o_lead = 0 OR NOT curAv THEN
+  tempCandidate := 0;
+  done := FALSE;
+  tempOffset := 1;
+  WHILE tempOffset <= 3 AND NOT done DO
+    tempIdx := (o_lead + tempOffset - 1) MOD 3 + 1;
+    IF tempIdx = 1 THEN
+      idxAv := av1;
+    ELSIF tempIdx = 2 THEN
+      idxAv := av2;
+    ELSE
+      idxAv := av3;
+    END_IF;
+    IF idxAv THEN
+      tempCandidate := tempIdx;
+      done := TRUE;
+    END_IF;
+    tempOffset := tempOffset + 1;
+  END_WHILE;
+  IF tempCandidate <> o_lead THEN
+    o_lead := tempCandidate;
+    o_rotations := o_rotations + 1;
+  END_IF;
+END_IF;
+
+o_lag := 0;
+IF i_lagDemand AND o_lead <> 0 THEN
+  done := FALSE;
+  tempOffset := 1;
+  WHILE tempOffset <= 2 AND NOT done DO
+    tempIdx := (o_lead + tempOffset - 1) MOD 3 + 1;
+    IF tempIdx = 1 THEN
+      idxAv := av1;
+    ELSIF tempIdx = 2 THEN
+      idxAv := av2;
+    ELSE
+      idxAv := av3;
+    END_IF;
+    IF idxAv THEN
+      o_lag := tempIdx;
+      done := TRUE;
+    END_IF;
+    tempOffset := tempOffset + 1;
+  END_WHILE;
+END_IF;
+
+o_run1 := o_lead = 1 OR o_lag = 1;
+o_run2 := o_lead = 2 OR o_lag = 2;
+o_run3 := o_lead = 3 OR o_lag = 3;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

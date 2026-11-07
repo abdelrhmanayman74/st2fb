@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Negative C3: one literal per position, which is the same dispatch spread over two states">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="WAIT_B"/>
+      <ECState Name="A"><ECAction Algorithm="step_a" Output="CNF"/></ECState>
+      <ECState Name="B"><ECAction Algorithm="step_b" Output="CNF"/></ECState>
+      <ECState Name="IDLE"><ECAction Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="A" Condition="REQ[SEQ = 0]"/>
+      <ECTransition Source="START" Destination="IDLE" Condition="REQ"/>
+      <ECTransition Source="WAIT_B" Destination="B" Condition="REQ[SEQ = 1]"/>
+      <ECTransition Source="WAIT_B" Destination="IDLE" Condition="REQ"/>
+      <ECTransition Source="A" Destination="WAIT_B" Condition="1"/>
+      <ECTransition Source="B" Destination="START" Condition="1"/>
+      <ECTransition Source="IDLE" Destination="START" Condition="[GO]"/>
+      <ECTransition Source="IDLE" Destination="WAIT_B" Condition="1"/>
+    </ECC>
+    <Algorithm Name="step_a"><ST><![CDATA[
+SEQ := 0;
+IF GO THEN
+  SEQ := 1;
+END_IF;
+]]></ST></Algorithm>
+    <Algorithm Name="step_b"><ST><![CDATA[
+IF NOT GO THEN
+  SEQ := 0;
+END_IF;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

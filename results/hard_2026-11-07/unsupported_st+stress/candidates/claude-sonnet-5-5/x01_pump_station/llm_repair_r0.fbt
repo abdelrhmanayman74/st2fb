@@ -1,0 +1,611 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PUMP_STATION" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="AUTO"/><With Var="ESTOP_OK"/><With Var="SUCTION_OK"/><With Var="DISCHARGE_HIGH"/><With Var="RESET"/><With Var="LEVEL"/><With Var="LEVEL_STOP"/><With Var="LEVEL_1"/><With Var="LEVEL_2"/><With Var="LEVEL_3"/><With Var="FEEDBACK_1"/><With Var="FEEDBACK_2"/><With Var="FEEDBACK_3"/><With Var="THERMAL_1"/><With Var="THERMAL_2"/><With Var="THERMAL_3"/><With Var="MAINT_1"/><With Var="MAINT_2"/><With Var="MAINT_3"/><With Var="PROOF_TIME"/><With Var="RETRY_DELAY"/><With Var="STAGE_DELAY"/><With Var="ROTATE_TIME"/><With Var="MAX_RETRIES"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="RUN_1"/><With Var="RUN_2"/><With Var="RUN_3"/><With Var="LOCKED_1"/><With Var="LOCKED_2"/><With Var="LOCKED_3"/><With Var="RETRIES_1"/><With Var="RETRIES_2"/><With Var="RETRIES_3"/><With Var="TICKS_1"/><With Var="TICKS_2"/><With Var="TICKS_3"/><With Var="DUTY"/><With Var="STAGES"/><With Var="UNMET"/><With Var="STATION_ALARM"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="AUTO" Type="BOOL"/>
+      <VarDeclaration Name="ESTOP_OK" Type="BOOL"/>
+      <VarDeclaration Name="SUCTION_OK" Type="BOOL"/>
+      <VarDeclaration Name="DISCHARGE_HIGH" Type="BOOL"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="LEVEL" Type="REAL"/>
+      <VarDeclaration Name="LEVEL_STOP" Type="REAL"/>
+      <VarDeclaration Name="LEVEL_1" Type="REAL"/>
+      <VarDeclaration Name="LEVEL_2" Type="REAL"/>
+      <VarDeclaration Name="LEVEL_3" Type="REAL"/>
+      <VarDeclaration Name="FEEDBACK_1" Type="BOOL"/>
+      <VarDeclaration Name="FEEDBACK_2" Type="BOOL"/>
+      <VarDeclaration Name="FEEDBACK_3" Type="BOOL"/>
+      <VarDeclaration Name="THERMAL_1" Type="BOOL"/>
+      <VarDeclaration Name="THERMAL_2" Type="BOOL"/>
+      <VarDeclaration Name="THERMAL_3" Type="BOOL"/>
+      <VarDeclaration Name="MAINT_1" Type="BOOL"/>
+      <VarDeclaration Name="MAINT_2" Type="BOOL"/>
+      <VarDeclaration Name="MAINT_3" Type="BOOL"/>
+      <VarDeclaration Name="PROOF_TIME" Type="TIME"/>
+      <VarDeclaration Name="RETRY_DELAY" Type="TIME"/>
+      <VarDeclaration Name="STAGE_DELAY" Type="TIME"/>
+      <VarDeclaration Name="ROTATE_TIME" Type="TIME"/>
+      <VarDeclaration Name="MAX_RETRIES" Type="INT"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="RUN_1" Type="BOOL"/>
+      <VarDeclaration Name="RUN_2" Type="BOOL"/>
+      <VarDeclaration Name="RUN_3" Type="BOOL"/>
+      <VarDeclaration Name="LOCKED_1" Type="BOOL"/>
+      <VarDeclaration Name="LOCKED_2" Type="BOOL"/>
+      <VarDeclaration Name="LOCKED_3" Type="BOOL"/>
+      <VarDeclaration Name="RETRIES_1" Type="INT"/>
+      <VarDeclaration Name="RETRIES_2" Type="INT"/>
+      <VarDeclaration Name="RETRIES_3" Type="INT"/>
+      <VarDeclaration Name="TICKS_1" Type="DINT"/>
+      <VarDeclaration Name="TICKS_2" Type="DINT"/>
+      <VarDeclaration Name="TICKS_3" Type="DINT"/>
+      <VarDeclaration Name="DUTY" Type="INT"/>
+      <VarDeclaration Name="STAGES" Type="INT"/>
+      <VarDeclaration Name="UNMET" Type="INT"/>
+      <VarDeclaration Name="STATION_ALARM" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME"/>
+      <VarDeclaration Name="VIEW_AV_1" Type="BOOL"/>
+      <VarDeclaration Name="VIEW_AV_2" Type="BOOL"/>
+      <VarDeclaration Name="VIEW_AV_3" Type="BOOL"/>
+      <VarDeclaration Name="VIEW_TK_1" Type="DINT"/>
+      <VarDeclaration Name="VIEW_TK_2" Type="DINT"/>
+      <VarDeclaration Name="VIEW_TK_3" Type="DINT"/>
+      <VarDeclaration Name="CALLS_1" Type="BOOL"/>
+      <VarDeclaration Name="CALLS_2" Type="BOOL"/>
+      <VarDeclaration Name="CALLS_3" Type="BOOL"/>
+      <VarDeclaration Name="PREF_1" Type="INT" InitialValue="1"/>
+      <VarDeclaration Name="PREF_2" Type="INT" InitialValue="2"/>
+      <VarDeclaration Name="PREF_3" Type="INT" InitialValue="3"/>
+      <VarDeclaration Name="WANTED" Type="INT"/>
+      <VarDeclaration Name="PERMIT" Type="BOOL"/>
+      <VarDeclaration Name="ST_IN" Type="BOOL"/>
+      <VarDeclaration Name="ST_PT" Type="TIME"/>
+      <VarDeclaration Name="ST_Q" Type="BOOL"/>
+      <VarDeclaration Name="ST_ET" Type="TIME"/>
+      <VarDeclaration Name="ST_STATE" Type="INT"/>
+      <VarDeclaration Name="ST_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="ST_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="RT_IN" Type="BOOL"/>
+      <VarDeclaration Name="RT_PT" Type="TIME"/>
+      <VarDeclaration Name="RT_Q" Type="BOOL"/>
+      <VarDeclaration Name="RT_ET" Type="TIME"/>
+      <VarDeclaration Name="RT_STATE" Type="INT"/>
+      <VarDeclaration Name="RT_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="RT_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="ALARM_Q1" Type="BOOL"/>
+      <VarDeclaration Name="BEST" Type="INT"/>
+      <VarDeclaration Name="BEST_TICKS" Type="DINT"/>
+      <VarDeclaration Name="I" Type="INT"/>
+      <VarDeclaration Name="CANDIDATE" Type="INT"/>
+      <VarDeclaration Name="REMAIN" Type="INT"/>
+      <VarDeclaration Name="TMP_AV" Type="BOOL"/>
+      <VarDeclaration Name="TMP_TK" Type="DINT"/>
+      <VarDeclaration Name="TMP_IDX" Type="INT"/>
+      <VarDeclaration Name="U1_STATE" Type="INT"/>
+      <VarDeclaration Name="U1_FAILED" Type="BOOL"/>
+      <VarDeclaration Name="U1_RUN" Type="BOOL"/>
+      <VarDeclaration Name="U1_AVAILABLE" Type="BOOL"/>
+      <VarDeclaration Name="U1_LOCKED" Type="BOOL"/>
+      <VarDeclaration Name="U1_RETRIES" Type="INT"/>
+      <VarDeclaration Name="U1_TICKS" Type="DINT"/>
+      <VarDeclaration Name="U1_PR_IN" Type="BOOL"/>
+      <VarDeclaration Name="U1_PR_PT" Type="TIME"/>
+      <VarDeclaration Name="U1_PR_Q" Type="BOOL"/>
+      <VarDeclaration Name="U1_PR_ET" Type="TIME"/>
+      <VarDeclaration Name="U1_PR_STATE" Type="INT"/>
+      <VarDeclaration Name="U1_PR_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="U1_PR_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="U1_HO_IN" Type="BOOL"/>
+      <VarDeclaration Name="U1_HO_PT" Type="TIME"/>
+      <VarDeclaration Name="U1_HO_Q" Type="BOOL"/>
+      <VarDeclaration Name="U1_HO_ET" Type="TIME"/>
+      <VarDeclaration Name="U1_HO_STATE" Type="INT"/>
+      <VarDeclaration Name="U1_HO_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="U1_HO_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="U2_STATE" Type="INT"/>
+      <VarDeclaration Name="U2_FAILED" Type="BOOL"/>
+      <VarDeclaration Name="U2_RUN" Type="BOOL"/>
+      <VarDeclaration Name="U2_AVAILABLE" Type="BOOL"/>
+      <VarDeclaration Name="U2_LOCKED" Type="BOOL"/>
+      <VarDeclaration Name="U2_RETRIES" Type="INT"/>
+      <VarDeclaration Name="U2_TICKS" Type="DINT"/>
+      <VarDeclaration Name="U2_PR_IN" Type="BOOL"/>
+      <VarDeclaration Name="U2_PR_PT" Type="TIME"/>
+      <VarDeclaration Name="U2_PR_Q" Type="BOOL"/>
+      <VarDeclaration Name="U2_PR_ET" Type="TIME"/>
+      <VarDeclaration Name="U2_PR_STATE" Type="INT"/>
+      <VarDeclaration Name="U2_PR_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="U2_PR_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="U2_HO_IN" Type="BOOL"/>
+      <VarDeclaration Name="U2_HO_PT" Type="TIME"/>
+      <VarDeclaration Name="U2_HO_Q" Type="BOOL"/>
+      <VarDeclaration Name="U2_HO_ET" Type="TIME"/>
+      <VarDeclaration Name="U2_HO_STATE" Type="INT"/>
+      <VarDeclaration Name="U2_HO_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="U2_HO_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="U3_STATE" Type="INT"/>
+      <VarDeclaration Name="U3_FAILED" Type="BOOL"/>
+      <VarDeclaration Name="U3_RUN" Type="BOOL"/>
+      <VarDeclaration Name="U3_AVAILABLE" Type="BOOL"/>
+      <VarDeclaration Name="U3_LOCKED" Type="BOOL"/>
+      <VarDeclaration Name="U3_RETRIES" Type="INT"/>
+      <VarDeclaration Name="U3_TICKS" Type="DINT"/>
+      <VarDeclaration Name="U3_PR_IN" Type="BOOL"/>
+      <VarDeclaration Name="U3_PR_PT" Type="TIME"/>
+      <VarDeclaration Name="U3_PR_Q" Type="BOOL"/>
+      <VarDeclaration Name="U3_PR_ET" Type="TIME"/>
+      <VarDeclaration Name="U3_PR_STATE" Type="INT"/>
+      <VarDeclaration Name="U3_PR_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="U3_PR_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="U3_HO_IN" Type="BOOL"/>
+      <VarDeclaration Name="U3_HO_PT" Type="TIME"/>
+      <VarDeclaration Name="U3_HO_Q" Type="BOOL"/>
+      <VarDeclaration Name="U3_HO_ET" Type="TIME"/>
+      <VarDeclaration Name="U3_HO_STATE" Type="INT"/>
+      <VarDeclaration Name="U3_HO_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="U3_HO_START_TIME" Type="TIME"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="WORK" x="200" y="0">
+        <ECAction Algorithm="scan" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="WORK" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="WORK" Destination="START" Condition="1" x="100" y="50"/>
+    </ECC>
+    <Algorithm Name="scan">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+PERMIT := ESTOP_OK AND SUCTION_OK AND NOT DISCHARGE_HIGH;
+
+IF NOT AUTO OR LEVEL <= LEVEL_STOP THEN
+  WANTED := 0;
+ELSIF LEVEL >= LEVEL_3 THEN
+  WANTED := 3;
+ELSIF LEVEL >= LEVEL_2 THEN
+  WANTED := MAX(WANTED, 2);
+ELSIF LEVEL >= LEVEL_1 THEN
+  WANTED := MAX(WANTED, 1);
+END_IF;
+
+ST_IN := (STAGES < WANTED) AND NOT ST_Q;
+ST_PT := STAGE_DELAY;
+IF (ST_STATE = 0) AND NOT ST_PREV_IN AND ST_IN THEN
+  ST_STATE := 1;
+  ST_Q := FALSE;
+  ST_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT ST_IN THEN
+    ST_ET := T#0s;
+    ST_Q := FALSE;
+    ST_STATE := 0;
+  ELSIF ST_STATE = 1 THEN
+    IF ST_START_TIME + ST_PT <= ST2FB_NOW THEN
+      ST_STATE := 2;
+      ST_Q := TRUE;
+      ST_ET := ST_PT;
+    ELSE
+      ST_ET := ST2FB_NOW - ST_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+ST_PREV_IN := ST_IN;
+
+IF STAGES > WANTED THEN
+  STAGES := WANTED;
+ELSIF ST_Q THEN
+  STAGES := STAGES + 1;
+END_IF;
+
+RT_IN := AUTO AND NOT RT_Q;
+RT_PT := ROTATE_TIME;
+IF (RT_STATE = 0) AND NOT RT_PREV_IN AND RT_IN THEN
+  RT_STATE := 1;
+  RT_Q := FALSE;
+  RT_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT RT_IN THEN
+    RT_ET := T#0s;
+    RT_Q := FALSE;
+    RT_STATE := 0;
+  ELSIF RT_STATE = 1 THEN
+    IF RT_START_TIME + RT_PT <= ST2FB_NOW THEN
+      RT_STATE := 2;
+      RT_Q := TRUE;
+      RT_ET := RT_PT;
+    ELSE
+      RT_ET := ST2FB_NOW - RT_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+RT_PREV_IN := RT_IN;
+
+TMP_IDX := MAX(DUTY, 1);
+IF TMP_IDX = 1 THEN
+  TMP_AV := VIEW_AV_1;
+ELSIF TMP_IDX = 2 THEN
+  TMP_AV := VIEW_AV_2;
+ELSE
+  TMP_AV := VIEW_AV_3;
+END_IF;
+IF RT_Q OR (DUTY = 0) OR NOT TMP_AV THEN
+  BEST := 0;
+  BEST_TICKS := 2147483647;
+  FOR I := 1 TO 3 DO
+    IF I = 1 THEN
+      CANDIDATE := PREF_1;
+    ELSIF I = 2 THEN
+      CANDIDATE := PREF_2;
+    ELSE
+      CANDIDATE := PREF_3;
+    END_IF;
+    IF CANDIDATE = 1 THEN
+      TMP_AV := VIEW_AV_1;
+      TMP_TK := VIEW_TK_1;
+    ELSIF CANDIDATE = 2 THEN
+      TMP_AV := VIEW_AV_2;
+      TMP_TK := VIEW_TK_2;
+    ELSE
+      TMP_AV := VIEW_AV_3;
+      TMP_TK := VIEW_TK_3;
+    END_IF;
+    IF TMP_AV AND (TMP_TK < BEST_TICKS) THEN
+      BEST := CANDIDATE;
+      BEST_TICKS := TMP_TK;
+    END_IF;
+  END_FOR;
+  IF BEST <> 0 THEN
+    DUTY := BEST;
+  END_IF;
+END_IF;
+
+CALLS_1 := FALSE;
+CALLS_2 := FALSE;
+CALLS_3 := FALSE;
+REMAIN := STAGES;
+FOR I := 0 TO 2 DO
+  IF REMAIN <> 0 THEN
+    CANDIDATE := (MAX(DUTY, 1) + I - 1) MOD 3 + 1;
+    IF CANDIDATE = 1 THEN
+      TMP_AV := VIEW_AV_1;
+    ELSIF CANDIDATE = 2 THEN
+      TMP_AV := VIEW_AV_2;
+    ELSE
+      TMP_AV := VIEW_AV_3;
+    END_IF;
+    IF TMP_AV THEN
+      IF CANDIDATE = 1 THEN
+        CALLS_1 := TRUE;
+      ELSIF CANDIDATE = 2 THEN
+        CALLS_2 := TRUE;
+      ELSE
+        CALLS_3 := TRUE;
+      END_IF;
+      REMAIN := REMAIN - 1;
+    END_IF;
+  END_IF;
+END_FOR;
+UNMET := REMAIN;
+
+(* pump 1 *)
+IF RESET AND NOT THERMAL_1 THEN
+  U1_RETRIES := 0;
+  IF U1_STATE = 4 THEN
+    U1_STATE := 0;
+  END_IF;
+END_IF;
+IF NOT PERMIT AND U1_STATE <> 4 THEN
+  U1_STATE := 0;
+END_IF;
+U1_FAILED := FALSE;
+CASE U1_STATE OF
+  0:
+    IF CALLS_1 AND PERMIT AND NOT MAINT_1 AND NOT THERMAL_1 THEN
+      U1_STATE := 1;
+    END_IF;
+  1:
+    IF NOT CALLS_1 THEN
+      U1_STATE := 0;
+    ELSIF THERMAL_1 OR U1_PR_Q THEN
+      U1_FAILED := TRUE;
+    ELSIF FEEDBACK_1 THEN
+      U1_STATE := 2;
+    END_IF;
+  2:
+    IF NOT CALLS_1 THEN
+      U1_STATE := 0;
+    ELSIF THERMAL_1 OR NOT FEEDBACK_1 THEN
+      U1_FAILED := TRUE;
+    END_IF;
+  3:
+    IF U1_HO_Q THEN
+      U1_STATE := 0;
+    END_IF;
+END_CASE;
+IF U1_FAILED THEN
+  U1_RETRIES := U1_RETRIES + 1;
+  IF U1_RETRIES >= MAX_RETRIES THEN
+    U1_STATE := 4;
+  ELSE
+    U1_STATE := 3;
+  END_IF;
+END_IF;
+U1_PR_IN := U1_STATE = 1;
+U1_PR_PT := PROOF_TIME;
+IF (U1_PR_STATE = 0) AND NOT U1_PR_PREV_IN AND U1_PR_IN THEN
+  U1_PR_STATE := 1;
+  U1_PR_Q := FALSE;
+  U1_PR_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT U1_PR_IN THEN
+    U1_PR_ET := T#0s;
+    U1_PR_Q := FALSE;
+    U1_PR_STATE := 0;
+  ELSIF U1_PR_STATE = 1 THEN
+    IF U1_PR_START_TIME + U1_PR_PT <= ST2FB_NOW THEN
+      U1_PR_STATE := 2;
+      U1_PR_Q := TRUE;
+      U1_PR_ET := U1_PR_PT;
+    ELSE
+      U1_PR_ET := ST2FB_NOW - U1_PR_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+U1_PR_PREV_IN := U1_PR_IN;
+U1_HO_IN := U1_STATE = 3;
+U1_HO_PT := RETRY_DELAY;
+IF (U1_HO_STATE = 0) AND NOT U1_HO_PREV_IN AND U1_HO_IN THEN
+  U1_HO_STATE := 1;
+  U1_HO_Q := FALSE;
+  U1_HO_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT U1_HO_IN THEN
+    U1_HO_ET := T#0s;
+    U1_HO_Q := FALSE;
+    U1_HO_STATE := 0;
+  ELSIF U1_HO_STATE = 1 THEN
+    IF U1_HO_START_TIME + U1_HO_PT <= ST2FB_NOW THEN
+      U1_HO_STATE := 2;
+      U1_HO_Q := TRUE;
+      U1_HO_ET := U1_HO_PT;
+    ELSE
+      U1_HO_ET := ST2FB_NOW - U1_HO_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+U1_HO_PREV_IN := U1_HO_IN;
+U1_RUN := (U1_STATE = 1) OR (U1_STATE = 2);
+U1_AVAILABLE := NOT MAINT_1 AND NOT THERMAL_1 AND (U1_STATE <> 3) AND (U1_STATE <> 4);
+U1_LOCKED := U1_STATE = 4;
+IF U1_STATE = 2 THEN
+  U1_TICKS := U1_TICKS + 1;
+END_IF;
+
+(* pump 2 *)
+IF RESET AND NOT THERMAL_2 THEN
+  U2_RETRIES := 0;
+  IF U2_STATE = 4 THEN
+    U2_STATE := 0;
+  END_IF;
+END_IF;
+IF NOT PERMIT AND U2_STATE <> 4 THEN
+  U2_STATE := 0;
+END_IF;
+U2_FAILED := FALSE;
+CASE U2_STATE OF
+  0:
+    IF CALLS_2 AND PERMIT AND NOT MAINT_2 AND NOT THERMAL_2 THEN
+      U2_STATE := 1;
+    END_IF;
+  1:
+    IF NOT CALLS_2 THEN
+      U2_STATE := 0;
+    ELSIF THERMAL_2 OR U2_PR_Q THEN
+      U2_FAILED := TRUE;
+    ELSIF FEEDBACK_2 THEN
+      U2_STATE := 2;
+    END_IF;
+  2:
+    IF NOT CALLS_2 THEN
+      U2_STATE := 0;
+    ELSIF THERMAL_2 OR NOT FEEDBACK_2 THEN
+      U2_FAILED := TRUE;
+    END_IF;
+  3:
+    IF U2_HO_Q THEN
+      U2_STATE := 0;
+    END_IF;
+END_CASE;
+IF U2_FAILED THEN
+  U2_RETRIES := U2_RETRIES + 1;
+  IF U2_RETRIES >= MAX_RETRIES THEN
+    U2_STATE := 4;
+  ELSE
+    U2_STATE := 3;
+  END_IF;
+END_IF;
+U2_PR_IN := U2_STATE = 1;
+U2_PR_PT := PROOF_TIME;
+IF (U2_PR_STATE = 0) AND NOT U2_PR_PREV_IN AND U2_PR_IN THEN
+  U2_PR_STATE := 1;
+  U2_PR_Q := FALSE;
+  U2_PR_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT U2_PR_IN THEN
+    U2_PR_ET := T#0s;
+    U2_PR_Q := FALSE;
+    U2_PR_STATE := 0;
+  ELSIF U2_PR_STATE = 1 THEN
+    IF U2_PR_START_TIME + U2_PR_PT <= ST2FB_NOW THEN
+      U2_PR_STATE := 2;
+      U2_PR_Q := TRUE;
+      U2_PR_ET := U2_PR_PT;
+    ELSE
+      U2_PR_ET := ST2FB_NOW - U2_PR_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+U2_PR_PREV_IN := U2_PR_IN;
+U2_HO_IN := U2_STATE = 3;
+U2_HO_PT := RETRY_DELAY;
+IF (U2_HO_STATE = 0) AND NOT U2_HO_PREV_IN AND U2_HO_IN THEN
+  U2_HO_STATE := 1;
+  U2_HO_Q := FALSE;
+  U2_HO_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT U2_HO_IN THEN
+    U2_HO_ET := T#0s;
+    U2_HO_Q := FALSE;
+    U2_HO_STATE := 0;
+  ELSIF U2_HO_STATE = 1 THEN
+    IF U2_HO_START_TIME + U2_HO_PT <= ST2FB_NOW THEN
+      U2_HO_STATE := 2;
+      U2_HO_Q := TRUE;
+      U2_HO_ET := U2_HO_PT;
+    ELSE
+      U2_HO_ET := ST2FB_NOW - U2_HO_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+U2_HO_PREV_IN := U2_HO_IN;
+U2_RUN := (U2_STATE = 1) OR (U2_STATE = 2);
+U2_AVAILABLE := NOT MAINT_2 AND NOT THERMAL_2 AND (U2_STATE <> 3) AND (U2_STATE <> 4);
+U2_LOCKED := U2_STATE = 4;
+IF U2_STATE = 2 THEN
+  U2_TICKS := U2_TICKS + 1;
+END_IF;
+
+(* pump 3 *)
+IF RESET AND NOT THERMAL_3 THEN
+  U3_RETRIES := 0;
+  IF U3_STATE = 4 THEN
+    U3_STATE := 0;
+  END_IF;
+END_IF;
+IF NOT PERMIT AND U3_STATE <> 4 THEN
+  U3_STATE := 0;
+END_IF;
+U3_FAILED := FALSE;
+CASE U3_STATE OF
+  0:
+    IF CALLS_3 AND PERMIT AND NOT MAINT_3 AND NOT THERMAL_3 THEN
+      U3_STATE := 1;
+    END_IF;
+  1:
+    IF NOT CALLS_3 THEN
+      U3_STATE := 0;
+    ELSIF THERMAL_3 OR U3_PR_Q THEN
+      U3_FAILED := TRUE;
+    ELSIF FEEDBACK_3 THEN
+      U3_STATE := 2;
+    END_IF;
+  2:
+    IF NOT CALLS_3 THEN
+      U3_STATE := 0;
+    ELSIF THERMAL_3 OR NOT FEEDBACK_3 THEN
+      U3_FAILED := TRUE;
+    END_IF;
+  3:
+    IF U3_HO_Q THEN
+      U3_STATE := 0;
+    END_IF;
+END_CASE;
+IF U3_FAILED THEN
+  U3_RETRIES := U3_RETRIES + 1;
+  IF U3_RETRIES >= MAX_RETRIES THEN
+    U3_STATE := 4;
+  ELSE
+    U3_STATE := 3;
+  END_IF;
+END_IF;
+U3_PR_IN := U3_STATE = 1;
+U3_PR_PT := PROOF_TIME;
+IF (U3_PR_STATE = 0) AND NOT U3_PR_PREV_IN AND U3_PR_IN THEN
+  U3_PR_STATE := 1;
+  U3_PR_Q := FALSE;
+  U3_PR_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT U3_PR_IN THEN
+    U3_PR_ET := T#0s;
+    U3_PR_Q := FALSE;
+    U3_PR_STATE := 0;
+  ELSIF U3_PR_STATE = 1 THEN
+    IF U3_PR_START_TIME + U3_PR_PT <= ST2FB_NOW THEN
+      U3_PR_STATE := 2;
+      U3_PR_Q := TRUE;
+      U3_PR_ET := U3_PR_PT;
+    ELSE
+      U3_PR_ET := ST2FB_NOW - U3_PR_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+U3_PR_PREV_IN := U3_PR_IN;
+U3_HO_IN := U3_STATE = 3;
+U3_HO_PT := RETRY_DELAY;
+IF (U3_HO_STATE = 0) AND NOT U3_HO_PREV_IN AND U3_HO_IN THEN
+  U3_HO_STATE := 1;
+  U3_HO_Q := FALSE;
+  U3_HO_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT U3_HO_IN THEN
+    U3_HO_ET := T#0s;
+    U3_HO_Q := FALSE;
+    U3_HO_STATE := 0;
+  ELSIF U3_HO_STATE = 1 THEN
+    IF U3_HO_START_TIME + U3_HO_PT <= ST2FB_NOW THEN
+      U3_HO_STATE := 2;
+      U3_HO_Q := TRUE;
+      U3_HO_ET := U3_HO_PT;
+    ELSE
+      U3_HO_ET := ST2FB_NOW - U3_HO_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+U3_HO_PREV_IN := U3_HO_IN;
+U3_RUN := (U3_STATE = 1) OR (U3_STATE = 2);
+U3_AVAILABLE := NOT MAINT_3 AND NOT THERMAL_3 AND (U3_STATE <> 3) AND (U3_STATE <> 4);
+U3_LOCKED := U3_STATE = 4;
+IF U3_STATE = 2 THEN
+  U3_TICKS := U3_TICKS + 1;
+END_IF;
+
+VIEW_AV_1 := U1_AVAILABLE;
+VIEW_TK_1 := U1_TICKS;
+VIEW_AV_2 := U2_AVAILABLE;
+VIEW_TK_2 := U2_TICKS;
+VIEW_AV_3 := U3_AVAILABLE;
+VIEW_TK_3 := U3_TICKS;
+
+RUN_1 := U1_RUN;
+RUN_2 := U2_RUN;
+RUN_3 := U3_RUN;
+LOCKED_1 := U1_LOCKED;
+LOCKED_2 := U2_LOCKED;
+LOCKED_3 := U3_LOCKED;
+RETRIES_1 := U1_RETRIES;
+RETRIES_2 := U2_RETRIES;
+RETRIES_3 := U3_RETRIES;
+TICKS_1 := U1_TICKS;
+TICKS_2 := U2_TICKS;
+TICKS_3 := U3_TICKS;
+
+ALARM_Q1 := (U1_LOCKED OR U2_LOCKED OR U3_LOCKED OR ((UNMET > 0) AND PERMIT)) OR (NOT RESET AND ALARM_Q1);
+STATION_ALARM := ALARM_Q1;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

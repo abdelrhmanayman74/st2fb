@@ -1,0 +1,69 @@
+FUNCTION_BLOCK "FB_HeaterPI"
+TITLE = 'Heater PI controller with anti-windup and PWM demand'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Temperature
+NAME : HeaterPI
+VERSION : 3.1
+//When disabled, nothing below the first region runs, so the output holds its last value. Enabling again loads the integral from it, for a bumpless start.
+   VAR_INPUT 
+      i_enable : Bool;
+      i_setpoint : Real;
+      i_measured : Real;
+      i_kp : Real;
+      i_ki : Real;
+      i_outMax : Real;
+      i_deadband : Real;
+   END_VAR
+
+   VAR_OUTPUT 
+      o_output : Real;
+      o_pwmTicks : Int;
+      o_saturated : Bool;
+      o_error : Real;
+      o_quality : Real;
+   END_VAR
+
+   VAR 
+      statIntegral : Real;
+      statFirstRun : Bool := TRUE;
+   END_VAR
+
+   VAR_TEMP 
+      tempUnclamped : Real;
+      tempErrorAbs : Real;
+   END_VAR
+
+
+BEGIN
+	REGION Enable
+	    IF NOT #i_enable THEN
+	        #o_saturated := FALSE;
+	        #statFirstRun := TRUE;
+	        RETURN;
+	    END_IF;
+	    IF #statFirstRun THEN
+	        #statIntegral := #o_output;
+	        #statFirstRun := FALSE;
+	    END_IF;
+	END_REGION
+	
+	REGION Control law
+	    #o_error := #i_setpoint - #i_measured;
+	    #tempErrorAbs := ABS(#o_error);
+	    IF #tempErrorAbs < #i_deadband THEN
+	        #o_error := 0.0;
+	    END_IF;
+	    #tempUnclamped := #i_kp * #o_error + #statIntegral + #i_ki * #o_error;
+	    #o_output := LIMIT(MN := 0.0, IN := #tempUnclamped, MX := #i_outMax);
+	    #o_saturated := #o_output <> #tempUnclamped;
+	    IF NOT #o_saturated THEN
+	        #statIntegral += #i_ki * #o_error;
+	    END_IF;
+	END_REGION
+	
+	REGION Derived values
+	    #o_pwmTicks := DINT_TO_INT(ROUND(#o_output * 10.0));
+	    #o_quality := SQRT(SQR(#o_error) + 1.0);
+	END_REGION
+END_FUNCTION_BLOCK

@@ -1,0 +1,480 @@
+{
+ "client": "live",
+ "prices_as_of": "2026-10-06",
+ "stopped": null,
+ "aggregate": [
+  {
+   "model": "claude-sonnet-5-5",
+   "mode": "llm_repair",
+   "runs": 4,
+   "not_run": 0,
+   "tuning_equal": 4,
+   "heldout_equal": 4,
+   "passed": 4,
+   "restructured_and_passed": 4,
+   "cost_usd": 0.42831740000000007,
+   "new_spend_usd": 0.42831740000000007,
+   "cost_per_pass_usd": 0.10707935000000002,
+   "fell_back": 0,
+   "failures": {},
+   "passed_where_translator_rejected": 0,
+   "passed_where_frontend_did_not_pass": 0,
+   "passed_and_persistent": 3,
+   "passed_needs_reading": 0
+  },
+  {
+   "model": "deterministic-translator",
+   "mode": "baseline",
+   "runs": 4,
+   "not_run": 0,
+   "tuning_equal": 4,
+   "heldout_equal": 4,
+   "passed": 4,
+   "restructured_and_passed": 0,
+   "cost_usd": 0.0,
+   "new_spend_usd": 0.0,
+   "cost_per_pass_usd": 0.0,
+   "fell_back": 0,
+   "failures": {},
+   "passed_where_translator_rejected": 0,
+   "passed_where_frontend_did_not_pass": 0,
+   "passed_and_persistent": 0,
+   "passed_needs_reading": 0
+  }
+ ],
+ "results": [
+  {
+   "client": "live",
+   "program": "06_star_delta",
+   "set": "",
+   "dialect": null,
+   "mode": "baseline",
+   "model": "deterministic-translator",
+   "repeat": 0,
+   "attempts": 0,
+   "input_tokens": 0,
+   "output_tokens": 0,
+   "cost_usd": 0.0,
+   "new_spend_usd": 0.0,
+   "source_has_case": false,
+   "frontend_status": "passed",
+   "frontend_reason": "",
+   "baseline_status": "passed",
+   "baseline_reason": "",
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "failure_category": null,
+   "ecc_states": 2,
+   "working_states": 1,
+   "algorithms": 1,
+   "restructured": false,
+   "ecc_persistent": false,
+   "ecc_verdict": "not_persistent",
+   "control_states": 1,
+   "ecc_persistent_failures": [
+    "C1: 1 control state(s) that hold and connect, and at least 2 are needed"
+   ],
+   "ecc_needs_reading": []
+  },
+  {
+   "client": "live",
+   "program": "13_case_sequencer",
+   "set": "",
+   "dialect": null,
+   "mode": "baseline",
+   "model": "deterministic-translator",
+   "repeat": 0,
+   "attempts": 0,
+   "input_tokens": 0,
+   "output_tokens": 0,
+   "cost_usd": 0.0,
+   "new_spend_usd": 0.0,
+   "source_has_case": true,
+   "frontend_status": "passed",
+   "frontend_reason": "",
+   "baseline_status": "passed",
+   "baseline_reason": "",
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "failure_category": null,
+   "ecc_states": 2,
+   "working_states": 1,
+   "algorithms": 1,
+   "restructured": false,
+   "ecc_persistent": false,
+   "ecc_verdict": "not_persistent",
+   "control_states": 1,
+   "ecc_persistent_failures": [
+    "C1: 1 control state(s) that hold and connect, and at least 2 are needed"
+   ],
+   "ecc_needs_reading": []
+  },
+  {
+   "client": "live",
+   "program": "14_batch_filling",
+   "set": "",
+   "dialect": null,
+   "mode": "baseline",
+   "model": "deterministic-translator",
+   "repeat": 0,
+   "attempts": 0,
+   "input_tokens": 0,
+   "output_tokens": 0,
+   "cost_usd": 0.0,
+   "new_spend_usd": 0.0,
+   "source_has_case": true,
+   "frontend_status": "passed",
+   "frontend_reason": "",
+   "baseline_status": "passed",
+   "baseline_reason": "",
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "failure_category": null,
+   "ecc_states": 2,
+   "working_states": 1,
+   "algorithms": 1,
+   "restructured": false,
+   "ecc_persistent": false,
+   "ecc_verdict": "not_persistent",
+   "control_states": 1,
+   "ecc_persistent_failures": [
+    "C1: 1 control state(s) that hold and connect, and at least 2 are needed"
+   ],
+   "ecc_needs_reading": []
+  },
+  {
+   "client": "live",
+   "program": "20_pump_station_supervisor",
+   "set": "",
+   "dialect": null,
+   "mode": "baseline",
+   "model": "deterministic-translator",
+   "repeat": 0,
+   "attempts": 0,
+   "input_tokens": 0,
+   "output_tokens": 0,
+   "cost_usd": 0.0,
+   "new_spend_usd": 0.0,
+   "source_has_case": true,
+   "frontend_status": "passed",
+   "frontend_reason": "",
+   "baseline_status": "passed",
+   "baseline_reason": "",
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "failure_category": null,
+   "ecc_states": 2,
+   "working_states": 1,
+   "algorithms": 1,
+   "restructured": false,
+   "ecc_persistent": false,
+   "ecc_verdict": "not_persistent",
+   "control_states": 1,
+   "ecc_persistent_failures": [
+    "C1: 1 control state(s) that hold and connect, and at least 2 are needed"
+   ],
+   "ecc_needs_reading": []
+  },
+  {
+   "set": "",
+   "dialect": null,
+   "heldout_files": {
+    "heldout_stimulus.json": "equal"
+   },
+   "max_tokens": 16000,
+   "ecc_persistent": false,
+   "ecc_verdict": "not_persistent",
+   "control_states": 2,
+   "ecc_persistent_failures": [
+    "C5: every control state runs the same algorithms"
+   ],
+   "ecc_needs_reading": [],
+   "client": "live",
+   "program": "06_star_delta",
+   "mode": "llm_repair",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium",
+   "repeat": 0,
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "attempts": 1,
+   "input_tokens": 7484,
+   "output_tokens": 4327,
+   "cost_usd": 0.061737,
+   "new_spend_usd": 0.061737,
+   "cached_calls": 0,
+   "served_by": [
+    "claude-sonnet-5-5"
+   ],
+   "fell_back": false,
+   "source_has_case": false,
+   "failure_category": null,
+   "tuning_first_divergence": null,
+   "candidate_path": "build/llm_hard/reports/ecc_persistent/candidates/claude-sonnet-5-5/06_star_delta/llm_repair_r0.fbt",
+   "attempt_log": [
+    {
+     "attempt": 1,
+     "stop_reason": "end_turn",
+     "status": "equal",
+     "detail": "",
+     "cached": false,
+     "cost_usd": 0.061737,
+     "new_spend_usd": 0.061737,
+     "served_by": "claude-sonnet-5-5",
+     "fell_back": false,
+     "refusal_category": null,
+     "usage": [
+      {
+       "model": "claude-sonnet-5-5",
+       "input_tokens": 486,
+       "output_tokens": 4327,
+       "cache_creation_input_tokens": 6998,
+       "cache_read_input_tokens": 0
+      }
+     ]
+    }
+   ],
+   "ecc_states": 4,
+   "working_states": 2,
+   "algorithms": 3,
+   "restructured": true
+  },
+  {
+   "set": "",
+   "dialect": null,
+   "heldout_files": {
+    "heldout_stimulus.json": "equal"
+   },
+   "max_tokens": 16000,
+   "ecc_persistent": true,
+   "ecc_verdict": "persistent",
+   "control_states": 9,
+   "ecc_persistent_failures": [],
+   "ecc_needs_reading": [],
+   "client": "live",
+   "program": "13_case_sequencer",
+   "mode": "llm_repair",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium",
+   "repeat": 0,
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "attempts": 1,
+   "input_tokens": 7911,
+   "output_tokens": 7788,
+   "cost_usd": 0.0811056,
+   "new_spend_usd": 0.0811056,
+   "cached_calls": 0,
+   "served_by": [
+    "claude-sonnet-5-5"
+   ],
+   "fell_back": false,
+   "source_has_case": true,
+   "failure_category": null,
+   "tuning_first_divergence": null,
+   "candidate_path": "build/llm_hard/reports/ecc_persistent/candidates/claude-sonnet-5-5/13_case_sequencer/llm_repair_r0.fbt",
+   "attempt_log": [
+    {
+     "attempt": 1,
+     "stop_reason": "end_turn",
+     "status": "equal",
+     "detail": "",
+     "cached": false,
+     "cost_usd": 0.0811056,
+     "new_spend_usd": 0.0811056,
+     "served_by": "claude-sonnet-5-5",
+     "fell_back": false,
+     "refusal_category": null,
+     "usage": [
+      {
+       "model": "claude-sonnet-5-5",
+       "input_tokens": 913,
+       "output_tokens": 7788,
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 6998
+      }
+     ]
+    }
+   ],
+   "ecc_states": 19,
+   "working_states": 10,
+   "algorithms": 11,
+   "restructured": true
+  },
+  {
+   "set": "",
+   "dialect": null,
+   "heldout_files": {
+    "heldout_stimulus.json": "equal"
+   },
+   "max_tokens": 16000,
+   "ecc_persistent": true,
+   "ecc_verdict": "persistent",
+   "control_states": 5,
+   "ecc_persistent_failures": [],
+   "ecc_needs_reading": [],
+   "client": "live",
+   "program": "14_batch_filling",
+   "mode": "llm_repair",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium",
+   "repeat": 0,
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "attempts": 2,
+   "input_tokens": 22457,
+   "output_tokens": 15769,
+   "cost_usd": 0.17741120000000002,
+   "new_spend_usd": 0.17741120000000002,
+   "cached_calls": 0,
+   "served_by": [
+    "claude-sonnet-5-5"
+   ],
+   "fell_back": false,
+   "source_has_case": true,
+   "failure_category": null,
+   "tuning_first_divergence": null,
+   "candidate_path": "build/llm_hard/reports/ecc_persistent/candidates/claude-sonnet-5-5/14_batch_filling/llm_repair_r0.fbt",
+   "attempt_log": [
+    {
+     "attempt": 1,
+     "stop_reason": "end_turn",
+     "status": "parse_failed",
+     "detail": "<InternalVars> must be inside <BasicFB>, not inside <InterfaceList>",
+     "cached": false,
+     "cost_usd": 0.09161960000000001,
+     "new_spend_usd": 0.09161960000000001,
+     "served_by": "claude-sonnet-5-5",
+     "fell_back": false,
+     "refusal_category": null,
+     "usage": [
+      {
+       "model": "claude-sonnet-5-5",
+       "input_tokens": 1175,
+       "output_tokens": 8787,
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 6998
+      }
+     ]
+    },
+    {
+     "attempt": 2,
+     "stop_reason": "end_turn",
+     "status": "equal",
+     "detail": "",
+     "cached": false,
+     "cost_usd": 0.08579160000000001,
+     "new_spend_usd": 0.08579160000000001,
+     "served_by": "claude-sonnet-5-5",
+     "fell_back": false,
+     "refusal_category": null,
+     "usage": [
+      {
+       "model": "claude-sonnet-5-5",
+       "input_tokens": 7286,
+       "output_tokens": 6982,
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 6998
+      }
+     ]
+    }
+   ],
+   "ecc_states": 11,
+   "working_states": 6,
+   "algorithms": 10,
+   "restructured": true
+  },
+  {
+   "set": "",
+   "dialect": null,
+   "heldout_files": {
+    "heldout_stimulus.json": "equal"
+   },
+   "max_tokens": 16000,
+   "ecc_persistent": true,
+   "ecc_verdict": "persistent",
+   "control_states": 6,
+   "ecc_persistent_failures": [],
+   "ecc_needs_reading": [],
+   "client": "live",
+   "program": "20_pump_station_supervisor",
+   "mode": "llm_repair",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium",
+   "repeat": 0,
+   "tuning_equal": true,
+   "heldout_equal": true,
+   "passed": true,
+   "attempts": 1,
+   "input_tokens": 9385,
+   "output_tokens": 10189,
+   "cost_usd": 0.10806360000000001,
+   "new_spend_usd": 0.10806360000000001,
+   "cached_calls": 0,
+   "served_by": [
+    "claude-sonnet-5-5"
+   ],
+   "fell_back": false,
+   "source_has_case": true,
+   "failure_category": null,
+   "tuning_first_divergence": null,
+   "candidate_path": "build/llm_hard/reports/ecc_persistent/candidates/claude-sonnet-5-5/20_pump_station_supervisor/llm_repair_r0.fbt",
+   "attempt_log": [
+    {
+     "attempt": 1,
+     "stop_reason": "end_turn",
+     "status": "equal",
+     "detail": "",
+     "cached": false,
+     "cost_usd": 0.10806360000000001,
+     "new_spend_usd": 0.10806360000000001,
+     "served_by": "claude-sonnet-5-5",
+     "fell_back": false,
+     "refusal_category": null,
+     "usage": [
+      {
+       "model": "claude-sonnet-5-5",
+       "input_tokens": 2387,
+       "output_tokens": 10189,
+       "cache_creation_input_tokens": 0,
+       "cache_read_input_tokens": 6998
+      }
+     ]
+    }
+   ],
+   "ecc_states": 12,
+   "working_states": 6,
+   "algorithms": 8,
+   "restructured": true
+  }
+ ],
+ "sets": [],
+ "form": "ecc_persistent",
+ "baseline": {
+  "rejected": [],
+  "passed": [
+   "06_star_delta",
+   "13_case_sequencer",
+   "14_batch_filling",
+   "20_pump_station_supervisor"
+  ],
+  "failed": []
+ },
+ "baseline_frontend": {
+  "rejected": [],
+  "passed": [
+   "06_star_delta",
+   "13_case_sequencer",
+   "14_batch_filling",
+   "20_pump_station_supervisor"
+  ],
+  "failed": []
+ }
+}

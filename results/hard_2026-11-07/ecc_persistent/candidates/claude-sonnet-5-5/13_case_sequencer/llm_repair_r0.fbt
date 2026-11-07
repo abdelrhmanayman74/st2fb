@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="CASE_SEQUENCER" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="START_PB"/><With Var="ABORT"/><With Var="HOLD"/><With Var="LEVEL_HIGH"/><With Var="LEVEL_LOW"/><With Var="STEP_TIME"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="SEQ"/><With Var="FILL_VALVE"/><With Var="MIXER"/><With Var="DRAIN_VALVE"/><With Var="RINSE_VALVE"/><With Var="CYCLES"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="START_PB" Type="BOOL"/>
+      <VarDeclaration Name="ABORT" Type="BOOL"/>
+      <VarDeclaration Name="HOLD" Type="BOOL"/>
+      <VarDeclaration Name="LEVEL_HIGH" Type="BOOL"/>
+      <VarDeclaration Name="LEVEL_LOW" Type="BOOL"/>
+      <VarDeclaration Name="STEP_TIME" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="SEQ" Type="INT"/>
+      <VarDeclaration Name="FILL_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="MIXER" Type="BOOL"/>
+      <VarDeclaration Name="DRAIN_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="RINSE_VALVE" Type="BOOL"/>
+      <VarDeclaration Name="CYCLES" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="TIMING" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="STEP_TIMER_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="STEP_TIMER_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="STEP_TIMER_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="STEP_TIMER_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="STEP_TIMER_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="STEP_TIMER_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="STEP_TIMER_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="STEP0" x="200" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s0" Output="CNF"/>
+      </ECState>
+      <ECState Name="W1" x="400" y="0"/>
+      <ECState Name="STEP1" x="600" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s1" Output="CNF"/>
+      </ECState>
+      <ECState Name="W2" x="800" y="0"/>
+      <ECState Name="STEP2" x="1000" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s2" Output="CNF"/>
+      </ECState>
+      <ECState Name="W3" x="1200" y="0"/>
+      <ECState Name="STEP3" x="1400" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s3" Output="CNF"/>
+      </ECState>
+      <ECState Name="W4" x="1600" y="0"/>
+      <ECState Name="STEP4" x="1800" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s4" Output="CNF"/>
+      </ECState>
+      <ECState Name="W5" x="2000" y="0"/>
+      <ECState Name="STEP5" x="2200" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s5" Output="CNF"/>
+      </ECState>
+      <ECState Name="W6" x="2400" y="0"/>
+      <ECState Name="STEP6" x="2600" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s6" Output="CNF"/>
+      </ECState>
+      <ECState Name="W7" x="2800" y="0"/>
+      <ECState Name="STEP7" x="3000" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s7" Output="CNF"/>
+      </ECState>
+      <ECState Name="W8" x="3200" y="0"/>
+      <ECState Name="STEP8" x="3400" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="s8" Output="CNF"/>
+      </ECState>
+      <ECState Name="ABORT_STEP" x="3600" y="0">
+        <ECAction Algorithm="pre"/>
+        <ECAction Algorithm="sabort" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="START" Destination="STEP0" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP0" Destination="W1" Condition="[START_PB]" x="0" y="0"/>
+      <ECTransition Source="STEP0" Destination="START" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W1" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W1" Destination="STEP1" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP1" Destination="W2" Condition="[LEVEL_HIGH]" x="0" y="0"/>
+      <ECTransition Source="STEP1" Destination="W1" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W2" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W2" Destination="STEP2" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP2" Destination="W3" Condition="[STEP_TIMER_Q]" x="0" y="0"/>
+      <ECTransition Source="STEP2" Destination="W2" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W3" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W3" Destination="STEP3" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP3" Destination="W4" Condition="[LEVEL_LOW]" x="0" y="0"/>
+      <ECTransition Source="STEP3" Destination="W3" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W4" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W4" Destination="STEP4" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP4" Destination="W5" Condition="[STEP_TIMER_Q]" x="0" y="0"/>
+      <ECTransition Source="STEP4" Destination="W4" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W5" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W5" Destination="STEP5" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP5" Destination="W6" Condition="[STEP_TIMER_Q]" x="0" y="0"/>
+      <ECTransition Source="STEP5" Destination="W5" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W6" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W6" Destination="STEP6" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP6" Destination="W7" Condition="[STEP_TIMER_Q]" x="0" y="0"/>
+      <ECTransition Source="STEP6" Destination="W6" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W7" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W7" Destination="STEP7" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP7" Destination="START" Condition="1" x="0" y="0"/>
+      <ECTransition Source="W8" Destination="ABORT_STEP" Condition="REQ[ABORT]" x="0" y="0"/>
+      <ECTransition Source="W8" Destination="STEP8" Condition="REQ" x="0" y="0"/>
+      <ECTransition Source="STEP8" Destination="START" Condition="[LEVEL_LOW]" x="0" y="0"/>
+      <ECTransition Source="STEP8" Destination="W8" Condition="1" x="0" y="0"/>
+      <ECTransition Source="ABORT_STEP" Destination="W8" Condition="1" x="0" y="0"/>
+    </ECC>
+    <Algorithm Name="pre">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+IF NOT HOLD THEN
+  STEP_TIMER_IN := TIMING;
+  STEP_TIMER_PT := STEP_TIME;
+  IF (STEP_TIMER_STATE = 0) AND NOT STEP_TIMER_PREV_IN AND STEP_TIMER_IN THEN
+    STEP_TIMER_STATE := 1;
+    STEP_TIMER_Q := FALSE;
+    STEP_TIMER_START_TIME := ST2FB_NOW;
+  ELSE
+    IF NOT STEP_TIMER_IN THEN
+      STEP_TIMER_ET := T#0s;
+      STEP_TIMER_Q := FALSE;
+      STEP_TIMER_STATE := 0;
+    ELSIF STEP_TIMER_STATE = 1 THEN
+      IF STEP_TIMER_START_TIME + STEP_TIMER_PT <= ST2FB_NOW THEN
+        STEP_TIMER_STATE := 2;
+        STEP_TIMER_Q := TRUE;
+        STEP_TIMER_ET := STEP_TIMER_PT;
+      ELSE
+        STEP_TIMER_ET := ST2FB_NOW - STEP_TIMER_START_TIME;
+      END_IF;
+    END_IF;
+  END_IF;
+  STEP_TIMER_PREV_IN := STEP_TIMER_IN;
+END_IF;
+FILL_VALVE := FALSE;
+MIXER := FALSE;
+DRAIN_VALVE := FALSE;
+RINSE_VALVE := FALSE;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s0">
+      <ST><![CDATA[
+TIMING := FALSE;
+IF START_PB THEN
+  SEQ := 1;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s1">
+      <ST><![CDATA[
+FILL_VALVE := TRUE;
+IF LEVEL_HIGH THEN
+  SEQ := 2;
+  TIMING := TRUE;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s2">
+      <ST><![CDATA[
+MIXER := TRUE;
+IF STEP_TIMER_Q THEN
+  SEQ := 3;
+  TIMING := FALSE;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s3">
+      <ST><![CDATA[
+DRAIN_VALVE := TRUE;
+IF LEVEL_LOW THEN
+  SEQ := 4;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s4">
+      <ST><![CDATA[
+RINSE_VALVE := TRUE;
+IF STEP_TIMER_Q THEN
+  SEQ := 5;
+  TIMING := FALSE;
+ELSE
+  TIMING := TRUE;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s5">
+      <ST><![CDATA[
+RINSE_VALVE := TRUE;
+IF STEP_TIMER_Q THEN
+  SEQ := 6;
+  TIMING := FALSE;
+ELSE
+  TIMING := TRUE;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s6">
+      <ST><![CDATA[
+RINSE_VALVE := TRUE;
+IF STEP_TIMER_Q THEN
+  SEQ := 7;
+  TIMING := FALSE;
+ELSE
+  TIMING := TRUE;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s7">
+      <ST><![CDATA[
+CYCLES := CYCLES + 1;
+SEQ := 0;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="s8">
+      <ST><![CDATA[
+TIMING := FALSE;
+DRAIN_VALVE := TRUE;
+IF LEVEL_LOW AND NOT ABORT THEN
+  SEQ := 0;
+END_IF;
+]]></ST>
+    </Algorithm>
+    <Algorithm Name="sabort">
+      <ST><![CDATA[
+SEQ := 8;
+TIMING := FALSE;
+DRAIN_VALVE := TRUE;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

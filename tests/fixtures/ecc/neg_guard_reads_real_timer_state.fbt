@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Negative C3: a real lowered TON body, whose state variable a guard reads as a position, so the exemption is lost">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars><VarDeclaration Name="T_STATE" Type="INT"/><VarDeclaration Name="T_PREV_IN" Type="BOOL"/><VarDeclaration Name="T_Q" Type="BOOL"/><VarDeclaration Name="T_START_TIME" Type="TIME"/><VarDeclaration Name="NOW" Type="TIME"/></InternalVars>
+    <ECC>
+      <ECState Name="START"></ECState>
+      <ECState Name="PHASE2"></ECState>
+      <ECState Name="S0_START"><ECAction Algorithm="a0" Output="CNF"/></ECState>
+      <ECState Name="S1_START"><ECAction Algorithm="a1" Output="CNF"/></ECState>
+      <ECState Name="S2_START"><ECAction Algorithm="a2" Output="CNF"/></ECState>
+      <ECState Name="S0_PHASE2"><ECAction Algorithm="noop"/><ECAction Algorithm="a0" Output="CNF"/></ECState>
+      <ECState Name="S1_PHASE2"><ECAction Algorithm="noop"/><ECAction Algorithm="a1" Output="CNF"/></ECState>
+      <ECState Name="S2_PHASE2"><ECAction Algorithm="noop"/><ECAction Algorithm="a2" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="S0_START" Condition="REQ[T_STATE = 0]"/>
+      <ECTransition Source="START" Destination="S1_START" Condition="REQ[T_STATE = 1]"/>
+      <ECTransition Source="START" Destination="S2_START" Condition="REQ"/>
+      <ECTransition Source="PHASE2" Destination="S0_PHASE2" Condition="REQ[T_STATE = 0]"/>
+      <ECTransition Source="PHASE2" Destination="S1_PHASE2" Condition="REQ[T_STATE = 1]"/>
+      <ECTransition Source="PHASE2" Destination="S2_PHASE2" Condition="REQ"/>
+      <ECTransition Source="S0_START" Destination="PHASE2" Condition="1"/>
+      <ECTransition Source="S1_START" Destination="PHASE2" Condition="1"/>
+      <ECTransition Source="S2_START" Destination="PHASE2" Condition="1"/>
+      <ECTransition Source="S0_PHASE2" Destination="START" Condition="1"/>
+      <ECTransition Source="S1_PHASE2" Destination="START" Condition="1"/>
+      <ECTransition Source="S2_PHASE2" Destination="START" Condition="1"/>
+    </ECC>
+    <Algorithm Name="a0"><ST><![CDATA[
+NOW := NOW + T#10ms;
+IF (T_STATE = 0) AND NOT T_PREV_IN AND GO THEN
+  T_STATE := 1;
+  T_START_TIME := NOW;
+ELSIF NOT GO THEN
+  T_STATE := 0;
+ELSIF T_STATE = 1 THEN
+  IF T_START_TIME + T#50ms <= NOW THEN
+    T_STATE := 2;
+    T_Q := TRUE;
+  END_IF;
+END_IF;
+T_PREV_IN := GO;
+SEQ := 1;
+]]></ST></Algorithm>
+    <Algorithm Name="a1"><ST><![CDATA[
+SEQ := 2;
+]]></ST></Algorithm>
+    <Algorithm Name="a2"><ST><![CDATA[
+SEQ := 0;
+]]></ST></Algorithm>
+    <Algorithm Name="noop"><ST><![CDATA[
+SEQ := SEQ;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

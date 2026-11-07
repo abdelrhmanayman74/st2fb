@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="MODE_SM">
+<InterfaceList>
+<EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/><With Var="SET_MODE"/></Event></EventInputs>
+<EventOutputs><Event Name="CNF" Type="Event"><With Var="ACTIVE"/><With Var="RATE"/></Event></EventOutputs>
+<InputVars><VarDeclaration Name="GO" Type="BOOL"/><VarDeclaration Name="SET_MODE" Type="INT"/></InputVars>
+<OutputVars><VarDeclaration Name="ACTIVE" Type="BOOL"/><VarDeclaration Name="RATE" Type="INT"/></OutputVars>
+</InterfaceList>
+<BasicFB>
+<InternalVars><VarDeclaration Name="GAIN" Type="INT"/></InternalVars>
+<ECC>
+<ECState Name="START"></ECState>
+<ECState Name="OFFS"><ECAction Algorithm="load"/><ECAction Algorithm="offa" Output="CNF"/></ECState>
+<ECState Name="WON"></ECState>
+<ECState Name="ONS"><ECAction Algorithm="load"/><ECAction Algorithm="ona" Output="CNF"/></ECState>
+<ECTransition Source="START" Destination="OFFS" Condition="REQ"/>
+<ECTransition Source="OFFS" Destination="WON" Condition="[GO]"/>
+<ECTransition Source="OFFS" Destination="START" Condition="1"/>
+<ECTransition Source="WON" Destination="ONS" Condition="REQ"/>
+<ECTransition Source="ONS" Destination="START" Condition="[NOT GO]"/>
+<ECTransition Source="ONS" Destination="WON" Condition="1"/>
+</ECC>
+<Algorithm Name="load"><ST><![CDATA[
+IF SET_MODE <> 0 THEN GAIN := SET_MODE; END_IF;
+]]></ST></Algorithm>
+<Algorithm Name="offa"><ST><![CDATA[
+CASE GAIN OF 1: RATE := 0; 2: RATE := 100; END_CASE;
+IF GO THEN ACTIVE := TRUE; END_IF;
+]]></ST></Algorithm>
+<Algorithm Name="ona"><ST><![CDATA[
+CASE GAIN OF 1: RATE := RATE + 1; 2: RATE := RATE + 2; END_CASE;
+IF NOT GO THEN ACTIVE := FALSE; END_IF;
+]]></ST></Algorithm>
+</BasicFB>
+</FBType>

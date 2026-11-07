@@ -41,6 +41,7 @@ EXIT_IEC2C, EXIT_GCC, EXIT_RUN = 10, 11, 12
 # -D_____time_*: at this commit iec2c writes TIME + TIME in ST as a call to _____time_add, three
 # underscores too many (print_binary_function in generate_c_base.cc adds them), and gcc rejects it. The two
 # defines route the calls to the library's own __time_add and __time_sub.
+# -lm: the math functions behind the iec_lib_* hooks defined in DRIVER_TEMPLATE.
 # iec2c names its generated C files after the configuration and resource in wrap_program.
 CONTAINER_SCRIPT = f"""
 iec2c -I /opt/matiec/lib -T . wrapped.st > iec2c.log 2>&1 || exit {EXIT_IEC2C}
@@ -79,12 +80,32 @@ class Interface:
     outputs: list[Var]
 
 
+# Marks the block under test in a file that also declares helper function blocks. Without it, a file
+# must hold exactly one FUNCTION_BLOCK. It is a comment, so matiec never sees it.
+DUT_MARKER = re.compile(r"\(\*\s*st2fb:dut\s*\*\)\s*FUNCTION_BLOCK\s+(\w+)", flags=re.IGNORECASE)
+
+
 def scan_interface(st_text: str) -> Interface:
-    """Read the FB name and its VAR_INPUT and VAR_OUTPUT declarations."""
+    """Read the FB name and its VAR_INPUT and VAR_OUTPUT declarations.
+
+    Only the text of the block under test is read, so a helper FUNCTION or FUNCTION_BLOCK in the same
+    file adds nothing to the interface.
+    """
+    marked = DUT_MARKER.findall(st_text)
+    if len(marked) > 1:
+        raise BadInput(f"expected at most one st2fb:dut marker, found {len(marked)}")
     text = re.sub(r"\(\*.*?\*\)", " ", st_text, flags=re.DOTALL)
     names = re.findall(r"\bFUNCTION_BLOCK\s+(\w+)", text, flags=re.IGNORECASE)
+    if marked:
+        if marked[0] not in names:
+            raise BadInput(f"the st2fb:dut marker names {marked[0]}, which is not a FUNCTION_BLOCK")
+        names = marked
     if len(names) != 1:
         raise BadInput(f"expected exactly one FUNCTION_BLOCK, found {len(names)}")
+    span = re.search(
+        rf"\bFUNCTION_BLOCK\s+{re.escape(names[0])}\b(.*?)\bEND_FUNCTION_BLOCK\b", text, flags=re.DOTALL | re.IGNORECASE
+    )
+    text = span.group(1) if span else text
 
     def section(keyword: str) -> list[Var]:
         result: list[Var] = []
@@ -129,6 +150,7 @@ END_CONFIGURATION
 
 
 DRIVER_TEMPLATE = """\
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "iec_std_lib.h"
@@ -139,6 +161,22 @@ TIME __CURRENT_TIME;
 extern ST2FB_HARNESS_data__ ST2FB_RES__ST2FB_INST;
 void config_init__(void);
 void config_run__(unsigned long tick);
+
+/* matiec's iec_std_lib.h declares these and leaves them to the platform, so a program that uses
+   REAL_TO_INT, REAL_TO_DINT (both through __real_round), ** or a function such as SQRT would not link.
+   The library's own code still does the rounding. These only forward to the C library. */
+double iec_lib_acos(double x) { return acos(x); }
+double iec_lib_asin(double x) { return asin(x); }
+double iec_lib_atan(double x) { return atan(x); }
+double iec_lib_cos(double x) { return cos(x); }
+double iec_lib_exp(double x) { return exp(x); }
+double iec_lib_fmod(double x, double y) { return fmod(x, y); }
+double iec_lib_log(double x) { return log(x); }
+double iec_lib_log10(double x) { return log10(x); }
+double iec_lib_pow(double x, double y) { return pow(x, y); }
+double iec_lib_sin(double x) { return sin(x); }
+double iec_lib_sqrt(double x) { return sqrt(x); }
+double iec_lib_tan(double x) { return tan(x); }
 
 static long long read_int(void) {
   long long value;

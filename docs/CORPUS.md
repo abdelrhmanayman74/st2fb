@@ -190,6 +190,10 @@ The library's state machines are short and the corner cases above all come from 
   - A direct comparison with a literal can differ from exact arithmetic: with ET exactly 130 ms, `ET > T#130ms` is TRUE
     and `ET <= T#130ms` is FALSE under matiec. The corpus avoids such comparisons, so a migration is not
     required to reproduce this. Any new program that makes one would expose it.
+- **REAL_TO_INT and REAL_TO_DINT round half to even.** `lib/C/iec_std_lib.h` adds 0.5 and fixes up exact integers, so 1.5 and 2.5 both give 2, and -0.5 gives 0. FORTE gives the same on every value tried in `tests/test_hard_corpus.py`.
+- **`iec_lib_*` are hooks that the platform has to provide.** `iec_std_lib.h` declares `iec_lib_fmod`, `iec_lib_pow`, `iec_lib_sqrt` and others without defining them, so REAL_TO_INT, REAL_TO_DINT, `**` and the math functions did not link until the driver in `reference_run` defined them, as plain calls to the C library. No corpus program uses them.
+- **TIME_TO_DINT and friends count seconds under matiec.** `__time_to_int` returns `tv_sec`, and DINT_TO_TIME takes seconds. FORTE at the pinned commit has no such functions at all, so no program in either corpus converts between TIME and a number.
+- **matiec's own limits, found while writing `corpus_hard/`.** `ARRAY OF TON` is rejected by iec2c. An `ARRAY` in `VAR_TEMP` makes iec2c write C that gcc rejects. `//` comments are a syntax error. `MID`, `LOG`, `LEFT` and `STEP` cannot be variable names.
 - **`TIME + TIME` and `TIME - TIME` in source ST need a workaround.** At this commit iec2c emits `_____time_add`,
   a name that does not exist, so gcc rejects the program. `reference_run` passes `-D_____time_add=__time_add` and the
   same for `sub`, which route the calls to matiec's own library functions. Nothing else in the generated

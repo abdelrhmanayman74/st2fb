@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="RETRY_SM">
+<InterfaceList>
+<EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/><With Var="OK"/><With Var="RESET"/></Event></EventInputs>
+<EventOutputs><Event Name="CNF" Type="Event"><With Var="TRYING"/><With Var="LOCKED"/><With Var="TRIES"/></Event></EventOutputs>
+<InputVars><VarDeclaration Name="GO" Type="BOOL"/><VarDeclaration Name="OK" Type="BOOL"/><VarDeclaration Name="RESET" Type="BOOL"/></InputVars>
+<OutputVars><VarDeclaration Name="TRYING" Type="BOOL"/><VarDeclaration Name="LOCKED" Type="BOOL"/><VarDeclaration Name="TRIES" Type="INT"/></OutputVars>
+</InterfaceList>
+<BasicFB>
+<InternalVars></InternalVars>
+<ECC>
+<ECState Name="START"></ECState>
+<ECState Name="IDLE_S"><ECAction Algorithm="idle" Output="CNF"/></ECState>
+<ECState Name="WT"></ECState>
+<ECState Name="T_OK"><ECAction Algorithm="tok" Output="CNF"/></ECState>
+<ECState Name="T_LOCK"><ECAction Algorithm="tlock" Output="CNF"/></ECState>
+<ECState Name="T_AGAIN"><ECAction Algorithm="tagain" Output="CNF"/></ECState>
+<ECState Name="WL"></ECState>
+<ECState Name="L_S"><ECAction Algorithm="lk" Output="CNF"/></ECState>
+<ECState Name="T_ZERO"><ECAction Algorithm="tagain" Output="CNF"/></ECState>
+<ECTransition Source="START" Destination="IDLE_S" Condition="REQ"/>
+<ECTransition Source="IDLE_S" Destination="WT" Condition="[GO]"/>
+<ECTransition Source="IDLE_S" Destination="START" Condition="1"/>
+<ECTransition Source="WT" Destination="T_OK" Condition="REQ[OK]"/>
+<ECTransition Source="WT" Destination="T_LOCK" Condition="REQ[TRIES = 2]"/>
+<ECTransition Source="WT" Destination="T_ZERO" Condition="REQ[TRIES = 0]"/>
+<ECTransition Source="WT" Destination="T_AGAIN" Condition="REQ"/>
+<ECTransition Source="T_OK" Destination="START" Condition="1"/>
+<ECTransition Source="T_LOCK" Destination="WL" Condition="1"/>
+<ECTransition Source="T_AGAIN" Destination="WT" Condition="1"/>
+<ECTransition Source="T_ZERO" Destination="WT" Condition="1"/>
+<ECTransition Source="WL" Destination="L_S" Condition="REQ"/>
+<ECTransition Source="L_S" Destination="START" Condition="[RESET]"/>
+<ECTransition Source="L_S" Destination="WL" Condition="1"/>
+</ECC>
+<Algorithm Name="idle"><ST><![CDATA[
+TRYING := FALSE;
+TRIES := 0;
+]]></ST></Algorithm>
+<Algorithm Name="tok"><ST><![CDATA[
+TRYING := TRUE;
+]]></ST></Algorithm>
+<Algorithm Name="tlock"><ST><![CDATA[
+TRYING := TRUE;
+LOCKED := TRUE;
+]]></ST></Algorithm>
+<Algorithm Name="tagain"><ST><![CDATA[
+TRYING := TRUE;
+TRIES := TRIES + 1;
+]]></ST></Algorithm>
+<Algorithm Name="lk"><ST><![CDATA[
+TRYING := FALSE;
+IF RESET THEN LOCKED := FALSE; END_IF;
+]]></ST></Algorithm>
+</BasicFB>
+</FBType>

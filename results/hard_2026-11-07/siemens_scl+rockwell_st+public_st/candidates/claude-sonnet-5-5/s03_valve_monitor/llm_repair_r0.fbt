@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_ValveMonitor" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_openCmd"/><With Var="i_atOpen"/><With Var="i_atClosed"/><With Var="i_maintenance"/><With Var="i_ack"/><With Var="i_travelTime"/><With Var="i_margin"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_coil"/><With Var="o_fault"/><With Var="o_opening"/><With Var="o_closing"/><With Var="o_openElapsed"/><With Var="o_closeElapsed"/><With Var="o_faultCount"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_openCmd" Type="BOOL"/>
+      <VarDeclaration Name="i_atOpen" Type="BOOL"/>
+      <VarDeclaration Name="i_atClosed" Type="BOOL"/>
+      <VarDeclaration Name="i_maintenance" Type="BOOL"/>
+      <VarDeclaration Name="i_ack" Type="BOOL"/>
+      <VarDeclaration Name="i_travelTime" Type="TIME"/>
+      <VarDeclaration Name="i_margin" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_coil" Type="BOOL"/>
+      <VarDeclaration Name="o_fault" Type="BOOL"/>
+      <VarDeclaration Name="o_opening" Type="BOOL"/>
+      <VarDeclaration Name="o_closing" Type="BOOL"/>
+      <VarDeclaration Name="o_openElapsed" Type="TIME"/>
+      <VarDeclaration Name="o_closeElapsed" Type="TIME"/>
+      <VarDeclaration Name="o_faultCount" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statOpenBudget" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statCloseBudget" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tempBudget" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OT_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OT_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OT_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OT_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="OT_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="OT_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OT_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="CT_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CT_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="CT_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CT_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="CT_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="CT_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="CT_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="FE_CLK" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FE_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="FE_M" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+IF NOT i_maintenance THEN
+  tempBudget := i_travelTime + i_margin;
+  o_coil := i_openCmd AND NOT o_fault;
+  IF NOT o_opening THEN
+    statOpenBudget := tempBudget;
+  END_IF;
+  IF NOT o_closing THEN
+    statCloseBudget := tempBudget;
+  END_IF;
+  o_opening := o_coil AND NOT i_atOpen;
+  o_closing := NOT o_coil AND NOT i_atClosed;
+
+  OT_IN := o_opening;
+  OT_PT := statOpenBudget;
+  IF (OT_STATE = 0) AND NOT OT_PREV_IN AND OT_IN THEN
+    OT_STATE := 1;
+    OT_Q := FALSE;
+    OT_START_TIME := ST2FB_NOW;
+  ELSE
+    IF NOT OT_IN THEN
+      OT_ET := T#0s;
+      OT_Q := FALSE;
+      OT_STATE := 0;
+    ELSIF OT_STATE = 1 THEN
+      IF OT_START_TIME + OT_PT <= ST2FB_NOW THEN
+        OT_STATE := 2;
+        OT_Q := TRUE;
+        OT_ET := OT_PT;
+      ELSE
+        OT_ET := ST2FB_NOW - OT_START_TIME;
+      END_IF;
+    END_IF;
+  END_IF;
+  OT_PREV_IN := OT_IN;
+  o_openElapsed := OT_ET;
+
+  CT_IN := o_closing;
+  CT_PT := statCloseBudget;
+  IF (CT_STATE = 0) AND NOT CT_PREV_IN AND CT_IN THEN
+    CT_STATE := 1;
+    CT_Q := FALSE;
+    CT_START_TIME := ST2FB_NOW;
+  ELSE
+    IF NOT CT_IN THEN
+      CT_ET := T#0s;
+      CT_Q := FALSE;
+      CT_STATE := 0;
+    ELSIF CT_STATE = 1 THEN
+      IF CT_START_TIME + CT_PT <= ST2FB_NOW THEN
+        CT_STATE := 2;
+        CT_Q := TRUE;
+        CT_ET := CT_PT;
+      ELSE
+        CT_ET := ST2FB_NOW - CT_START_TIME;
+      END_IF;
+    END_IF;
+  END_IF;
+  CT_PREV_IN := CT_IN;
+  o_closeElapsed := CT_ET;
+
+  IF i_ack THEN
+    o_fault := FALSE;
+  ELSIF OT_Q OR CT_Q OR (i_atOpen AND i_atClosed) THEN
+    o_fault := TRUE;
+  END_IF;
+  FE_CLK := o_fault;
+  FE_Q := FE_CLK AND NOT FE_M;
+  FE_M := FE_CLK;
+  IF FE_Q THEN
+    o_faultCount := o_faultCount + 1;
+  END_IF;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

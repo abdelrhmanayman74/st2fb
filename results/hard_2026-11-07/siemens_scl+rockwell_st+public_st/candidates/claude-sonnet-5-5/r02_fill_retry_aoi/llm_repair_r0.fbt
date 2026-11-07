@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FillRetry_AOI" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="FillRequest"/><With Var="LevelPct"/><With Var="StartPct"/><With Var="StopPct"/><With Var="ValveOpen"/><With Var="InflowPerSec"/><With Var="OpenTimeoutMs"/><With Var="RetryWaitMs"/><With Var="MaxRetries"/><With Var="Acknowledge"/><With Var="TaskPeriodMs"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="ValveCmd"/><With Var="WaitingRetry"/><With Var="LockedOut"/><With Var="RetryCount"/><With Var="Totalised"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="FillRequest" Type="BOOL"/>
+      <VarDeclaration Name="LevelPct" Type="REAL"/>
+      <VarDeclaration Name="StartPct" Type="REAL"/>
+      <VarDeclaration Name="StopPct" Type="REAL"/>
+      <VarDeclaration Name="ValveOpen" Type="BOOL"/>
+      <VarDeclaration Name="InflowPerSec" Type="REAL"/>
+      <VarDeclaration Name="OpenTimeoutMs" Type="DINT"/>
+      <VarDeclaration Name="RetryWaitMs" Type="DINT"/>
+      <VarDeclaration Name="MaxRetries" Type="DINT"/>
+      <VarDeclaration Name="Acknowledge" Type="BOOL"/>
+      <VarDeclaration Name="TaskPeriodMs" Type="DINT"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="ValveCmd" Type="BOOL"/>
+      <VarDeclaration Name="WaitingRetry" Type="BOOL"/>
+      <VarDeclaration Name="LockedOut" Type="BOOL"/>
+      <VarDeclaration Name="RetryCount" Type="DINT"/>
+      <VarDeclaration Name="Totalised" Type="REAL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="Demand" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WaitActive" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OpenTimer_TimerEnable" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OpenTimer_PRE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="OpenTimer_EN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OpenTimer_TT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OpenTimer_DN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OpenTimer_ACC" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="WaitTimer_TimerEnable" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WaitTimer_PRE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="WaitTimer_EN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WaitTimer_TT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WaitTimer_DN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WaitTimer_ACC" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="Retries_CUEnable" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="Retries_PRE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="Retries_ACC" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="Retries_DN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="Retries_PREV" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="AckOneShot_InputBit" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="AckOneShot_OutputBit" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="AckOneShot_PREV" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OpenTimer_PREV" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WaitTimer_PREV" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="logic" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="logic">
+      <ST><![CDATA[
+IF LevelPct <= StartPct THEN
+  Demand := TRUE;
+ELSIF LevelPct >= StopPct THEN
+  Demand := FALSE;
+END_IF;
+
+Retries_CUEnable := OpenTimer_DN;
+Retries_PRE := MaxRetries;
+IF Retries_CUEnable AND NOT Retries_PREV THEN
+  Retries_ACC := Retries_ACC + 1;
+END_IF;
+Retries_PREV := Retries_CUEnable;
+Retries_DN := Retries_ACC >= Retries_PRE;
+RetryCount := Retries_ACC;
+LockedOut := Retries_DN;
+
+IF OpenTimer_DN AND NOT LockedOut THEN
+  WaitActive := TRUE;
+END_IF;
+WaitTimer_TimerEnable := WaitActive;
+WaitTimer_PRE := RetryWaitMs;
+WaitTimer_EN := WaitTimer_TimerEnable;
+IF WaitTimer_EN THEN
+  IF WaitTimer_PREV AND NOT WaitTimer_DN THEN
+    WaitTimer_ACC := WaitTimer_ACC + TaskPeriodMs;
+    IF WaitTimer_ACC >= WaitTimer_PRE THEN
+      WaitTimer_ACC := WaitTimer_PRE;
+      WaitTimer_DN := TRUE;
+    END_IF;
+  END_IF;
+ELSE
+  WaitTimer_ACC := 0;
+  WaitTimer_DN := FALSE;
+END_IF;
+WaitTimer_TT := WaitTimer_EN AND NOT WaitTimer_DN;
+WaitTimer_PREV := WaitTimer_EN;
+WaitingRetry := WaitTimer_TT;
+IF WaitTimer_DN THEN
+  WaitActive := FALSE;
+END_IF;
+
+ValveCmd := FillRequest AND Demand AND NOT LockedOut AND NOT WaitActive;
+
+OpenTimer_TimerEnable := ValveCmd AND NOT ValveOpen;
+OpenTimer_PRE := OpenTimeoutMs;
+OpenTimer_EN := OpenTimer_TimerEnable;
+IF OpenTimer_EN THEN
+  IF OpenTimer_PREV AND NOT OpenTimer_DN THEN
+    OpenTimer_ACC := OpenTimer_ACC + TaskPeriodMs;
+    IF OpenTimer_ACC >= OpenTimer_PRE THEN
+      OpenTimer_ACC := OpenTimer_PRE;
+      OpenTimer_DN := TRUE;
+    END_IF;
+  END_IF;
+ELSE
+  OpenTimer_ACC := 0;
+  OpenTimer_DN := FALSE;
+END_IF;
+OpenTimer_TT := OpenTimer_EN AND NOT OpenTimer_DN;
+OpenTimer_PREV := OpenTimer_EN;
+
+IF ValveCmd AND ValveOpen THEN
+  Totalised := Totalised + InflowPerSec * DINT_TO_REAL(TaskPeriodMs) / 1000.0;
+END_IF;
+
+AckOneShot_InputBit := Acknowledge;
+AckOneShot_OutputBit := AckOneShot_InputBit AND NOT AckOneShot_PREV;
+AckOneShot_PREV := AckOneShot_InputBit;
+IF AckOneShot_OutputBit THEN
+  Retries_ACC := 0;
+  Retries_DN := FALSE;
+  OpenTimer_ACC := 0;
+  OpenTimer_EN := FALSE;
+  OpenTimer_TT := FALSE;
+  OpenTimer_DN := FALSE;
+  OpenTimer_PREV := FALSE;
+  WaitTimer_ACC := 0;
+  WaitTimer_EN := FALSE;
+  WaitTimer_TT := FALSE;
+  WaitTimer_DN := FALSE;
+  WaitTimer_PREV := FALSE;
+  WaitActive := FALSE;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

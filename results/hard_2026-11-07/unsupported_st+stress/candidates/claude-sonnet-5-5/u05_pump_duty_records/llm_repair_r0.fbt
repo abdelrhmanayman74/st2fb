@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="PUMP_DUTY_SELECT" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="DEMAND"/><With Var="AVAIL_1"/><With Var="AVAIL_2"/><With Var="AVAIL_3"/><With Var="RESET_TICKS"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="RUN_1"/><With Var="RUN_2"/><With Var="RUN_3"/><With Var="TICKS_1"/><With Var="TICKS_2"/><With Var="TICKS_3"/><With Var="STARTS_TOTAL"/><With Var="UNMET"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="DEMAND" Type="INT"/>
+      <VarDeclaration Name="AVAIL_1" Type="BOOL"/>
+      <VarDeclaration Name="AVAIL_2" Type="BOOL"/>
+      <VarDeclaration Name="AVAIL_3" Type="BOOL"/>
+      <VarDeclaration Name="RESET_TICKS" Type="BOOL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="RUN_1" Type="BOOL"/>
+      <VarDeclaration Name="RUN_2" Type="BOOL"/>
+      <VarDeclaration Name="RUN_3" Type="BOOL"/>
+      <VarDeclaration Name="TICKS_1" Type="DINT"/>
+      <VarDeclaration Name="TICKS_2" Type="DINT"/>
+      <VarDeclaration Name="TICKS_3" Type="DINT"/>
+      <VarDeclaration Name="STARTS_TOTAL" Type="INT"/>
+      <VarDeclaration Name="UNMET" Type="INT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="PUMP_COUNT" Type="INT" InitialValue="3"/>
+      <VarDeclaration Name="WEAR_PER_START" Type="DINT" InitialValue="5"/>
+      <VarDeclaration Name="AV1" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="AV2" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="AV3" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RN1" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RN2" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RN3" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RT1" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="RT2" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="RT3" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="ST1" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="ST2" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="ST3" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="WR1" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WR2" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="WR3" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="PREV_DEMAND" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="N" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="P" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="BEST" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="BEST_SCORE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="SCORE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="CHANGED" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="TMP_B" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="TMP_A" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="TMP_D" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="TMP_I" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="DONE_F" Type="BOOL" InitialValue="FALSE"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="main" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="main">
+      <ST><![CDATA[
+AV1 := AVAIL_1;
+AV2 := AVAIL_2;
+AV3 := AVAIL_3;
+
+CHANGED := DEMAND <> PREV_DEMAND;
+DONE_F := FALSE;
+FOR P := 1 TO 3 DO
+  IF NOT DONE_F THEN
+    TMP_B := FALSE;
+    TMP_A := FALSE;
+    IF P = 1 THEN
+      TMP_B := RN1;
+      TMP_A := AV1;
+    ELSIF P = 2 THEN
+      TMP_B := RN2;
+      TMP_A := AV2;
+    ELSE
+      TMP_B := RN3;
+      TMP_A := AV3;
+    END_IF;
+    IF TMP_B AND NOT TMP_A THEN
+      CHANGED := TRUE;
+      DONE_F := TRUE;
+    END_IF;
+  END_IF;
+END_FOR;
+PREV_DEMAND := DEMAND;
+
+IF CHANGED THEN
+  WR1 := RN1;
+  WR2 := RN2;
+  WR3 := RN3;
+  RN1 := FALSE;
+  RN2 := FALSE;
+  RN3 := FALSE;
+  UNMET := 0;
+  DONE_F := FALSE;
+  FOR N := 1 TO DEMAND DO
+    IF NOT DONE_F THEN
+      BEST := 0;
+      BEST_SCORE := 2147483647;
+      FOR P := 1 TO 3 DO
+        TMP_B := FALSE;
+        TMP_D := 0;
+        IF P = 1 THEN
+          TMP_B := AV1 AND NOT RN1;
+          TMP_D := RT1 + WEAR_PER_START * INT_TO_DINT(ST1);
+        ELSIF P = 2 THEN
+          TMP_B := AV2 AND NOT RN2;
+          TMP_D := RT2 + WEAR_PER_START * INT_TO_DINT(ST2);
+        ELSE
+          TMP_B := AV3 AND NOT RN3;
+          TMP_D := RT3 + WEAR_PER_START * INT_TO_DINT(ST3);
+        END_IF;
+        IF TMP_B THEN
+          SCORE := TMP_D;
+          IF SCORE < BEST_SCORE THEN
+            BEST := P;
+            BEST_SCORE := SCORE;
+          END_IF;
+        END_IF;
+      END_FOR;
+      IF BEST = 0 THEN
+        UNMET := DEMAND - N + 1;
+        DONE_F := TRUE;
+      ELSE
+        TMP_B := FALSE;
+        IF BEST = 1 THEN
+          RN1 := TRUE;
+          TMP_B := NOT WR1;
+          IF TMP_B THEN
+            ST1 := ST1 + 1;
+          END_IF;
+        ELSIF BEST = 2 THEN
+          RN2 := TRUE;
+          TMP_B := NOT WR2;
+          IF TMP_B THEN
+            ST2 := ST2 + 1;
+          END_IF;
+        ELSE
+          RN3 := TRUE;
+          TMP_B := NOT WR3;
+          IF TMP_B THEN
+            ST3 := ST3 + 1;
+          END_IF;
+        END_IF;
+        IF TMP_B THEN
+          STARTS_TOTAL := STARTS_TOTAL + 1;
+        END_IF;
+      END_IF;
+    END_IF;
+  END_FOR;
+END_IF;
+
+IF RESET_TICKS THEN
+  RT1 := 0;
+  RT2 := 0;
+  RT3 := 0;
+ELSE
+  IF RN1 THEN
+    RT1 := RT1 + 1;
+  END_IF;
+  IF RN2 THEN
+    RT2 := RT2 + 1;
+  END_IF;
+  IF RN3 THEN
+    RT3 := RT3 + 1;
+  END_IF;
+END_IF;
+
+RUN_1 := RN1;
+RUN_2 := RN2;
+RUN_3 := RN3;
+TICKS_1 := RT1;
+TICKS_2 := RT2;
+TICKS_3 := RT3;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

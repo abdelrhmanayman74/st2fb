@@ -1,0 +1,8 @@
+.venv
+.env
+secrets
+results
+tests
+tools
+firmware
+**/__pycache__

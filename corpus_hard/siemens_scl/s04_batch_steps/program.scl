@@ -1,0 +1,111 @@
+FUNCTION_BLOCK "FB_BatchSteps"
+TITLE = 'Dosing batch step sequence'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Batch
+NAME : BatchSteps
+VERSION : 1.0
+//Dose, mix, heat, hold, drain. The step number is published to the HMI.
+   VAR_INPUT 
+      i_start : Bool;
+      i_abort : Bool;
+      i_doseDone : Bool;
+      i_tempReached : Bool;
+      i_tankEmpty : Bool;
+      i_mixTime : Time;
+      i_holdTime : Time;
+   END_VAR
+
+   VAR_OUTPUT 
+      o_step : Int;
+      o_doseValve : Bool;
+      o_mixer : Bool;
+      o_heater : Bool;
+      o_drainValve : Bool;
+      o_batches : Int;
+      o_stepElapsed : Time;
+   END_VAR
+
+   VAR 
+      statStepTimer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+      statBatchCounter {InstructionName := 'CTU_INT'; LibVersion := '1.0'} : CTU_INT;
+      statStartEdge {InstructionName := 'R_TRIG'; LibVersion := '1.0'} : R_TRIG;
+      statStepTimerRun : Bool;
+      statBatchDone : Bool;
+      statStepPreset : Time;
+   END_VAR
+
+   VAR CONSTANT 
+      C_BATCH_LIMIT : Int := 500;
+   END_VAR
+
+
+BEGIN
+	REGION Common
+	    #statStartEdge(CLK := #i_start);
+	    #statStepTimer(IN := #statStepTimerRun, PT := #statStepPreset, ET => #o_stepElapsed);
+	    #o_doseValve := FALSE;
+	    #o_mixer := FALSE;
+	    #o_heater := FALSE;
+	    #o_drainValve := FALSE;
+	    #statBatchDone := FALSE;
+	    IF #i_abort AND #o_step <> 0 THEN
+	        #o_step := 90;
+	        #statStepTimerRun := FALSE;
+	    END_IF;
+	END_REGION
+	
+	REGION Step sequence
+	    CASE #o_step OF
+	        0:  // Idle
+	            IF #statStartEdge.Q AND NOT #i_abort THEN
+	                #o_step := 10;
+	            END_IF;
+	        10: // Dose
+	            #o_doseValve := TRUE;
+	            IF #i_doseDone THEN
+	                #o_step := 20;
+	                #statStepPreset := #i_mixTime;
+	                #statStepTimerRun := TRUE;
+	            END_IF;
+	        20: // Mix
+	            #o_mixer := TRUE;
+	            IF #statStepTimer.Q THEN
+	                #statStepTimerRun := FALSE;
+	                #o_step := 30;
+	            END_IF;
+	        30: // Heat with mixer on
+	            #o_mixer := TRUE;
+	            #o_heater := TRUE;
+	            IF #i_tempReached THEN
+	                #o_step := 40;
+	                #statStepPreset := #i_holdTime;
+	                #statStepTimerRun := TRUE;
+	            END_IF;
+	        40: // Hold, heater only below temperature
+	            #o_mixer := TRUE;
+	            #o_heater := NOT #i_tempReached;
+	            IF #statStepTimer.Q THEN
+	                #statStepTimerRun := FALSE;
+	                #o_step := 50;
+	            END_IF;
+	        50: // Drain
+	            #o_drainValve := TRUE;
+	            IF #i_tankEmpty THEN
+	                #statBatchDone := TRUE;
+	                #o_step := 0;
+	            END_IF;
+	        90: // Aborted: drain, then wait for the abort to clear
+	            #o_drainValve := TRUE;
+	            IF #i_tankEmpty AND NOT #i_abort THEN
+	                #o_step := 0;
+	            END_IF;
+	        ELSE
+	            #o_step := 0;
+	    END_CASE;
+	END_REGION
+	
+	REGION Batch count
+	    #statBatchCounter(CU := #statBatchDone, R := FALSE, PV := #C_BATCH_LIMIT, CV => #o_batches);
+	END_REGION
+END_FUNCTION_BLOCK

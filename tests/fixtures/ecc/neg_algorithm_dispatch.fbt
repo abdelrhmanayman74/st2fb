@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Negative C4: two positions toggle, and each runs a copy of the CASE on the real position">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="A"><ECAction Algorithm="scan_a" Output="CNF"/></ECState>
+      <ECState Name="WAIT_B"/>
+      <ECState Name="B"><ECAction Algorithm="scan_b" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="A" Condition="REQ"/>
+      <ECTransition Source="A" Destination="WAIT_B" Condition="1"/>
+      <ECTransition Source="WAIT_B" Destination="B" Condition="REQ"/>
+      <ECTransition Source="B" Destination="START" Condition="1"/>
+    </ECC>
+    <Algorithm Name="scan_a"><ST><![CDATA[
+CASE SEQ OF
+  0:
+    SEQ := 1;
+  1:
+    SEQ := 0;
+END_CASE;
+]]></ST></Algorithm>
+    <Algorithm Name="scan_b"><ST><![CDATA[
+CASE SEQ OF
+  0:
+    SEQ := 1;
+  1:
+    SEQ := 0;
+END_CASE;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="DebounceBool" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="inputSignal"/><With Var="onDelay"/><With Var="offDelay"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="debouncedOutput"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="inputSignal" Type="BOOL"/>
+      <VarDeclaration Name="onDelay" Type="TIME"/>
+      <VarDeclaration Name="offDelay" Type="TIME"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="debouncedOutput" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tonTimer_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tonTimer_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tonTimer_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tonTimer_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tonTimer_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="tonTimer_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tonTimer_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tofTimer_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tofTimer_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tofTimer_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tofTimer_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tofTimer_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="tofTimer_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tofTimer_START_TIME" Type="TIME" InitialValue="T#0s"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+tonTimer_IN := inputSignal AND NOT debouncedOutput;
+tonTimer_PT := onDelay;
+IF (tonTimer_STATE = 0) AND NOT tonTimer_PREV_IN AND tonTimer_IN THEN
+  tonTimer_STATE := 1;
+  tonTimer_Q := FALSE;
+  tonTimer_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT tonTimer_IN THEN
+    tonTimer_ET := T#0s;
+    tonTimer_Q := FALSE;
+    tonTimer_STATE := 0;
+  ELSIF tonTimer_STATE = 1 THEN
+    IF tonTimer_START_TIME + tonTimer_PT <= ST2FB_NOW THEN
+      tonTimer_STATE := 2;
+      tonTimer_Q := TRUE;
+      tonTimer_ET := tonTimer_PT;
+    ELSE
+      tonTimer_ET := ST2FB_NOW - tonTimer_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+tonTimer_PREV_IN := tonTimer_IN;
+
+tofTimer_IN := NOT inputSignal AND debouncedOutput;
+tofTimer_PT := offDelay;
+IF (tofTimer_STATE = 0) AND NOT tofTimer_PREV_IN AND tofTimer_IN THEN
+  tofTimer_STATE := 1;
+  tofTimer_Q := FALSE;
+  tofTimer_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT tofTimer_IN THEN
+    tofTimer_ET := T#0s;
+    tofTimer_Q := FALSE;
+    tofTimer_STATE := 0;
+  ELSIF tofTimer_STATE = 1 THEN
+    IF tofTimer_START_TIME + tofTimer_PT <= ST2FB_NOW THEN
+      tofTimer_STATE := 2;
+      tofTimer_Q := TRUE;
+      tofTimer_ET := tofTimer_PT;
+    ELSE
+      tofTimer_ET := ST2FB_NOW - tofTimer_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+tofTimer_PREV_IN := tofTimer_IN;
+
+IF tonTimer_IN AND tonTimer_Q THEN
+  debouncedOutput := TRUE;
+ELSIF tofTimer_IN AND tofTimer_Q THEN
+  debouncedOutput := FALSE;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

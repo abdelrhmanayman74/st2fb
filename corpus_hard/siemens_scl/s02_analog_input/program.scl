@@ -1,0 +1,90 @@
+FUNCTION_BLOCK "FB_AnalogInput"
+TITLE = 'Analog input scaling with wire-break detection'
+{ S7_Optimized_Access := 'TRUE' }
+AUTHOR : st2fb
+FAMILY : Analog
+NAME : AnalogInput
+VERSION : 1.2
+//Raw channel value 0..27648 is scaled to engineering units. Over-range and wire-break are filtered by delay timers.
+   VAR_INPUT 
+      i_raw : Int;   // Peripheral input word
+      i_scaleMin : Real;
+      i_scaleMax : Real;
+      i_highLimit : Real;
+      i_lowLimit : Real;
+      i_alarmDelay : Time;
+      i_simulate : Bool;
+      i_simValue : Real;
+   END_VAR
+
+   VAR_OUTPUT 
+      o_value : Real;
+      o_percent : Int;
+      o_wireBreak : Bool;
+      o_highAlarm : Bool;
+      o_lowAlarm : Bool;
+   END_VAR
+
+   VAR 
+      statHighTimer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+      statLowTimer {InstructionName := 'TON_TIME'; LibVersion := '1.0'} : TON_TIME;
+      statBreakTimer {InstructionName := 'IEC_TIMER'; LibVersion := '1.0'} : IEC_TIMER;
+      statLastGood : Real;
+      statDelay : Time;
+      statTiming : Bool;
+   END_VAR
+
+   VAR_TEMP 
+      tempNorm : Real;
+      tempScaled : Real;
+      tempBreak : Bool;
+      tempHigh : Bool;
+      tempLow : Bool;
+   END_VAR
+
+   VAR CONSTANT 
+      C_RAW_MAX : Int := 27648;
+      C_RAW_BREAK : Int := 32767;
+   END_VAR
+
+
+BEGIN
+	REGION Scaling
+	    #tempNorm := NORM_X(MIN := 0, VALUE := #i_raw, MAX := #C_RAW_MAX);
+	    #tempScaled := SCALE_X(MIN := #i_scaleMin, VALUE := #tempNorm, MAX := #i_scaleMax);
+	END_REGION
+	
+	REGION Delay
+	    // A change of the delay takes effect once no alarm timer is running.
+	    IF NOT #statTiming THEN
+	        #statDelay := #i_alarmDelay;
+	    END_IF;
+	END_REGION
+	
+	REGION Wire break
+	    // A broken 4..20 mA loop reads as the overflow value 32767. The last good value is held.
+	    #tempBreak := #i_raw = #C_RAW_BREAK;
+	    #statBreakTimer.TON(IN := #tempBreak, PT := #statDelay);
+	    #o_wireBreak := #statBreakTimer.Q;
+	    IF #i_raw <> #C_RAW_BREAK THEN
+	        #statLastGood := #tempScaled;
+	    END_IF;
+	END_REGION
+	
+	REGION Output selection
+	    IF #i_simulate THEN
+	        #o_value := #i_simValue;
+	    ELSE
+	        #o_value := #statLastGood;
+	    END_IF;
+	    #o_percent := REAL_TO_INT(100.0 * LIMIT(MN := 0.0, IN := #tempNorm, MX := 1.0));
+	END_REGION
+	
+	REGION Limit alarms
+	    #tempHigh := #o_value > #i_highLimit;
+	    #tempLow := #o_value < #i_lowLimit;
+	    #statHighTimer(IN := #tempHigh, PT := #statDelay, Q => #o_highAlarm);
+	    #statLowTimer(IN := #tempLow, PT := #statDelay, Q => #o_lowAlarm);
+	    #statTiming := #tempBreak OR #tempHigh OR #tempLow;
+	END_REGION
+END_FUNCTION_BLOCK

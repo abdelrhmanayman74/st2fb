@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="SENSOR_VOTER" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="ENABLE"/><With Var="PT_A"/><With Var="PT_B"/><With Var="PT_C"/><With Var="BAND"/><With Var="HIGH_LIMIT"/><With Var="SPAN"/><With Var="DISAGREE_DELAY"/><With Var="RESET"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="VOTED"/><With Var="PERCENT"/><With Var="BAD_COUNT"/><With Var="DISAGREE"/><With Var="TRIP"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="ENABLE" Type="BOOL"/>
+      <VarDeclaration Name="PT_A" Type="REAL"/>
+      <VarDeclaration Name="PT_B" Type="REAL"/>
+      <VarDeclaration Name="PT_C" Type="REAL"/>
+      <VarDeclaration Name="BAND" Type="REAL"/>
+      <VarDeclaration Name="HIGH_LIMIT" Type="REAL"/>
+      <VarDeclaration Name="SPAN" Type="REAL"/>
+      <VarDeclaration Name="DISAGREE_DELAY" Type="TIME"/>
+      <VarDeclaration Name="RESET" Type="BOOL"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="VOTED" Type="REAL"/>
+      <VarDeclaration Name="PERCENT" Type="INT"/>
+      <VarDeclaration Name="BAD_COUNT" Type="INT"/>
+      <VarDeclaration Name="DISAGREE" Type="BOOL"/>
+      <VarDeclaration Name="TRIP" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="MIDDLE" Type="REAL"/>
+      <VarDeclaration Name="OVER_HIGH" Type="BOOL"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="DT_IN" Type="BOOL"/>
+      <VarDeclaration Name="DT_PT" Type="TIME"/>
+      <VarDeclaration Name="DT_Q" Type="BOOL"/>
+      <VarDeclaration Name="DT_ET" Type="TIME"/>
+      <VarDeclaration Name="DT_STATE" Type="INT"/>
+      <VarDeclaration Name="DT_PREV_IN" Type="BOOL"/>
+      <VarDeclaration Name="DT_START_TIME" Type="TIME"/>
+      <VarDeclaration Name="TL_S" Type="BOOL"/>
+      <VarDeclaration Name="TL_R1" Type="BOOL"/>
+      <VarDeclaration Name="TL_Q1" Type="BOOL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+IF NOT ENABLE THEN
+  DT_IN := FALSE;
+  DT_PT := DISAGREE_DELAY;
+  IF (DT_STATE = 0) AND NOT DT_PREV_IN AND DT_IN THEN
+    DT_STATE := 1;
+    DT_Q := FALSE;
+    DT_START_TIME := ST2FB_NOW;
+  ELSE
+    IF NOT DT_IN THEN
+      DT_ET := T#0s;
+      DT_Q := FALSE;
+      DT_STATE := 0;
+    ELSIF DT_STATE = 1 THEN
+      IF DT_START_TIME + DT_PT <= ST2FB_NOW THEN
+        DT_STATE := 2;
+        DT_Q := TRUE;
+        DT_ET := DT_PT;
+      ELSE
+        DT_ET := ST2FB_NOW - DT_START_TIME;
+      END_IF;
+    END_IF;
+  END_IF;
+  DT_PREV_IN := DT_IN;
+  DISAGREE := FALSE;
+  BAD_COUNT := 0;
+ELSE
+  MIDDLE := MAX(MIN(PT_A, PT_B), MIN(MAX(PT_A, PT_B), PT_C));
+  BAD_COUNT := 0;
+  IF ABS(PT_A - MIDDLE) > BAND THEN
+    BAD_COUNT := BAD_COUNT + 1;
+  END_IF;
+  IF ABS(PT_B - MIDDLE) > BAND THEN
+    BAD_COUNT := BAD_COUNT + 1;
+  END_IF;
+  IF ABS(PT_C - MIDDLE) > BAND THEN
+    BAD_COUNT := BAD_COUNT + 1;
+  END_IF;
+
+  DT_IN := BAD_COUNT > 0;
+  DT_PT := DISAGREE_DELAY;
+  IF (DT_STATE = 0) AND NOT DT_PREV_IN AND DT_IN THEN
+    DT_STATE := 1;
+    DT_Q := FALSE;
+    DT_START_TIME := ST2FB_NOW;
+  ELSE
+    IF NOT DT_IN THEN
+      DT_ET := T#0s;
+      DT_Q := FALSE;
+      DT_STATE := 0;
+    ELSIF DT_STATE = 1 THEN
+      IF DT_START_TIME + DT_PT <= ST2FB_NOW THEN
+        DT_STATE := 2;
+        DT_Q := TRUE;
+        DT_ET := DT_PT;
+      ELSE
+        DT_ET := ST2FB_NOW - DT_START_TIME;
+      END_IF;
+    END_IF;
+  END_IF;
+  DT_PREV_IN := DT_IN;
+  DISAGREE := DT_Q;
+
+  VOTED := MIDDLE;
+  PERCENT := REAL_TO_INT(100.0 * VOTED / SPAN);
+
+  OVER_HIGH := (VOTED > HIGH_LIMIT) AND (BAD_COUNT < 2);
+  TL_S := OVER_HIGH;
+  TL_R1 := RESET;
+  TL_Q1 := NOT TL_R1 AND (TL_S OR TL_Q1);
+  TRIP := TL_Q1;
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

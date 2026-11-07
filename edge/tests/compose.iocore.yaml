@@ -1,0 +1,12 @@
+# Overlay: replace the Python I/O simulation with the firmware's decision logic compiled for Linux.
+services:
+  remote-io:
+    image: st2fb-edge-iocore-host:1
+    build: !reset null
+    command: !reset null
+    ports: !override
+      - "127.0.0.1:${MODBUS_PORT:-1502}:502"
+    environment: !override
+      PLANT_HOST: 172.30.1.10
+      WD_TIMEOUT_MS: "1000"
+      LEASE_TTL_MS: "300"

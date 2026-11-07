@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_PackagingCounter" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_photoEye"/><With Var="i_rejectRequest"/><With Var="i_resetCount"/><With Var="i_batchSize"/><With Var="i_rejectPulse"/><With Var="i_jamTime"/><With Var="i_clearJam"/><With Var="i_maxSpeed"/><With Var="i_speedRef"/><With Var="SCAN_DT"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_count"/><With Var="o_batchFull"/><With Var="o_reject"/><With Var="o_rejectElapsed"/><With Var="o_jam"/><With Var="o_speed"/><With Var="o_rejected"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_photoEye" Type="BOOL"/>
+      <VarDeclaration Name="i_rejectRequest" Type="BOOL"/>
+      <VarDeclaration Name="i_resetCount" Type="BOOL"/>
+      <VarDeclaration Name="i_batchSize" Type="INT"/>
+      <VarDeclaration Name="i_rejectPulse" Type="TIME"/>
+      <VarDeclaration Name="i_jamTime" Type="TIME"/>
+      <VarDeclaration Name="i_clearJam" Type="BOOL"/>
+      <VarDeclaration Name="i_maxSpeed" Type="REAL"/>
+      <VarDeclaration Name="i_speedRef" Type="REAL"/>
+      <VarDeclaration Name="SCAN_DT" Type="TIME"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_count" Type="INT"/>
+      <VarDeclaration Name="o_batchFull" Type="BOOL"/>
+      <VarDeclaration Name="o_reject" Type="BOOL"/>
+      <VarDeclaration Name="o_rejectElapsed" Type="TIME"/>
+      <VarDeclaration Name="o_jam" Type="BOOL"/>
+      <VarDeclaration Name="o_speed" Type="REAL"/>
+      <VarDeclaration Name="o_rejected" Type="INT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="statEyePrev" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statRequestPrev" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statRejectPrev" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="statRejectPreset" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="statJamPreset" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="tempCartonEdge" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="tempRejectEdge" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="ST2FB_NOW" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="RP_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RP_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="RP_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RP_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="RP_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="RP_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="RP_START_TIME" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="JT_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="JT_PT" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="JT_Q" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="JT_ET" Type="TIME" InitialValue="T#0s"/>
+      <VarDeclaration Name="JT_STATE" Type="INT" InitialValue="0"/>
+      <VarDeclaration Name="JT_PREV_IN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="JT_START_TIME" Type="TIME" InitialValue="T#0s"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+ST2FB_NOW := ST2FB_NOW + SCAN_DT;
+
+tempCartonEdge := statEyePrev AND NOT i_photoEye;
+IF i_resetCount THEN
+  o_count := 0;
+ELSIF tempCartonEdge AND o_count < i_batchSize THEN
+  o_count := o_count + 1;
+END_IF;
+o_batchFull := o_count >= i_batchSize;
+
+tempRejectEdge := statRequestPrev AND NOT i_rejectRequest;
+statRequestPrev := i_rejectRequest;
+IF NOT o_reject THEN
+  statRejectPreset := i_rejectPulse;
+END_IF;
+RP_IN := tempRejectEdge AND NOT o_jam;
+RP_PT := statRejectPreset;
+IF (RP_STATE = 0) AND NOT RP_PREV_IN AND RP_IN THEN
+  RP_STATE := 1;
+  RP_Q := TRUE;
+  RP_START_TIME := ST2FB_NOW;
+ELSIF RP_STATE = 1 THEN
+  IF RP_START_TIME + RP_PT <= ST2FB_NOW THEN
+    RP_STATE := 2;
+    RP_Q := FALSE;
+    RP_ET := RP_PT;
+  ELSE
+    RP_ET := ST2FB_NOW - RP_START_TIME;
+  END_IF;
+END_IF;
+IF (RP_STATE = 2) AND NOT RP_IN THEN
+  RP_ET := T#0s;
+  RP_STATE := 0;
+END_IF;
+RP_PREV_IN := RP_IN;
+o_reject := RP_Q;
+o_rejectElapsed := RP_ET;
+IF i_resetCount THEN
+  o_rejected := 0;
+ELSIF o_reject AND NOT statRejectPrev THEN
+  o_rejected := o_rejected + 1;
+END_IF;
+statRejectPrev := o_reject;
+
+IF NOT statEyePrev THEN
+  statJamPreset := i_jamTime;
+END_IF;
+statEyePrev := i_photoEye;
+JT_IN := i_photoEye;
+JT_PT := statJamPreset;
+IF (JT_STATE = 0) AND NOT JT_PREV_IN AND JT_IN THEN
+  JT_STATE := 1;
+  JT_Q := FALSE;
+  JT_START_TIME := ST2FB_NOW;
+ELSE
+  IF NOT JT_IN THEN
+    JT_ET := T#0s;
+    JT_Q := FALSE;
+    JT_STATE := 0;
+  ELSIF JT_STATE = 1 THEN
+    IF JT_START_TIME + JT_PT <= ST2FB_NOW THEN
+      JT_STATE := 2;
+      JT_Q := TRUE;
+      JT_ET := JT_PT;
+    ELSE
+      JT_ET := ST2FB_NOW - JT_START_TIME;
+    END_IF;
+  END_IF;
+END_IF;
+JT_PREV_IN := JT_IN;
+IF JT_Q THEN
+  o_jam := TRUE;
+ELSIF i_clearJam THEN
+  o_jam := FALSE;
+END_IF;
+IF o_jam OR o_batchFull THEN
+  o_speed := 0.0;
+ELSE
+  o_speed := MIN(i_speedRef, i_maxSpeed);
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

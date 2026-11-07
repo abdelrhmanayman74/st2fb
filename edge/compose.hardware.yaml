@@ -1,0 +1,99 @@
+# NOT EXECUTED in this project: no Raspberry Pi or ESP32 was available. `docker compose config` is the only check it had.
+# Controller on a Pi (or any Linux node) talking to the real ESP32 firmware. No plant, no simulated I/O.
+#   IO_HOST=<esp32 ip> docker compose -f compose.hardware.yaml up -d
+# Polling is slower than the simulation's on purpose: an ESP32 on Wi-Fi will not answer 200 requests a second.
+# Tune POLL_MS, AGENT_LOOP_S and the firmware's LEASE_TTL_MS and WD_TIMEOUT_MS on the bench.
+name: st2fb-edge-hw
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  stop_grace_period: 2s
+
+x-controller: &controller
+  <<: *hardening
+  image: st2fb-edge-controller:efcd63c
+  tmpfs:
+    - /tmp:size=64m
+  networks: [edge]
+
+services:
+  ctrl-a:
+    <<: *controller
+    hostname: ctrl-a
+    ports: ["127.0.0.1:18111:8081"]
+    environment: &ctrl-env
+      NODE_ID: "1"
+      ROLE: contender
+      IO_HOST: ${IO_HOST:?set IO_HOST to the ESP32 address}
+      IO_PORT: "502"
+      AGENT_TOKEN: ${AGENT_TOKEN:?run scripts/bootstrap.py}
+      POLL_MS: ${POLL_MS:-200}
+      AGENT_LOOP_S: ${AGENT_LOOP_S:-0.1}
+
+  # Second node for failover on the same Pi. For a real second node, run this service on another machine.
+  ctrl-b:
+    <<: *controller
+    hostname: ctrl-b
+    ports: ["127.0.0.1:18112:8081"]
+    environment:
+      <<: *ctrl-env
+      NODE_ID: "2"
+
+  gateway:
+    <<: *hardening
+    image: st2fb-edge-it:1
+    command: ["python3", "-B", "-u", "gateway/gateway.py"]
+    tmpfs: [/tmp]
+    networks: [edge]
+    ports: ["127.0.0.1:4840:4840"]
+    environment:
+      IO_HOST: ${IO_HOST:?set IO_HOST to the ESP32 address}
+      IO_PORT: "502"
+      MQTT_HOST: mosquitto
+      MQTT_USER: st2fb-gateway
+      MQTT_PASSWORD: ${MQTT_GATEWAY_PASSWORD:?run scripts/bootstrap.py}
+      TSDB_URL: http://tsdb:8428
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN:?run scripts/bootstrap.py}
+
+  mosquitto:
+    <<: *hardening
+    image: eclipse-mosquitto:2.0.20@sha256:21421af7b32bf9ce508e9090c8eb13bb81f410ca778dc205506180a6f862d0eb
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    networks: [edge]
+    ports: ["127.0.0.1:1883:1883"]
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/acl:/mosquitto/config/acl:ro
+      - ./secrets/passwd:/mosquitto/secrets/passwd:ro
+
+  tsdb:
+    <<: *hardening
+    image: victoriametrics/victoria-metrics:v1.106.1@sha256:54b283129634239db62798fd8d92e8d8d4372a0b114e72967eb233dbb264ff53
+    command: ["-storageDataPath=/data", "-retentionPeriod=7d", "-httpListenAddr=:8428", "-search.latencyOffset=0s"]
+    networks: [edge]
+    tmpfs: [/tmp]
+    volumes:
+      - tsdb-data:/data
+
+  api:
+    <<: *hardening
+    image: st2fb-edge-it:1
+    command: ["python3", "-B", "-m", "uvicorn", "app:app", "--app-dir", "api", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]
+    tmpfs: [/tmp]
+    networks: [edge]
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      GATEWAY_URL: http://gateway:8090
+      TSDB_URL: http://tsdb:8428
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN:?run scripts/bootstrap.py}
+      API_VIEWER_TOKEN: ${API_VIEWER_TOKEN:?run scripts/bootstrap.py}
+      API_OPERATOR_TOKEN: ${API_OPERATOR_TOKEN:?run scripts/bootstrap.py}
+
+volumes:
+  tsdb-data:
+
+networks:
+  # A normal bridge: the controller has to reach the ESP32 on the LAN.
+  edge: {}

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="FB_HeaterPI" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="i_enable"/><With Var="i_setpoint"/><With Var="i_measured"/><With Var="i_kp"/><With Var="i_ki"/><With Var="i_outMax"/><With Var="i_deadband"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="o_output"/><With Var="o_pwmTicks"/><With Var="o_saturated"/><With Var="o_error"/><With Var="o_quality"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="i_enable" Type="BOOL"/>
+      <VarDeclaration Name="i_setpoint" Type="REAL"/>
+      <VarDeclaration Name="i_measured" Type="REAL"/>
+      <VarDeclaration Name="i_kp" Type="REAL"/>
+      <VarDeclaration Name="i_ki" Type="REAL"/>
+      <VarDeclaration Name="i_outMax" Type="REAL"/>
+      <VarDeclaration Name="i_deadband" Type="REAL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="o_output" Type="REAL"/>
+      <VarDeclaration Name="o_pwmTicks" Type="INT"/>
+      <VarDeclaration Name="o_saturated" Type="BOOL"/>
+      <VarDeclaration Name="o_error" Type="REAL"/>
+      <VarDeclaration Name="o_quality" Type="REAL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="statIntegral" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="statFirstRun" Type="BOOL" InitialValue="TRUE"/>
+      <VarDeclaration Name="tempUnclamped" Type="REAL" InitialValue="0.0"/>
+      <VarDeclaration Name="tempErrorAbs" Type="REAL" InitialValue="0.0"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+IF NOT i_enable THEN
+  o_saturated := FALSE;
+  statFirstRun := TRUE;
+ELSE
+  IF statFirstRun THEN
+    statIntegral := o_output;
+    statFirstRun := FALSE;
+  END_IF;
+  o_error := i_setpoint - i_measured;
+  tempErrorAbs := ABS(o_error);
+  IF tempErrorAbs < i_deadband THEN
+    o_error := 0.0;
+  END_IF;
+  tempUnclamped := i_kp * o_error + statIntegral + i_ki * o_error;
+  o_output := LIMIT(0.0, tempUnclamped, i_outMax);
+  o_saturated := o_output <> tempUnclamped;
+  IF NOT o_saturated THEN
+    statIntegral := statIntegral + i_ki * o_error;
+  END_IF;
+  o_pwmTicks := DINT_TO_INT(REAL_TO_DINT(o_output * 10.0));
+  o_quality := SQRT(o_error * o_error + 1.0);
+END_IF;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

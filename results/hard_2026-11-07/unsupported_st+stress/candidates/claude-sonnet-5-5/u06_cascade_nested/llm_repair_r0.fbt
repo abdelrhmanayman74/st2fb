@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="CASCADE_CONTROL" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="ENABLE"/><With Var="MASTER_AUTO"/><With Var="TEMP_SP"/><With Var="TEMP_PV"/><With Var="FLOW_PV"/><With Var="MANUAL_FLOW_SP"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="FLOW_SP"/><With Var="VALVE_PCT"/><With Var="VALVE_RAW"/><With Var="WINDUP"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="ENABLE" Type="BOOL"/>
+      <VarDeclaration Name="MASTER_AUTO" Type="BOOL"/>
+      <VarDeclaration Name="TEMP_SP" Type="REAL"/>
+      <VarDeclaration Name="TEMP_PV" Type="REAL"/>
+      <VarDeclaration Name="FLOW_PV" Type="REAL"/>
+      <VarDeclaration Name="MANUAL_FLOW_SP" Type="REAL"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="FLOW_SP" Type="REAL"/>
+      <VarDeclaration Name="VALVE_PCT" Type="REAL"/>
+      <VarDeclaration Name="VALVE_RAW" Type="INT"/>
+      <VarDeclaration Name="WINDUP" Type="BOOL"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="M_OUTPUT" Type="REAL"/>
+      <VarDeclaration Name="M_SAT" Type="BOOL"/>
+      <VarDeclaration Name="M_RAMP" Type="REAL"/>
+      <VarDeclaration Name="M_I" Type="REAL"/>
+      <VarDeclaration Name="M_ERR" Type="REAL"/>
+      <VarDeclaration Name="M_DEM" Type="REAL"/>
+      <VarDeclaration Name="S_OUTPUT" Type="REAL"/>
+      <VarDeclaration Name="S_SAT" Type="BOOL"/>
+      <VarDeclaration Name="S_RAMP" Type="REAL"/>
+      <VarDeclaration Name="S_I" Type="REAL"/>
+      <VarDeclaration Name="S_ERR" Type="REAL"/>
+      <VarDeclaration Name="S_DEM" Type="REAL"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="run" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="run">
+      <ST><![CDATA[
+IF NOT (ENABLE AND MASTER_AUTO) THEN
+  M_I := 0.0;
+  M_OUTPUT := 0.0;
+  M_SAT := FALSE;
+ELSE
+  IF TEMP_SP > M_RAMP + 2.0 THEN
+    M_RAMP := M_RAMP + 2.0;
+  ELSIF TEMP_SP < M_RAMP - 2.0 THEN
+    M_RAMP := M_RAMP - 2.0;
+  ELSE
+    M_RAMP := TEMP_SP;
+  END_IF;
+  M_ERR := M_RAMP - TEMP_PV;
+  M_DEM := 0.5 * (1.0 + ABS(M_ERR) ** 0.5) * M_ERR + M_I + 0.125 * M_ERR;
+  IF M_DEM > 80.0 THEN
+    M_OUTPUT := 80.0;
+    M_SAT := TRUE;
+  ELSIF M_DEM < 0.0 THEN
+    M_OUTPUT := 0.0;
+    M_SAT := TRUE;
+  ELSE
+    M_OUTPUT := M_DEM;
+    M_SAT := FALSE;
+    M_I := M_I + 0.125 * M_ERR;
+  END_IF;
+END_IF;
+IF MASTER_AUTO THEN
+  FLOW_SP := M_OUTPUT;
+ELSE
+  FLOW_SP := MANUAL_FLOW_SP;
+END_IF;
+IF NOT ENABLE THEN
+  S_I := 0.0;
+  S_OUTPUT := 0.0;
+  S_SAT := FALSE;
+ELSE
+  IF FLOW_SP > S_RAMP + 8.0 THEN
+    S_RAMP := S_RAMP + 8.0;
+  ELSIF FLOW_SP < S_RAMP - 8.0 THEN
+    S_RAMP := S_RAMP - 8.0;
+  ELSE
+    S_RAMP := FLOW_SP;
+  END_IF;
+  S_ERR := S_RAMP - FLOW_PV;
+  S_DEM := 0.25 * (1.0 + ABS(S_ERR) ** 0.5) * S_ERR + S_I + 0.25 * S_ERR;
+  IF S_DEM > 100.0 THEN
+    S_OUTPUT := 100.0;
+    S_SAT := TRUE;
+  ELSIF S_DEM < 0.0 THEN
+    S_OUTPUT := 0.0;
+    S_SAT := TRUE;
+  ELSE
+    S_OUTPUT := S_DEM;
+    S_SAT := FALSE;
+    S_I := S_I + 0.25 * S_ERR;
+  END_IF;
+END_IF;
+VALVE_PCT := S_OUTPUT;
+VALVE_RAW := REAL_TO_INT(VALVE_PCT * 276.48);
+WINDUP := M_SAT OR S_SAT;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

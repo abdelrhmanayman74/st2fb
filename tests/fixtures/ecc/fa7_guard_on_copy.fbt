@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="GATE_CYCLE">
+<InterfaceList>
+<EventInputs><Event Name="REQ" Type="Event"><With Var="OPEN_CMD"/><With Var="AT_TOP"/></Event></EventInputs>
+<EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/><With Var="MOTOR"/><With Var="CYCLES"/></Event></EventOutputs>
+<InputVars><VarDeclaration Name="OPEN_CMD" Type="BOOL"/><VarDeclaration Name="AT_TOP" Type="BOOL"/></InputVars>
+<OutputVars><VarDeclaration Name="SEQ" Type="INT"/><VarDeclaration Name="MOTOR" Type="BOOL"/><VarDeclaration Name="CYCLES" Type="INT"/></OutputVars>
+</InterfaceList>
+<BasicFB>
+<InternalVars><VarDeclaration Name="K" Type="INT"/></InternalVars>
+<ECC>
+<ECState Name="START"></ECState>
+<ECState Name="PB"></ECState>
+<ECState Name="LA"><ECAction Algorithm="load"/></ECState>
+<ECState Name="LB"><ECAction Algorithm="load"/><ECAction Algorithm="noop"/></ECState>
+<ECState Name="S0LA"><ECAction Algorithm="a0" Output="CNF"/></ECState>
+<ECState Name="S1LA"><ECAction Algorithm="a1" Output="CNF"/></ECState>
+<ECState Name="S2LA"><ECAction Algorithm="a2" Output="CNF"/></ECState>
+<ECState Name="S0LB"><ECAction Algorithm="a0" Output="CNF"/></ECState>
+<ECState Name="S1LB"><ECAction Algorithm="a1" Output="CNF"/></ECState>
+<ECState Name="S2LB"><ECAction Algorithm="a2" Output="CNF"/></ECState>
+<ECTransition Source="START" Destination="LA" Condition="REQ"/>
+<ECTransition Source="PB" Destination="LB" Condition="REQ"/>
+<ECTransition Source="LA" Destination="S0LA" Condition="[K = 0]"/>
+<ECTransition Source="S0LA" Destination="PB" Condition="1"/>
+<ECTransition Source="LA" Destination="S1LA" Condition="[K = 1]"/>
+<ECTransition Source="S1LA" Destination="PB" Condition="1"/>
+<ECTransition Source="LA" Destination="S2LA" Condition="1"/>
+<ECTransition Source="S2LA" Destination="PB" Condition="1"/>
+<ECTransition Source="LB" Destination="S0LB" Condition="[K = 0]"/>
+<ECTransition Source="S0LB" Destination="START" Condition="1"/>
+<ECTransition Source="LB" Destination="S1LB" Condition="[K = 1]"/>
+<ECTransition Source="S1LB" Destination="START" Condition="1"/>
+<ECTransition Source="LB" Destination="S2LB" Condition="1"/>
+<ECTransition Source="S2LB" Destination="START" Condition="1"/>
+</ECC>
+<Algorithm Name="load"><ST><![CDATA[
+K := SEQ;
+]]></ST></Algorithm>
+<Algorithm Name="noop"><ST><![CDATA[
+CYCLES := CYCLES;
+]]></ST></Algorithm>
+<Algorithm Name="a0"><ST><![CDATA[
+MOTOR := FALSE;
+IF OPEN_CMD THEN SEQ := 1; END_IF;
+]]></ST></Algorithm>
+<Algorithm Name="a1"><ST><![CDATA[
+MOTOR := TRUE;
+IF AT_TOP THEN SEQ := 2; END_IF;
+]]></ST></Algorithm>
+<Algorithm Name="a2"><ST><![CDATA[
+MOTOR := FALSE;
+CYCLES := CYCLES + 1;
+SEQ := 0;
+]]></ST></Algorithm>
+</BasicFB>
+</FBType>

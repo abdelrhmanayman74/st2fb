@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="CipSequence_AOI" Comment="Migrated from IEC 61131-3 ST">
+  <Identification Standard="61499-2"/>
+  <VersionInfo Version="1.0" Author="st2fb" Date="2026-11-06"/>
+  <InterfaceList>
+    <EventInputs>
+      <Event Name="REQ" Type="Event"><With Var="StartCmd"/><With Var="HoldCmd"/><With Var="AbortCmd"/><With Var="ConductivityOk"/><With Var="RinseMs"/><With Var="WashMs"/><With Var="TaskPeriodMs"/></Event>
+    </EventInputs>
+    <EventOutputs>
+      <Event Name="CNF" Type="Event"><With Var="StepNo"/><With Var="WaterValve"/><With Var="CausticValve"/><With Var="ReturnPump"/><With Var="StepRemainingMs"/><With Var="DeviationAlarm"/><With Var="CycleCount"/></Event>
+    </EventOutputs>
+    <InputVars>
+      <VarDeclaration Name="StartCmd" Type="BOOL"/>
+      <VarDeclaration Name="HoldCmd" Type="BOOL"/>
+      <VarDeclaration Name="AbortCmd" Type="BOOL"/>
+      <VarDeclaration Name="ConductivityOk" Type="BOOL"/>
+      <VarDeclaration Name="RinseMs" Type="DINT"/>
+      <VarDeclaration Name="WashMs" Type="DINT"/>
+      <VarDeclaration Name="TaskPeriodMs" Type="DINT"/>
+    </InputVars>
+    <OutputVars>
+      <VarDeclaration Name="StepNo" Type="DINT"/>
+      <VarDeclaration Name="WaterValve" Type="BOOL"/>
+      <VarDeclaration Name="CausticValve" Type="BOOL"/>
+      <VarDeclaration Name="ReturnPump" Type="BOOL"/>
+      <VarDeclaration Name="StepRemainingMs" Type="DINT"/>
+      <VarDeclaration Name="DeviationAlarm" Type="BOOL"/>
+      <VarDeclaration Name="CycleCount" Type="DINT"/>
+    </OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars>
+      <VarDeclaration Name="StepTimer_EN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="StepTimer_TT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="StepTimer_DN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="StepTimer_ACC" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="StepTimer_PRE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="StepTimer_ENABLE" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="DevTimer_EN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="DevTimer_TT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="DevTimer_DN" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="DevTimer_ACC" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="DevTimer_PRE" Type="DINT" InitialValue="0"/>
+      <VarDeclaration Name="DevTimer_ENABLE" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OS_PREV" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="OS_OUT" Type="BOOL" InitialValue="FALSE"/>
+      <VarDeclaration Name="Preset" Type="DINT" InitialValue="0"/>
+    </InternalVars>
+    <ECC>
+      <ECState Name="START" x="0" y="0"/>
+      <ECState Name="RUN" x="200" y="0">
+        <ECAction Algorithm="logic" Output="CNF"/>
+      </ECState>
+      <ECTransition Source="START" Destination="RUN" Condition="REQ" x="100" y="0"/>
+      <ECTransition Source="RUN" Destination="START" Condition="1" x="100" y="100"/>
+    </ECC>
+    <Algorithm Name="logic">
+      <ST><![CDATA[
+OS_OUT := StartCmd AND NOT OS_PREV;
+OS_PREV := StartCmd;
+
+WaterValve := FALSE;
+CausticValve := FALSE;
+ReturnPump := FALSE;
+
+IF AbortCmd THEN
+  StepNo := 0;
+  StepTimer_ACC := 0;
+  StepTimer_EN := FALSE;
+  StepTimer_TT := FALSE;
+  StepTimer_DN := FALSE;
+END_IF;
+
+CASE StepNo OF
+  0:
+    Preset := RinseMs;
+    IF OS_OUT AND NOT AbortCmd THEN
+      StepNo := 10;
+    END_IF;
+  10:
+    WaterValve := TRUE;
+    ReturnPump := TRUE;
+    IF StepTimer_DN THEN
+      StepTimer_ACC := 0;
+      StepTimer_EN := FALSE;
+      StepTimer_TT := FALSE;
+      StepTimer_DN := FALSE;
+      Preset := WashMs;
+      StepNo := 20;
+    END_IF;
+  20:
+    CausticValve := TRUE;
+    ReturnPump := TRUE;
+    IF StepTimer_DN THEN
+      StepTimer_ACC := 0;
+      StepTimer_EN := FALSE;
+      StepTimer_TT := FALSE;
+      StepTimer_DN := FALSE;
+      Preset := RinseMs;
+      StepNo := 30;
+    END_IF;
+  30:
+    WaterValve := TRUE;
+    ReturnPump := TRUE;
+    IF StepTimer_DN THEN
+      StepTimer_ACC := 0;
+      StepTimer_EN := FALSE;
+      StepTimer_TT := FALSE;
+      StepTimer_DN := FALSE;
+      CycleCount := CycleCount + 1;
+      StepNo := 0;
+    END_IF;
+END_CASE;
+
+StepTimer_ENABLE := (StepNo = 10 OR StepNo = 30 OR (StepNo = 20 AND ConductivityOk)) AND NOT HoldCmd;
+StepTimer_PRE := Preset;
+IF StepTimer_ENABLE AND StepTimer_EN AND NOT StepTimer_DN THEN
+  StepTimer_ACC := StepTimer_ACC + TaskPeriodMs;
+  IF StepTimer_ACC >= StepTimer_PRE THEN
+    StepTimer_ACC := StepTimer_PRE;
+    StepTimer_DN := TRUE;
+  END_IF;
+END_IF;
+IF NOT StepTimer_ENABLE THEN
+  StepTimer_ACC := 0;
+  StepTimer_DN := FALSE;
+END_IF;
+StepTimer_EN := StepTimer_ENABLE;
+StepTimer_TT := StepTimer_EN AND NOT StepTimer_DN;
+StepRemainingMs := Preset - StepTimer_ACC;
+
+DevTimer_ENABLE := (StepNo = 20) AND NOT ConductivityOk;
+DevTimer_PRE := 200;
+IF DevTimer_ENABLE AND DevTimer_EN AND NOT DevTimer_DN THEN
+  DevTimer_ACC := DevTimer_ACC + TaskPeriodMs;
+  IF DevTimer_ACC >= DevTimer_PRE THEN
+    DevTimer_ACC := DevTimer_PRE;
+    DevTimer_DN := TRUE;
+  END_IF;
+END_IF;
+IF NOT DevTimer_ENABLE THEN
+  DevTimer_ACC := 0;
+  DevTimer_DN := FALSE;
+END_IF;
+DevTimer_EN := DevTimer_ENABLE;
+DevTimer_TT := DevTimer_EN AND NOT DevTimer_DN;
+DeviationAlarm := DevTimer_DN;
+]]></ST>
+    </Algorithm>
+  </BasicFB>
+</FBType>

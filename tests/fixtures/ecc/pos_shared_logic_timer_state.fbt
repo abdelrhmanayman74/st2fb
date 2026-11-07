@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FBType Name="F" Comment="Positive: shared prelude holding a lowered timer, whose X_STATE beside X_START_TIME is not a control position">
+  <InterfaceList>
+    <EventInputs><Event Name="REQ" Type="Event"><With Var="GO"/></Event></EventInputs>
+    <EventOutputs><Event Name="CNF" Type="Event"><With Var="SEQ"/></Event></EventOutputs>
+    <InputVars><VarDeclaration Name="GO" Type="BOOL"/></InputVars>
+    <OutputVars><VarDeclaration Name="SEQ" Type="INT"/></OutputVars>
+  </InterfaceList>
+  <BasicFB>
+    <InternalVars><VarDeclaration Name="T_STATE" Type="INT"/><VarDeclaration Name="T_PREV_IN" Type="BOOL"/><VarDeclaration Name="T_Q" Type="BOOL"/><VarDeclaration Name="T_START_TIME" Type="TIME"/><VarDeclaration Name="NOW" Type="TIME"/></InternalVars>
+    <ECC>
+      <ECState Name="START"/>
+      <ECState Name="A"><ECAction Algorithm="prelude"/><ECAction Algorithm="step_a" Output="CNF"/></ECState>
+      <ECState Name="WAIT_B"/>
+      <ECState Name="B"><ECAction Algorithm="prelude"/><ECAction Algorithm="step_b" Output="CNF"/></ECState>
+      <ECTransition Source="START" Destination="A" Condition="REQ"/>
+      <ECTransition Source="A" Destination="WAIT_B" Condition="[GO]"/>
+      <ECTransition Source="A" Destination="START" Condition="1"/>
+      <ECTransition Source="WAIT_B" Destination="B" Condition="REQ"/>
+      <ECTransition Source="B" Destination="START" Condition="[NOT GO]"/>
+      <ECTransition Source="B" Destination="WAIT_B" Condition="1"/>
+    </ECC>
+    <Algorithm Name="prelude"><ST><![CDATA[
+NOW := NOW + T#10ms;
+IF (T_STATE = 0) AND NOT T_PREV_IN AND GO THEN
+  T_STATE := 1;
+  T_Q := FALSE;
+  T_START_TIME := NOW;
+ELSE
+  IF NOT GO THEN
+    T_Q := FALSE;
+    T_STATE := 0;
+  ELSIF T_STATE = 1 THEN
+    IF T_START_TIME + T#50ms <= NOW THEN
+      T_STATE := 2;
+      T_Q := TRUE;
+    END_IF;
+  END_IF;
+END_IF;
+T_PREV_IN := GO;
+]]></ST></Algorithm>
+    <Algorithm Name="step_a"><ST><![CDATA[
+SEQ := 0;
+IF GO THEN
+  SEQ := 1;
+END_IF;
+]]></ST></Algorithm>
+    <Algorithm Name="step_b"><ST><![CDATA[
+IF NOT GO THEN
+  SEQ := 0;
+END_IF;
+]]></ST></Algorithm>
+  </BasicFB>
+</FBType>

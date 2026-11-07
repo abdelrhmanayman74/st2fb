@@ -1,0 +1,28 @@
+{
+ "survivors": {
+  "p01_bistable_device|algorithm scan, line 66:37: boundary: '=' -> '<>'": "This body is the entry reset, `TransitionDelay(IN := FALSE)`, so `NOT IN` always takes the branch and this test is never reached. Equivalent.",
+  "p01_bistable_device|algorithm scan, line 7:10: negate: IF condition 'TransitionDelay_STATE = 0 AND NOT TransitionDelay_PREV_IN AND TransitionDelay_IN' negated": "Also the entry reset. Negated, it sets STATE to 1 where the original resets to 0, and the real call on the same scan then resets it on a low input, or starts timing from this scan on a high one, as the original does. Equivalent.",
+  "p01_bistable_device|algorithm scan, line 100:5: remove: removed 'TransitionDelay_PREV_IN := TransitionDelay_IN;'": "STATE is 0 with IN high only on a rising edge, since `NOT IN` is what returns it to 0. So PREV_IN adds nothing to this start test. Equivalent.",
+  "p02_pi_controller|algorithm scan, line 4:132: boundary: '>' -> '>='": "PV equal to SP means an error of 0. Not pausing adds exactly 0 to the integral. Equivalent. The matiec campaign has the same mutant.",
+  "p03_alpha_beta_filter|algorithm scan, line 6:42: boundary: '>' -> '>='": "Only differs with deltaInSecond 0, where the mutant takes `(beta * predictionError) / 0.0`. In the matiec campaign that is detected, as a non-finite REAL. On FORTE it survives: a run here of `Y := X / Z` with X 3.0 and Z 0.0 on real FORTE gave the value in the Findings below, so the result is the same as the original's. A real difference between the two runtimes, which a stimulus avoids only by not dividing by zero. The source guards this division.",
+  "p03_alpha_beta_filter|algorithm scan, line 3:1: remove: removed 'velocityIntegrator := velocityEstimate;'": "The variable already holds that value from the end of the last scan. Equivalent.",
+  "p04_debounce_bool|algorithm scan, line 34:19: constant: 'FALSE' -> 'TRUE'": "The source only reads this Q together with the timer's IN, and a rising IN clears Q. So a stale TRUE with IN low is never used. Equivalent.",
+  "p04_debounce_bool|algorithm scan, line 27:23: operator: 'AND' -> 'OR'": "The AND in the TON or TOF start test became OR, so an idle timer flips its STATE between 0 and 1 with its input low. On the scan the input rises, `NOT PREV AND IN` starts it the same way, and Q and ET are already cleared, so nothing shows. Equivalent.",
+  "p04_debounce_bool|algorithm scan, line 20:7: remove: removed 'tonTimer_ET := ST2FB_NOW - tonTimer_START_TIME;'": "This ET reaches no output. Equivalent.",
+  "r03_sequence_aoi|algorithm scan, line 10:20: constant: '0' -> '1'": "The RES on abort. StepNo becomes 0 on the same scan, so the later disabled call sets ACC to 0. Equivalent.",
+  "s03_valve_monitor|algorithm scan, line 16:30: operator: 'AND' -> 'OR'": "The AND in the TON or TOF start test became OR, so an idle timer flips its STATE between 0 and 1 with its input low. On the scan the input rises, `NOT PREV AND IN` starts it the same way, and Q and ET are already cleared, so nothing shows. Equivalent.",
+  "s03_valve_monitor|algorithm scan, line 18:5: remove: removed 'statOpenTimer_Q := FALSE;'": "STATE is 0 only after `NOT IN`, which already cleared Q. Equivalent.",
+  "s04_batch_steps|algorithm scan, line 92:55: boundary: '<' -> '<='": "CV would have to reach PV, 500 batches. Not provoked, on purpose: past PV is where matiec's CTU and a real CTU_INT are read differently. A gap, listed.",
+  "s04_batch_steps|algorithm scan, line 8:28: operator: 'AND' -> 'OR'": "The AND in the TON or TOF start test became OR, so an idle timer flips its STATE between 0 and 1 with its input low. On the scan the input rises, `NOT PREV AND IN` starts it the same way, and Q and ET are already cleared, so nothing shows. Equivalent.",
+  "s05_lead_lag_array|algorithm scan, line 37:30: constant: '0' -> '-1'": "o_lead is 0 only when no pump is available, and then the loop finds no lag. Equivalent.",
+  "s08_packaging_counter|algorithm scan, line 12:4: negate: IF condition 'NOT o_reject' negated": "Survives tuning and is killed on held-out. The preset is not refreshed before a pulse here, so this needs a new pulse length, which only held-out has.",
+  "u02_valve_manifold|algorithm scan, line 45:28: constant: '2' -> '1'": "Without STATE 2, each later scan repeats the expiry test, which stays true and sets Q again. Raising PT afterwards would only change this watchdog's ET, which reaches no output. Equivalent.",
+  "u02_valve_manifold|algorithm scan, line 34:26: operator: 'AND' -> 'OR'": "The AND in the TON or TOF start test became OR, so an idle timer flips its STATE between 0 and 1 with its input low. On the scan the input rises, `NOT PREV AND IN` starts it the same way, and Q and ET are already cleared, so nothing shows. Equivalent.",
+  "u04_alarm_ring|algorithm scan, line 8:3: remove: removed 'G1 := 0;'": "Clearing the age of a record. USED is 0 after a clear, and every field of a record is written before it can be read again. Equivalent.",
+  "u06_cascade_nested|algorithm scan, line 9:17: boundary: '<' -> '<='": "On the boundary TARGET equals VALUE - MAX_STEP, and both branches give that value. Equivalent."
+ },
+ "findings": [
+  "- **REAL division by zero differs between the two runtimes.** `Y := X / Z` with X 3.0 and Z 0.0 gave 0.0 on real FORTE in a direct run. matiec's C gives a non-finite value there, which `reference_run` treats as a failed run. So a mutant that reaches a division by zero is `crashed` under matiec and may survive on FORTE. Nothing scored divides by zero: `p03` guards its division, and a stimulus that did so would fail on the oracle.",
+  "- Each analysis above is a reasoned argument from reading the program and the mutant. It is not a proof."
+ ]
+}

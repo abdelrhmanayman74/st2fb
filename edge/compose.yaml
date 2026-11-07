@@ -1,0 +1,176 @@
+# st2fb edge demo. Everything here is SIMULATED on one x86_64 host: plant, remote I/O, network.
+# Run scripts/bootstrap.py first: it writes .env and secrets/, which git ignores.
+# Every published port binds to 127.0.0.1. The sim-control and agent ports are for tests and tools only.
+name: st2fb-edge
+
+x-hardening: &hardening
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  init: false
+  stop_grace_period: 2s
+
+x-controller: &controller
+  <<: *hardening
+  image: st2fb-edge-controller:efcd63c
+  build:
+    context: .
+    dockerfile: controller/Dockerfile
+  tmpfs:
+    - /tmp:size=64m
+  depends_on: [remote-io]
+
+services:
+  plant:
+    <<: *hardening
+    image: st2fb-edge-sim:1
+    build: {context: ., dockerfile: sim.Dockerfile}
+    command: ["python3", "-B", "-u", "plant/plant.py"]
+    networks:
+      field: {ipv4_address: 172.30.1.10}
+    ports:
+      - "127.0.0.1:${PLANT_SIM_PORT:-18100}:8100"
+    environment:
+      INITIAL_LEVEL_M: "2.0"
+
+  remote-io:
+    <<: *hardening
+    image: st2fb-edge-sim:1
+    build: {context: ., dockerfile: sim.Dockerfile}
+    command: ["python3", "-B", "-u", "remote_io/server.py"]
+    networks:
+      field: {ipv4_address: 172.30.1.20}
+      ot: {ipv4_address: 172.30.0.20}
+    ports:
+      - "127.0.0.1:${MODBUS_PORT:-1502}:502"
+      - "127.0.0.1:${IO_SIM_PORT:-18101}:8101"
+    cap_add: [NET_BIND_SERVICE]
+    sysctls:
+      net.ipv4.ip_unprivileged_port_start: "0"
+    environment:
+      PLANT_HOST: 172.30.1.10
+      WD_TIMEOUT_MS: "1000"
+      LEASE_TTL_MS: "300"
+    depends_on: [plant]
+
+  ctrl-a:
+    <<: *controller
+    hostname: ctrl-a
+    networks:
+      ot: {ipv4_address: 172.30.0.11}
+    ports:
+      - "127.0.0.1:${CTRL_A_PORT:-18111}:8081"
+    environment: &ctrl-env
+      NODE_ID: "1"
+      ROLE: contender
+      IO_HOST: ${IO_HOST:-172.30.0.20}
+      IO_PORT: "502"
+      AGENT_TOKEN: ${AGENT_TOKEN:?run scripts/bootstrap.py}
+      ST2FB_SCAN_LOG: /tmp/scan.bin
+      ALLOW_TEST_HOOKS: ${ALLOW_TEST_HOOKS:-0}
+      APP_OVERRIDES: ${APP_OVERRIDES:-}
+      FORTE_RT: ${FORTE_RT:-0}
+      POLL_MS: ${POLL_MS:-50}
+      AGENT_LOOP_S: ${AGENT_LOOP_S:-0.02}
+
+  ctrl-b:
+    <<: *controller
+    hostname: ctrl-b
+    networks:
+      ot: {ipv4_address: 172.30.0.12}
+    ports:
+      - "127.0.0.1:${CTRL_B_PORT:-18112}:8081"
+    environment:
+      <<: *ctrl-env
+      NODE_ID: "2"
+
+  # A third node with an empty runtime: where the logic is moved to in the migration test.
+  ctrl-c:
+    <<: *controller
+    hostname: ctrl-c
+    networks:
+      ot: {ipv4_address: 172.30.0.13}
+    ports:
+      - "127.0.0.1:${CTRL_C_PORT:-18113}:8081"
+    environment:
+      <<: *ctrl-env
+      NODE_ID: "3"
+      ROLE: bare
+
+  # IT zone. Only the gateway is on both ot and it.
+  gateway:
+    <<: *hardening
+    image: st2fb-edge-it:1
+    build: {context: ., dockerfile: it.Dockerfile}
+    command: ["python3", "-B", "-u", "gateway/gateway.py"]
+    tmpfs: [/tmp]
+    networks:
+      ot: {ipv4_address: 172.30.0.30}
+      it: {ipv4_address: 172.30.2.30}
+    ports:
+      - "127.0.0.1:${OPCUA_PORT:-4840}:4840"
+    environment:
+      IO_HOST: 172.30.0.20
+      IO_PORT: "502"
+      MQTT_HOST: mosquitto
+      MQTT_USER: st2fb-gateway
+      MQTT_PASSWORD: ${MQTT_GATEWAY_PASSWORD:?run scripts/bootstrap.py}
+      TSDB_URL: http://tsdb:8428
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN:?run scripts/bootstrap.py}
+
+  mosquitto:
+    <<: *hardening
+    image: eclipse-mosquitto:2.0.20@sha256:21421af7b32bf9ce508e9090c8eb13bb81f410ca778dc205506180a6f862d0eb
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    networks:
+      it: {ipv4_address: 172.30.2.40}
+    ports:
+      - "127.0.0.1:${MQTT_PORT:-1883}:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/acl:/mosquitto/config/acl:ro
+      - ./secrets/passwd:/mosquitto/secrets/passwd:ro
+
+  # Single binary, 32 MB image, small time-series database. Not published: only the API reads it.
+  tsdb:
+    <<: *hardening
+    image: victoriametrics/victoria-metrics:v1.106.1@sha256:54b283129634239db62798fd8d92e8d8d4372a0b114e72967eb233dbb264ff53
+    # latencyOffset: by default it hides the newest 30 s, which is wrong for a live trend.
+    command: ["-storageDataPath=/data", "-retentionPeriod=7d", "-httpListenAddr=:8428", "-search.latencyOffset=0s"]
+    networks:
+      it: {ipv4_address: 172.30.2.50}
+    tmpfs: [/tmp]
+    volumes:
+      - tsdb-data:/data
+
+  api:
+    <<: *hardening
+    image: st2fb-edge-it:1
+    build: {context: ., dockerfile: it.Dockerfile}
+    command: ["python3", "-B", "-m", "uvicorn", "app:app", "--app-dir", "api", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]
+    tmpfs: [/tmp]
+    networks:
+      it: {ipv4_address: 172.30.2.60}
+    ports:
+      - "127.0.0.1:${API_PORT:-8080}:8080"
+    environment:
+      GATEWAY_URL: http://gateway:8090
+      TSDB_URL: http://tsdb:8428
+      GATEWAY_TOKEN: ${GATEWAY_TOKEN:?run scripts/bootstrap.py}
+      API_VIEWER_TOKEN: ${API_VIEWER_TOKEN:?run scripts/bootstrap.py}
+      API_OPERATOR_TOKEN: ${API_OPERATOR_TOKEN:?run scripts/bootstrap.py}
+
+volumes:
+  tsdb-data:
+
+networks:
+  # No masquerade: containers on these networks have no route out to the internet.
+  field:
+    driver_opts: {com.docker.network.bridge.enable_ip_masquerade: "false"}
+    ipam: {config: [{subnet: 172.30.1.0/24}]}
+  ot:
+    driver_opts: {com.docker.network.bridge.enable_ip_masquerade: "false"}
+    ipam: {config: [{subnet: 172.30.0.0/24}]}
+  it:
+    driver_opts: {com.docker.network.bridge.enable_ip_masquerade: "false"}
+    ipam: {config: [{subnet: 172.30.2.0/24}]}

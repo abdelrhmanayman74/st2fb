@@ -118,11 +118,18 @@ def describe_failure(outcome: forte_eval.Outcome, stimulus: dict[str, Any]) -> s
     return "\n".join(lines)[:FAILURE_LIMIT]
 
 
-def migrate(program: ProgramInput, mode: str, config: LlmConfig, gateway: Gateway, repeat: int) -> MigrationResult:
+def migrate(
+    program: ProgramInput,
+    mode: str,
+    config: LlmConfig,
+    gateway: Gateway,
+    repeat: int,
+    profile: prompts.PromptProfile = prompts.DEFAULT_PROFILE,
+) -> MigrationResult:
     result = MigrationResult()
-    system = prompts.system_prompt()
+    system = prompts.system_prompt(profile)
     stimulus = json.loads(program.tuning_path.read_text(encoding="utf-8"))
-    user = prompts.generate_prompt(program.source)
+    user = prompts.generate_prompt(program.source, profile)
 
     for attempt in range(1, MODE_ATTEMPTS[mode] + 1):
         tag = f"{program.name}/{mode}/{config.model}/r{repeat}/a{attempt}"
