@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import time
 import shutil
 import subprocess
 import sys
@@ -353,6 +354,16 @@ class CachePruning(TempDirCase):
             os.utime(entry, (index, index))
         self.assertEqual(forte_eval.prune_cache(150, self.tmp), 2)
         self.assertEqual([p.name for p in self.tmp.iterdir()], ["new"])
+
+    def test_min_age_keeps_recent_entries(self):
+        now = time.time()
+        for name, age in (("old", 7200), ("recent", 60)):
+            entry = self.tmp / name
+            entry.mkdir()
+            (entry / "forte").write_bytes(b"x" * 100)
+            os.utime(entry, (now - age, now - age))
+        self.assertEqual(forte_eval.prune_cache(0, self.tmp, min_age_s=3600), 1)
+        self.assertEqual([p.name for p in self.tmp.iterdir()], ["recent"])
 
 
 def run_cli(*args):

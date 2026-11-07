@@ -355,6 +355,16 @@ def inner_main(run_dir: Path) -> int:
     return 0
 
 
+def _prune_old_binaries() -> None:
+    """Keep the cache bounded, without touching a binary another run may be using."""
+    from . import forte_eval  # Imported here because forte_eval imports this module.
+
+    try:
+        forte_eval.prune_cache(min_age_s=3600)
+    except OSError as exc:
+        print(f"forte_run: cache not pruned: {exc}", file=sys.stderr)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run a Basic FB on real FORTE and write a trace")
     parser.add_argument("--fbt", type=Path)
@@ -371,6 +381,7 @@ def main(argv: list[str] | None = None) -> int:
     # A stale trace from an earlier run must not survive a failed one.
     args.out.unlink(missing_ok=True)
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    _prune_old_binaries()
     try:
         fb = fbt.read_fbt(args.fbt)
         plan = build_plan(fb, json.loads(args.stimulus.read_text(encoding="utf-8")))

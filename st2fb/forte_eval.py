@@ -19,6 +19,7 @@ from __future__ import annotations
 import functools
 import json
 import shutil
+import time
 import subprocess
 import sys
 import tempfile
@@ -53,11 +54,12 @@ def _image_id() -> str:
     return forte_run.ensure_image()
 
 
-def prune_cache(limit_bytes: int = CACHE_LIMIT_BYTES, cache_dir: Path | None = None) -> int:
+def prune_cache(limit_bytes: int = CACHE_LIMIT_BYTES, cache_dir: Path | None = None, min_age_s: float = 0) -> int:
     """Delete the oldest compiled FORTEs until the cache fits. Returns how many went.
 
     Each is about 24 MB. Deleting one is safe, since the next run of that FB just compiles it again.
     Not for use while another thread is evaluating, which could lose a binary it just built.
+    A positive min_age_s keeps recent entries, which makes this safe beside a run in another process.
     """
     cache_dir = cache_dir or forte_run.CACHE_DIR
     if not cache_dir.exists():
@@ -69,8 +71,9 @@ def prune_cache(limit_bytes: int = CACHE_LIMIT_BYTES, cache_dir: Path | None = N
             entries.append((entry.stat().st_mtime, size, entry))
     total = sum(size for _, size, _ in entries)
     removed = 0
-    for _, size, entry in sorted(entries, key=lambda item: item[0]):
-        if total <= limit_bytes:
+    now = time.time()
+    for mtime, size, entry in sorted(entries, key=lambda item: item[0]):
+        if total <= limit_bytes or now - mtime < min_age_s:
             break
         shutil.rmtree(entry, ignore_errors=True)
         total -= size
