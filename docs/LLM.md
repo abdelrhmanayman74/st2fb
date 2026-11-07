@@ -3,7 +3,7 @@
 The model proposes a Basic FB. It never decides correctness. Its `.fbt` goes through the same exporter, FORTE
 build, matiec reference and `st2fb.compare` as the deterministic translator's.
 
-**One live run exists, on `corpus/` only, in `results/benchmark_2026-11-06/`.** A human approved it, and its report and candidates are kept there, read-only. **No model has run on `corpus_hard/`.** Everything
+**Live runs exist on `corpus/` (`results/benchmark_2026-11-06/`) and on `corpus_hard/` with Sonnet 5.5, one repeat per program (`results/hard_2026-11-07/`).** A human approved each, and their reports and candidates are kept there, read-only. Everything
 said of that corpus in `docs/HARD_CORPUS.md` comes from the translator, matiec, FORTE and scripted fake replies. The tests use fake clients and a stub HTTP server on localhost, and they send nothing to Anthropic.
 
 ## Layout

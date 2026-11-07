@@ -1,0 +1,51 @@
+................................................................................................................s01_conveyor_starter llm_repair claude-sonnet-5-5 r0: passed=False attempts=1 category=heldout_different
+..06_star_delta llm_only claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+06_star_delta llm_only claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+.u03_tank_strapping llm_only claude-sonnet-5-5 r0: passed=False attempts=1 category=xml_error
+.s01_conveyor_starter llm_repair claude-sonnet-5-5 r0: passed=True attempts=2 category=None
+.x01_pump_station llm_only claude-sonnet-5-5 r0: passed=False attempts=1 category=xml_error
+...............................................s01_conveyor_starter llm_repair claude-sonnet-5-5 r0: passed=False attempts=3 category=xml_error
+r01_motor_aoi llm_repair claude-sonnet-5-5 r0: passed=False attempts=3 category=xml_error
+.benchmark: stopping, budget: 00_latch/llm_repair/claude-sonnet-5-5/r0/a1: spent $0.5000 of $0.50, and the next request could cost $0.3734
+00_latch llm_repair claude-sonnet-5-5 r0: passed=False attempts=0 category=budget_stop
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=False attempts=3 category=tuning_different
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+.00_latch llm_only claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+00_latch llm_only claude-sonnet-5-5 r1: passed=True attempts=1 category=None
+benchmark: stopping, budget: 00_latch/llm_only/claude-sonnet-5-5/r2/a1: spent $0.1200 of $0.45, and the next request could cost $0.3734
+00_latch llm_only claude-sonnet-5-5 r2: passed=False attempts=0 category=budget_stop
+.benchmark: stopping, budget: 00_latch/llm_repair/claude-sonnet-5-5/r0/a2: spent $0.0600 of $0.40, and the next request could cost $0.3824
+00_latch llm_repair claude-sonnet-5-5 r0: passed=False attempts=1 category=budget_stop
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=2 category=None
+00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=2 category=None
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=2 category=None
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=2 category=None
+.00_latch llm_only claude-sonnet-5-5 r0: passed=False attempts=1 category=tuning_different
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=2 category=None
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=False attempts=1 category=max_tokens
+.00_latch llm_only claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=False attempts=3 category=tuning_different
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=False attempts=1 category=heldout_different
+.gate_cycle llm_repair claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+.10_valve_feedback llm_repair claude-sonnet-5-5 r0: passed=False attempts=1 category=heldout_different
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=False attempts=1 category=refusal
+.00_latch llm_only claude-sonnet-5-5 r0: passed=True attempts=1 category=None
+00_latch llm_only claude-sonnet-5-5 r1: passed=False attempts=1 category=tuning_different
+.00_latch llm_repair claude-sonnet-5-5 r0: passed=True attempts=2 category=None
+.ssssssssssssssss.............................................................DIFFERENT: 1 divergences, first: {'scan': 0, 't_ms': 0, 'output': 'Q', 'expected': True, 'actual': False}
+..compare: unreadable trace: /tmp/tmpms9417ak/b.json: NaN is not a JSON number
+.DIFFERENT: 2 divergences, first: {'scan': 0, 't_ms': 0, 'output': 'Q', 'expected': 'output declared', 'actual': 'output missing'}
+shape error: output 'Q' is missing from the actual trace
+shape error: output 'N' is not in the expected trace
+.compare: unreadable trace: /tmp/tmpfvmm6d97/b.json: missing or invalid 'scans'
+.compare: unreadable trace: /tmp/tmpprnlwsc6/b.json: Expecting value: line 1 column 1 (char 0)
+...................................................................................................
+----------------------------------------------------------------------
+Ran 367 tests in 1381.633s
+
+OK (skipped=16)
+EQUAL: 1 scans compared
+wrote 5 mutants to /tmp/tmpfphhrl6b/m
